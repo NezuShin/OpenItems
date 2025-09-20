@@ -1,0 +1,5 @@
+name: OpenItems
+version: '1.0-SNAPSHOT'
+main: su.nezushin.openitems.OpenItems
+api-version: '1.21'
+author: NezuShin
