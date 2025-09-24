@@ -42,23 +42,16 @@ public class NamespacedSectionBuilder {
         //for items with parent minecraft:handheld
         List<ResourcePackScanFile> pngFilesHandheld = new ArrayList<>();
 
-        //for textures with own model
-        List<ResourcePackScanFile> pngFilesOther = new ArrayList<>();
-
-        //.png.mcmeta and other
-        List<ResourcePackScanFile> otherTypeFiles = new ArrayList<>();
-
 
         var generatedDir = new File(this.sectionDir, "textures/item/generated");
         var handheldDir = new File(this.sectionDir, "textures/item/handheld");
 
         if (this.config.isAllowAutogen()) {
-            scanForTextures(generatedDir, "item", pngFilesGenerated, otherTypeFiles, new ArrayList<>());
-            scanForTextures(handheldDir, "item", pngFilesHandheld, otherTypeFiles, new ArrayList<>());
+            scanForTextures(generatedDir, "item", pngFilesGenerated, new ArrayList<>());
+            scanForTextures(handheldDir, "item", pngFilesHandheld, new ArrayList<>());
         }
 
-        scanForTextures(new File(this.sectionDir, "textures"), "", pngFilesHandheld, otherTypeFiles,
-                Lists.newArrayList(generatedDir, handheldDir));
+        Utils.copyFolder(this.sectionDir, outputDir, this.sectionDir, this.config.getDirectoriesIgnoreList(), this.config.getExtensionsIgnoreList());
 
         for (var i : pngFilesGenerated)
             createModelAndCopy(i, this.config.getGeneratedModelTemplate());
@@ -66,13 +59,8 @@ public class NamespacedSectionBuilder {
         for (var i : pngFilesHandheld)
             createModelAndCopy(i, this.config.getHandheldModelTemplate());
 
-        for (var i : Utils.concatLists(pngFilesGenerated, pngFilesHandheld, pngFilesOther, otherTypeFiles)) {
-            var dir = new File(this.outputDir, "textures/" + i.path());
-            dir.mkdirs();
-            FileUtils.copyFile(i.file(), new File(dir + "/" + i.file().getName()));
-        }
 
-        scanForModels(new File(this.sectionDir, "models/item"), "");
+        scanForModels(new File(this.sectionDir, "models/item"), "", false);
 
 
     }
@@ -89,31 +77,28 @@ public class NamespacedSectionBuilder {
         return file.getName().substring(0, file.getName().lastIndexOf("."));
     }
 
-    public void scanForModels(File file, String path) throws IOException {
+    public void scanForModels(File file, String path, boolean appendPath) throws IOException {
         if (!file.isDirectory()) {
-            createRegularTemplateItem(path, path, getFileName(file));
-
-
+            createRegularTemplateItem(this.namespace + ":" + path + "/" + getFileName(file), path.replaceFirst("item", ""), getFileName(file));
             return;
         }
         path = createPath(path, file);
         for (File i : file.listFiles())
-            scanForModels(i, path);
+            scanForModels(i, path, true);
     }
 
-    public void scanForTextures(File file, String path, List<ResourcePackScanFile> pngFiles, List<ResourcePackScanFile>
-            otherTypeFiles, List<File> ignoreDirs) {
+    public void scanForTextures(File file, String path, List<ResourcePackScanFile> pngFiles, List<File> ignoreDirs) {
         if (!file.isDirectory()) {
             if (file.getName().toLowerCase().endsWith(".png")) {
                 pngFiles.add(new ResourcePackScanFile(file, path, getFileName(file)));
-            } else otherTypeFiles.add(new ResourcePackScanFile(file, path, ""));
+            }
             return;
         }
         if (ignoreDirs.contains(file)) return;
 
         path = createPath(path, file);
         for (File i : file.listFiles())
-            scanForTextures(i, path, pngFiles, otherTypeFiles, ignoreDirs);
+            scanForTextures(i, path, pngFiles, ignoreDirs);
 
     }
 
@@ -128,7 +113,6 @@ public class NamespacedSectionBuilder {
         modelDir.mkdirs();
 
         Files.write(modelStr.getBytes(StandardCharsets.UTF_8), new File(modelDir, scanFile.name() + ".json"));
-        //.replaceFirst("item/", "")
 
         createRegularTemplateItem(modelPath, scanFile.path().replaceFirst("item/", ""), scanFile.name());
     }

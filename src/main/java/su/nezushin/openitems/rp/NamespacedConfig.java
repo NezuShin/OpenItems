@@ -1,5 +1,7 @@
 package su.nezushin.openitems.rp;
 
+import com.google.common.collect.Lists;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +10,11 @@ public class NamespacedConfig {
     private boolean allowAutogen = true;
 
     private List<String> autogenIgnoreList = new ArrayList<>();
+
+
+    private List<String> extensionsIgnoreList = Lists.newArrayList(".yml");
+    private List<String> directoriesIgnoreList = Lists.newArrayList();
+
 
     private String generatedModelTemplate = "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"{path}\"}}";
     private String handheldModelTemplate = "{\"parent\":\"minecraft:item/handheld\",\"textures\":{\"layer0\":\"{path}\"}}";
@@ -42,5 +49,13 @@ public class NamespacedConfig {
 
     public String getRegularItemTemplate() {
         return regularItemTemplate;
+    }
+
+    public List<String> getExtensionsIgnoreList() {
+        return extensionsIgnoreList;
+    }
+
+    public List<String> getDirectoriesIgnoreList() {
+        return directoriesIgnoreList;
     }
 }

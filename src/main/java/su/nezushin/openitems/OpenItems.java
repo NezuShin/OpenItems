@@ -1,5 +1,6 @@
 package su.nezushin.openitems;
 
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import su.nezushin.openitems.rp.ResourcePackBuilder;
 
@@ -15,6 +16,7 @@ public final class OpenItems extends JavaPlugin {
     @Override
     public void onEnable() {
         new ResourcePackBuilder().build();
+        Bukkit.getPluginManager().registerEvents(new TestListener(), instance);
     }
 
     @Override
