@@ -4,3 +4,5 @@ main: su.nezushin.openitems.OpenItems
 api-version: '1.21'
 author: NezuShin
 libraries: []
+commands:
+  oedit:

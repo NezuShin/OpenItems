@@ -1,9 +1,7 @@
 package su.nezushin.openitems;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Instrument;
-import org.bukkit.Material;
-import org.bukkit.Note;
+import io.papermc.paper.event.block.BlockBreakBlockEvent;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.MultipleFacing;
@@ -12,13 +10,11 @@ import org.bukkit.block.data.type.Tripwire;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPhysicsEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.EntitiesUnloadEvent;
-import su.nezushin.openitems.blocks.CustomBlock;
+import org.bukkit.persistence.PersistentDataType;
+import su.nezushin.openitems.blocks.CustomBlocks;
 import su.nezushin.openitems.blocks.types.CustomNoteblockType;
 
 public class TestListener implements Listener {
@@ -30,7 +26,7 @@ public class TestListener implements Listener {
             return;
         Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(), () -> {
             b.setType(Material.CHORUS_PLANT);
-            CustomBlock.setId(b, "123");
+            CustomBlocks.setId(b, "123");
             if (b.getBlockData() instanceof MultipleFacing mf) {
 
 
@@ -60,8 +56,11 @@ public class TestListener implements Listener {
             return;
         Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(), () -> {
 
+            b.getChunk().getPersistentDataContainer().set(new NamespacedKey(OpenItems.getInstance(), "123"), PersistentDataType.STRING, "");
+
+
             b.setType(Material.NOTE_BLOCK);
-            CustomBlock.setId(b, "123");
+            CustomBlocks.setId(b, "123");
             if (b.getBlockData() instanceof NoteBlock nb) {
 
                 /*nb.setInstrument(Instrument.BASS_DRUM);
@@ -87,7 +86,7 @@ public class TestListener implements Listener {
         Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(), () -> {
 
             b.setType(Material.TRIPWIRE);
-            CustomBlock.setId(b, "123");
+            CustomBlocks.setId(b, "123");
             if (b.getBlockData() instanceof Tripwire str) {
 
                 /*nb.setInstrument(Instrument.BASS_DRUM);
@@ -113,12 +112,14 @@ public class TestListener implements Listener {
         Block b = e.getClickedBlock();
         if (b == null)
             return;
-        if (CustomBlock.getId(b) != null) {
+        if (CustomBlocks.getId(b) != null && !e.getPlayer().isSneaking()) {
             e.setUseInteractedBlock(Event.Result.DENY);
             return;
         }
 
     }
+
+
 
 
     @EventHandler
@@ -132,16 +133,25 @@ public class TestListener implements Listener {
         /*if (!block.getType().equals(Material.CHORUS_PLANT))
             return;*/
 
-
-        if (CustomBlock.getId(block) != null) {
+        if (CustomBlocks.getId(block) != null) {
             e.setCancelled(true);
             return;
         }
         for (var face : Utils.getBlockFacesForChorus())
-            if (CustomBlock.getId(block.getRelative(face)) != null) {
+            if (CustomBlocks.getId(block.getRelative(face)) != null) {
                 e.setCancelled(true);
                 return;
             }
+    }
+
+
+    @EventHandler
+    public void blockBreakBlockEvent(BlockBreakBlockEvent e) {
+        if (CustomBlocks.getId(e.getBlock()) != null) {
+            System.out.println(123333);
+
+            return;
+        }
     }
 
     @EventHandler

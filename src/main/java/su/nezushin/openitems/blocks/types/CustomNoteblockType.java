@@ -12,6 +12,10 @@ public class CustomNoteblockType implements CustomBlockType {
 
     private int id;
 
+    public CustomNoteblockType(int id) {
+        this.id = id;
+    }
+
     @Override
     public void apply(Block b) {
 
@@ -31,19 +35,23 @@ public class CustomNoteblockType implements CustomBlockType {
 
     public static void setId(NoteBlock nb, int id) {
         int powered = id & 0b1;
-        int note = (id >> 1) & 0b11;
-        int instrument = (id >> 3);
+
+        int temp = (id >> 1);
+
+        int note = temp % 25;
+
+        int instrument = temp / 25;
 
         nb.setNote(new Note(note));
-        nb.setInstrument(Instrument.values()[instrument]);
+        nb.setInstrument(Instrument.getByType((byte) instrument));
         nb.setPowered(powered == 1);
     }
 
     public static int getId(NoteBlock nb) {
-        int instrument = Arrays.asList(Instrument.values()).indexOf(nb.getInstrument());
-        int note = nb.getNote().getId();
-        int powered = nb.isPowered() ? 1 : 0;
+        return getId(nb.getInstrument(), nb.getNote().getId(), nb.isPowered());
+    }
 
-        return (instrument << 3) | (note << 1) | powered;
+    public static int getId(Instrument instrument, int note, boolean powered) {
+        return ((((int) instrument.getType()) * (25 + note)) << 1) | (powered ? 1 : 0);
     }
 }

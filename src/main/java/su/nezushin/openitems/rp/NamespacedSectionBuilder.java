@@ -60,7 +60,7 @@ public class NamespacedSectionBuilder {
             createModelAndCopy(i, this.config.getHandheldModelTemplate());
 
 
-        scanForModels(new File(this.sectionDir, "models/item"), "", false);
+        scanForModels(new File(this.sectionDir, "models/item"), "");
 
 
     }
@@ -69,34 +69,28 @@ public class NamespacedSectionBuilder {
 
     }
 
-    private String createPath(String path, File file) {
-        return path + (path.isEmpty() ? "" : "/") + file.getName();
-    }
 
-    private String getFileName(File file) {
-        return file.getName().substring(0, file.getName().lastIndexOf("."));
-    }
-
-    public void scanForModels(File file, String path, boolean appendPath) throws IOException {
+    public void scanForModels(File file, String path) throws IOException {
         if (!file.isDirectory()) {
-            createRegularTemplateItem(this.namespace + ":" + path + "/" + getFileName(file), path.replaceFirst("item", ""), getFileName(file));
+            createRegularTemplateItem(this.namespace + ":" + path + "/" + Utils.getFileName(file),
+                    path.replaceFirst("item", ""), Utils.getFileName(file));
             return;
         }
-        path = createPath(path, file);
+        path = Utils.createPath(path, file);
         for (File i : file.listFiles())
-            scanForModels(i, path, true);
+            scanForModels(i, path);
     }
 
     public void scanForTextures(File file, String path, List<ResourcePackScanFile> pngFiles, List<File> ignoreDirs) {
         if (!file.isDirectory()) {
             if (file.getName().toLowerCase().endsWith(".png")) {
-                pngFiles.add(new ResourcePackScanFile(file, path, getFileName(file)));
+                pngFiles.add(new ResourcePackScanFile(file, path, Utils.getFileName(file)));
             }
             return;
         }
         if (ignoreDirs.contains(file)) return;
 
-        path = createPath(path, file);
+        path = Utils.createPath(path, file);
         for (File i : file.listFiles())
             scanForTextures(i, path, pngFiles, ignoreDirs);
 

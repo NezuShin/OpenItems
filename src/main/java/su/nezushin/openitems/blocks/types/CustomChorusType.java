@@ -10,6 +10,10 @@ import su.nezushin.openitems.Utils;
 public class CustomChorusType implements CustomBlockType {
     private int id;
 
+    public CustomChorusType(int id) {
+        this.id = id;
+    }
+
     @Override
     public void apply(Block b) {
         b.setType(Material.TRIPWIRE);

@@ -1,9 +1,14 @@
 package su.nezushin.openitems;
 
+import org.bukkit.Bukkit;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.util.BlockVector;
 import org.codehaus.plexus.util.FileUtils;
+import su.nezushin.openitems.blocks.BlockStore;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +59,40 @@ public class Utils {
 
             FileUtils.copyFile(src, dest);
         }
+    }
+
+    public static void resyncCommands() {
+        try {
+            var method = Bukkit.getServer().getClass().getDeclaredMethod("syncCommands");
+            method.setAccessible(true);
+            method.invoke(Bukkit.getServer());
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static BlockVector createBlockVector(BlockStore b) {
+        return new BlockVector(b.getX(), b.getY(), b.getZ());
+    }
+
+    public static BlockVector createBlockVector(Block b) {
+        return new BlockVector(b.getX(), b.getY(), b.getZ());
+    }
+
+    public static String createPath(String path, String file) {
+        return path + (path.isEmpty() ? "" : "/") + file;
+    }
+
+    public static String createPath(String path, File file) {
+        return path + (path.isEmpty() ? "" : "/") + file.getName();
+    }
+
+    public static String getFileName(File file) {
+        return file.getName().substring(0, file.getName().lastIndexOf("."));
     }
 
 }
