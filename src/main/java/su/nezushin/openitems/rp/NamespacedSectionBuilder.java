@@ -1,8 +1,6 @@
 package su.nezushin.openitems.rp;
 
-import com.google.common.collect.Lists;
 import com.google.common.io.Files;
-import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.Utils;
 
@@ -42,22 +40,30 @@ public class NamespacedSectionBuilder {
         //for items with parent minecraft:handheld
         List<ResourcePackScanFile> pngFilesHandheld = new ArrayList<>();
 
+        //for blocks with parent minecraft:cube_all
+        List<ResourcePackScanFile> pngFilesCubeAll = new ArrayList<>();
 
         var generatedDir = new File(this.sectionDir, "textures/item/generated");
         var handheldDir = new File(this.sectionDir, "textures/item/handheld");
+        var cubeAllDir = new File(this.sectionDir, "textures/block/cube_all");
 
         if (this.config.isAllowAutogen()) {
             scanForTextures(generatedDir, "item", pngFilesGenerated, new ArrayList<>());
             scanForTextures(handheldDir, "item", pngFilesHandheld, new ArrayList<>());
+
+            scanForTextures(cubeAllDir, "block", pngFilesCubeAll, new ArrayList<>());
         }
 
         Utils.copyFolder(this.sectionDir, outputDir, this.sectionDir, this.config.getDirectoriesIgnoreList(), this.config.getExtensionsIgnoreList());
 
         for (var i : pngFilesGenerated)
-            createModelAndCopy(i, this.config.getGeneratedModelTemplate());
+            createItemModel(i, this.config.getGeneratedModelTemplate());
 
         for (var i : pngFilesHandheld)
-            createModelAndCopy(i, this.config.getHandheldModelTemplate());
+            createItemModel(i, this.config.getHandheldModelTemplate());
+
+        for (var i : pngFilesCubeAll)
+            createCubeAllModel(i);
 
 
         scanForModels(new File(this.sectionDir, "models/item"), "");
@@ -96,7 +102,25 @@ public class NamespacedSectionBuilder {
 
     }
 
-    private void createModelAndCopy(ResourcePackScanFile scanFile, String template) throws IOException {
+    private void createCubeAllModel(ResourcePackScanFile scanFile) throws IOException {
+
+        var modelPath = this.namespace + ":" + scanFile.path() + "/" + scanFile.name();
+
+        var modelStr = this.config.getCubeAllModelTemplate().replace("{path}", modelPath);
+
+        var modelDir = new File(this.outputDir, "models/" + scanFile.path());
+
+        modelDir.mkdirs();
+
+        OpenItems.getInstance().getResourcePackBuilder().getBlockIdCache().getOrCreateNoteblockId(modelPath);
+
+        Files.write(modelStr.getBytes(StandardCharsets.UTF_8), new File(modelDir, scanFile.name() + ".json"));
+
+        createRegularTemplateItem(modelPath, scanFile.path(), scanFile.name());
+    }
+
+
+    private void createItemModel(ResourcePackScanFile scanFile, String template) throws IOException {
 
         var modelPath = this.namespace + ":" + scanFile.path() + "/" + scanFile.name();
 
@@ -108,7 +132,7 @@ public class NamespacedSectionBuilder {
 
         Files.write(modelStr.getBytes(StandardCharsets.UTF_8), new File(modelDir, scanFile.name() + ".json"));
 
-        createRegularTemplateItem(modelPath, scanFile.path().replaceFirst("item/", ""), scanFile.name());
+        createRegularTemplateItem(modelPath, scanFile.path(), scanFile.name());
     }
 
     private void createRegularTemplateItem(String modelPath, String itemPath, String itemName) throws IOException {

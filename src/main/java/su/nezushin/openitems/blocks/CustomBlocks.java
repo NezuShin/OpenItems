@@ -27,7 +27,8 @@ public class CustomBlocks {
 
 
     public CustomBlocks() {
-        blockTypes.put("ns:teleporter", new CustomNoteblockType(CustomNoteblockType.getId(Instrument.BASS_DRUM, 0, false)));
+        //blockTypes.put("ns:teleporter", new CustomNoteblockType(CustomNoteblockType.getId(Instrument.BASS_DRUM, 0, false)));
+        blockTypes.put("ns:teleporter", new CustomNoteblockType(CustomNoteblockType.getId(Instrument.PIANO, 0, true)));
 
         Bukkit.getPluginManager().registerEvents(new CustomBlocksListener(), OpenItems.getInstance());
 

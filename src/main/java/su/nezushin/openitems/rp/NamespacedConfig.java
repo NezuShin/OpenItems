@@ -20,6 +20,7 @@ public class NamespacedConfig {
     private String handheldModelTemplate = "{\"parent\":\"minecraft:item/handheld\",\"textures\":{\"layer0\":\"{path}\"}}";
     private String bowModelTemplate = "{\"parent\":\"minecraft:item/bow\",\"textures\":{\"layer0\":\"{path}\"}";
 
+    private String cubeAllModelTemplate = "{\"parent\": \"minecraft:block/cube_all\",\"textures\": {\"all\": \"{path}\"}}";
 
     private String regularItemTemplate = "{\"model\": {\"type\": \"model\", \"model\": \"{path}\"}}\n";
 
@@ -45,6 +46,10 @@ public class NamespacedConfig {
 
     public String getBowModelTemplate() {
         return bowModelTemplate;
+    }
+
+    public String getCubeAllModelTemplate() {
+        return cubeAllModelTemplate;
     }
 
     public String getRegularItemTemplate() {

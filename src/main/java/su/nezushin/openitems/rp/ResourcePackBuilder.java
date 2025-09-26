@@ -1,15 +1,33 @@
 package su.nezushin.openitems.rp;
 
+import com.google.common.base.Charsets;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import org.bukkit.Material;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.Utils;
+import su.nezushin.openitems.blocks.BlockStore;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ResourcePackBuilder {
 
+    private BlockIdCache blockIdCache;
+
+    public void loadCache() throws IOException {
+        this.blockIdCache = new BlockIdCache();
+        this.blockIdCache.load();
+    }
+
+
     public void build() {
         try {
+            this.loadCache();
             this.clean();
 
             var contents = new File(OpenItems.getInstance().getDataFolder(), "contents");
@@ -19,6 +37,8 @@ public class ResourcePackBuilder {
             for (var i : contents.listFiles())
                 if (i.isDirectory()) new NamespacedSectionBuilder(i.getName(), i).build();
 
+            this.blockIdCache.build();
+            this.blockIdCache.save();
 
             fillRegistry();
         } catch (Exception ex) {
@@ -55,5 +75,7 @@ public class ResourcePackBuilder {
         if (dir.exists()) dir.delete();
     }
 
-
+    public BlockIdCache getBlockIdCache() {
+        return blockIdCache;
+    }
 }

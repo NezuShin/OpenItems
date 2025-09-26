@@ -12,6 +12,7 @@ public final class OpenItems extends JavaPlugin {
     private static OpenItems instance;
     private CustomBlocks blocks;
     private ModelRegistry modelRegistry;
+    private ResourcePackBuilder resourcePackBuilder;
 
     public static NamespacedKey CUSTOM_BLOCKS_KEY;
 
@@ -25,7 +26,9 @@ public final class OpenItems extends JavaPlugin {
     public void onEnable() {
         this.modelRegistry = new ModelRegistry();
         this.blocks = new CustomBlocks();
-        new ResourcePackBuilder().build();
+        this.resourcePackBuilder = new ResourcePackBuilder();
+
+        this.resourcePackBuilder.build();
         System.out.println(this.modelRegistry.getItems());
         //Bukkit.getPluginManager().registerEvents(new TestListener(), instance);
 
@@ -49,6 +52,10 @@ public final class OpenItems extends JavaPlugin {
 
     public ModelRegistry getModelRegistry() {
         return modelRegistry;
+    }
+
+    public ResourcePackBuilder getResourcePackBuilder() {
+        return resourcePackBuilder;
     }
 
     public static void sync(Runnable run) {
