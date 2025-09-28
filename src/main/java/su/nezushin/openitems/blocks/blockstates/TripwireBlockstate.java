@@ -1,0 +1,18 @@
+package su.nezushin.openitems.blocks.blockstates;
+
+import su.nezushin.openitems.blocks.types.CustomTripwireType;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class TripwireBlockstate {
+
+    private Map<String, BlockstateModel> variants = new HashMap<>();
+
+    public TripwireBlockstate(Map<String, Integer> tripwireIds) {
+        for (var i : tripwireIds.entrySet()) {
+            variants.put(CustomTripwireType.toBlocksate(i.getValue()), new BlockstateModel(i.getKey()));
+        }
+    }
+
+}

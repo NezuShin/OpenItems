@@ -22,6 +22,11 @@ public class NamespacedConfig {
 
     private String cubeAllModelTemplate = "{\"parent\": \"minecraft:block/cube_all\",\"textures\": {\"all\": \"{path}\"}}";
 
+
+    private String cubeModelTemplate = "{\"parent\": \"minecraft:block/cube\",\"textures\": {\"down\": \"{path_down}\",\"east\": \"{path_east}\",\"north\": \"{path_north}\",\"particle\": \"{path_up}\",\"south\": \"{path_south}\",\"up\": \"{path_up}\",\"west\": \"{path_west}\"}}";
+
+    private String cubeSideModelTemplate = "{\"parent\": \"minecraft:block/cube\",\"textures\": {\"down\": \"{path_down}\",\"east\": \"{path_side}\",\"north\": \"{path_side}\",\"particle\": \"{path_up}\",\"south\": \"{path_side}\",\"up\": \"{path_up}\",\"west\": \"{path_side}\"}}";
+
     private String regularItemTemplate = "{\"model\": {\"type\": \"model\", \"model\": \"{path}\"}}\n";
 
     public NamespacedConfig() {
@@ -46,6 +51,14 @@ public class NamespacedConfig {
 
     public String getBowModelTemplate() {
         return bowModelTemplate;
+    }
+
+    public String getCubeModelTemplate() {
+        return cubeModelTemplate;
+    }
+
+    public String getCubeSideModelTemplate() {
+        return cubeSideModelTemplate;
     }
 
     public String getCubeAllModelTemplate() {

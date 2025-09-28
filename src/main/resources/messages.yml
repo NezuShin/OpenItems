@@ -1,0 +1,5 @@
+messages:
+  err_u_should_have_item_in_hand: 'You should hold item in hand'
+  err_u_dont_have_permission: 'You do not have permission!'
+  err_player_only: 'This command is for players only!'
+  err_nan: '"{nan}" is not a number!'

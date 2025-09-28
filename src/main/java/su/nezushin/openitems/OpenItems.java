@@ -6,6 +6,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import su.nezushin.openitems.blocks.CustomBlocks;
 import su.nezushin.openitems.cmd.ItemEditCommand;
 import su.nezushin.openitems.rp.ResourcePackBuilder;
+import su.nezushin.openitems.utils.OpenItemsConfig;
+import su.nezushin.openitems.utils.Utils;
 
 public final class OpenItems extends JavaPlugin {
 
@@ -28,8 +30,8 @@ public final class OpenItems extends JavaPlugin {
         this.blocks = new CustomBlocks();
         this.resourcePackBuilder = new ResourcePackBuilder();
 
-        this.resourcePackBuilder.build();
-        System.out.println(this.modelRegistry.getItems());
+        load();
+
         //Bukkit.getPluginManager().registerEvents(new TestListener(), instance);
 
 
@@ -37,6 +39,12 @@ public final class OpenItems extends JavaPlugin {
 
         Utils.resyncCommands();
     }
+
+    public void load() {
+        OpenItemsConfig.init();
+        this.resourcePackBuilder.build();
+    }
+
 
     @Override
     public void onDisable() {

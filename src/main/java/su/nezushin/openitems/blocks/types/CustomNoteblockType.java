@@ -5,6 +5,8 @@ import org.bukkit.Instrument;
 import org.bukkit.Material;
 import org.bukkit.Note;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.NoteBlock;
 import su.nezushin.openitems.blocks.blockstates.NoteblockBlockstate;
 
@@ -12,7 +14,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CustomNoteblockType implements CustomBlockType {
+public class CustomNoteblockType extends CustomBlockType {
 
     private static Map<Instrument, String> instrumentToBlockstate = new HashMap<>();
 
@@ -43,6 +45,8 @@ public class CustomNoteblockType implements CustomBlockType {
 
     private int id;
 
+    private Map<BlockFace, Integer> faceMap = new HashMap<>();
+
     public CustomNoteblockType(int id) {
         this.id = id;
     }
@@ -55,13 +59,26 @@ public class CustomNoteblockType implements CustomBlockType {
         if (b.getBlockData() instanceof NoteBlock nb) {
             setId(nb, id);
             b.setBlockData(nb);
-            b.getState().update(true, true);
+            //b.getState().update(true, true);
         }
+    }
+
+    @Override
+    public void apply(BlockData b) {
+        if (!(b instanceof NoteBlock nb))
+            return;
+
+        setId(nb, id);
     }
 
     @Override
     public boolean isSimilar(Block b) {
         return b.getBlockData() instanceof NoteBlock nb && getId(nb) == this.id;
+    }
+
+    @Override
+    public boolean applyOnPhysics() {
+        return true;
     }
 
     public static void setId(NoteBlock nb, int id) {

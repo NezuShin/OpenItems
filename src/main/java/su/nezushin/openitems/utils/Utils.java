@@ -1,4 +1,4 @@
-package su.nezushin.openitems;
+package su.nezushin.openitems.utils;
 
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
@@ -9,7 +9,6 @@ import su.nezushin.openitems.blocks.BlockStore;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,6 +73,8 @@ public class Utils {
             throw new RuntimeException(e);
         }
     }
+
+
 
     public static BlockVector createBlockVector(BlockStore b) {
         return new BlockVector(b.getX(), b.getY(), b.getZ());

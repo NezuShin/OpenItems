@@ -1,23 +1,27 @@
 package su.nezushin.openitems.rp;
 
-import com.google.common.base.Charsets;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import org.bukkit.Material;
+import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.OpenItems;
-import su.nezushin.openitems.Utils;
-import su.nezushin.openitems.blocks.BlockStore;
+import su.nezushin.openitems.blocks.types.CustomTripwireType;
+import su.nezushin.openitems.utils.OpenItemsConfig;
+import su.nezushin.openitems.utils.Utils;
+import su.nezushin.openitems.blocks.types.CustomNoteblockType;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ResourcePackBuilder {
 
     private BlockIdCache blockIdCache;
+
+    public ResourcePackBuilder() {
+        try {
+            this.loadCache();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
 
     public void loadCache() throws IOException {
         this.blockIdCache = new BlockIdCache();
@@ -41,6 +45,13 @@ public class ResourcePackBuilder {
             this.blockIdCache.save();
 
             fillRegistry();
+
+
+            for (var out : OpenItemsConfig.getResourcePackCopyDestinationFiles()) {
+                FileUtils.deleteDirectory(out);
+                var build = new File(OpenItems.getInstance().getDataFolder(), "build");
+                Utils.copyFolder(build, out, build, new ArrayList<>(), new ArrayList<>());
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -56,7 +67,12 @@ public class ResourcePackBuilder {
             }
         }
 
-
+        this.blockIdCache.getRegistredNoteblockIds().forEach((k, v) -> {
+            OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomNoteblockType(v));
+        });
+        this.blockIdCache.getRegistredTripwireIds().forEach((k, v) -> {
+            OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomTripwireType(v));
+        });
     }
 
     public void scanForItems(File file, String namespace, String path, boolean appendPath) throws IOException {
@@ -69,10 +85,15 @@ public class ResourcePackBuilder {
             scanForItems(i, namespace, path, true);
     }
 
-    public void clean() {
+    public void clean() throws IOException {
+        this.blockIdCache.cleanRegistred();
+        OpenItems.getInstance().getModelRegistry().clear();
         var dir = new File(OpenItems.getInstance().getDataFolder(), "build/assets");
 
-        if (dir.exists()) dir.delete();
+
+        if (dir.exists()) FileUtils.deleteDirectory(dir);
+
+        OpenItemsConfig.getResourcePackCopyDestinationFiles().forEach(i -> i.delete());
     }
 
     public BlockIdCache getBlockIdCache() {

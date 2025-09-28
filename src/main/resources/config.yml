@@ -1,0 +1,5 @@
+resourcepack:
+  #Where to copy built resourcepack
+  copy-destinations:
+#   - 'Resourceloader/packs/OpenItems'
+#   - 'C:\Users\nezushin\my-resource-packs\etc'

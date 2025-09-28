@@ -1,9 +1,8 @@
-package su.nezushin.openitems;
+package su.nezushin.openitems.utils;
 
 import com.google.common.collect.Lists;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -16,7 +15,7 @@ import java.util.regex.Pattern;
 
 public enum Message {
 
-    err_u_should_have_item_in_hand, err_u_dont_have_permission, err_player_only;
+    err_u_should_have_item_in_hand, err_u_dont_have_permission, err_player_only, err_nan;
 
     private List<String> list = Lists.newArrayList("");
 

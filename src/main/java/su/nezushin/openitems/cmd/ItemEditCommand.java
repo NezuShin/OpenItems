@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -13,7 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import su.nezushin.openitems.Message;
+import su.nezushin.openitems.utils.Message;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.BlockNBTUtil;
 
@@ -44,27 +43,41 @@ public class ItemEditCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        try {
 
-        if (args[0].equalsIgnoreCase("model")) {
-            item.setData(DataComponentTypes.ITEM_MODEL, Key.key(args[1]));
-        } else if (args[0].equalsIgnoreCase("name")) {
-            var newName = new ArrayList<>(Arrays.asList(args));
-            newName.removeFirst();
-            item.setData(DataComponentTypes.ITEM_NAME, MiniMessage.miniMessage().deserialize(Message.translateCodes(String.join(" ", newName))));
-        } else if (args[0].equalsIgnoreCase("max_damage")) {
-            item.setData(DataComponentTypes.MAX_DAMAGE, Integer.parseInt(args[1]));
-        } else if (args[0].equalsIgnoreCase("damage")) {
-            item.setData(DataComponentTypes.DAMAGE, Integer.parseInt(args[1]));
-        } else if (args[0].equalsIgnoreCase("max_stack_size")) {
-            item.setData(DataComponentTypes.MAX_STACK_SIZE, Integer.parseInt(args[1]));
-        } else if (args[0].equalsIgnoreCase("block")) {
-            item = BlockNBTUtil.setBlockId(item, args[1]);
+
+            if (args[0].equalsIgnoreCase("model")) {
+                item.setData(DataComponentTypes.ITEM_MODEL, Key.key(args[1]));
+            } else if (args[0].equalsIgnoreCase("name")) {
+                var newName = new ArrayList<>(Arrays.asList(args));
+                newName.removeFirst();
+                item.setData(DataComponentTypes.ITEM_NAME, MiniMessage.miniMessage().deserialize(Message.translateCodes(String.join(" ", newName))));
+            } else if (args[0].equalsIgnoreCase("max_damage")) {
+                item.setData(DataComponentTypes.MAX_DAMAGE, parseInt(args[1]));
+            } else if (args[0].equalsIgnoreCase("damage")) {
+                item.setData(DataComponentTypes.DAMAGE, parseInt(args[1]));
+            } else if (args[0].equalsIgnoreCase("max_stack_size")) {
+                item.setData(DataComponentTypes.MAX_STACK_SIZE, parseInt(args[1]));
+            } else if (args[0].equalsIgnoreCase("block")) {
+                item = BlockNBTUtil.setBlockId(item, args[1]);
+            }
+
+
+            p.getInventory().setItemInMainHand(item);
+        } catch (CommandException ex) {
+            ex.send(p);
+            return true;
         }
 
-
-        p.getInventory().setItemInMainHand(item);
-
         return true;
+    }
+
+    public int parseInt(String str) {
+        try {
+            return Integer.parseInt(str);
+        } catch (NumberFormatException ex) {
+            throw new CommandException(Message.err_nan.replace("{nan}", str));
+        }
     }
 
     @Override
@@ -76,6 +89,8 @@ public class ItemEditCommand implements CommandExecutor, TabCompleter {
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("model") && args.length > 1) {
                 return OpenItems.getInstance().getModelRegistry().getItems().stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
+            } else if (args[0].equalsIgnoreCase("block") && args.length > 1) {
+                return OpenItems.getInstance().getModelRegistry().getBlockTypes().keySet().stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
             }
 
             return List.of();

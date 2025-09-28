@@ -2,12 +2,11 @@ package su.nezushin.openitems.blocks.types;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.MultipleFacing;
-import org.bukkit.block.data.type.Tripwire;
-import su.nezushin.openitems.Utils;
+import su.nezushin.openitems.utils.Utils;
 
-public class CustomChorusType implements CustomBlockType {
+public class CustomChorusType extends CustomBlockType {
     private int id;
 
     public CustomChorusType(int id) {
@@ -17,16 +16,29 @@ public class CustomChorusType implements CustomBlockType {
     @Override
     public void apply(Block b) {
         b.setType(Material.TRIPWIRE);
-        if (b.getBlockData() instanceof Tripwire t) {
+        if (b.getBlockData() instanceof MultipleFacing t) {
             setId(t, this.id);
             b.setBlockData(t);
-            b.getState().update(true, true);
+            //b.getState().update(true, true);
         }
     }
 
     @Override
+    public void apply(BlockData b) {
+        if (!(b instanceof MultipleFacing t))
+            return;
+
+        setId(t, this.id);
+    }
+
+    @Override
     public boolean isSimilar(Block b) {
-        return b.getBlockData() instanceof Tripwire t && getId(t) == this.id;
+        return b.getBlockData() instanceof MultipleFacing t && getId(t) == this.id;
+    }
+
+    @Override
+    public boolean applyOnPhysics() {
+        return true;
     }
 
     public static void setId(MultipleFacing nb, int id) {

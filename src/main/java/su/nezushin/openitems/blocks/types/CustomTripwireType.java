@@ -2,17 +2,18 @@ package su.nezushin.openitems.blocks.types;
 
 import org.bukkit.Instrument;
 import org.bukkit.Material;
-import org.bukkit.Note;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.data.type.NoteBlock;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Tripwire;
-import su.nezushin.openitems.Utils;
 
-import java.util.Arrays;
-
-public class CustomStringType implements CustomBlockType {
+public class CustomTripwireType extends CustomBlockType {
     private int id;
+
+    public CustomTripwireType(int id) {
+        this.id = id;
+    }
 
     @Override
     public void apply(Block b) {
@@ -20,13 +21,26 @@ public class CustomStringType implements CustomBlockType {
         if (b.getBlockData() instanceof Tripwire t) {
             setId(t, this.id);
             b.setBlockData(t);
-            b.getState().update(true, true);
+            //b.getState().update(false, false);
         }
+    }
+
+    @Override
+    public void apply(BlockData b) {
+        if (!(b instanceof Tripwire t))
+            return;
+
+        setId(t, this.id);
     }
 
     @Override
     public boolean isSimilar(Block b) {
         return b.getBlockData() instanceof Tripwire t && getId(t) == this.id;
+    }
+
+    @Override
+    public boolean applyOnPhysics() {
+        return true;
     }
 
     public static void setId(Tripwire nb, int id) {
@@ -38,7 +52,19 @@ public class CustomStringType implements CustomBlockType {
 
         nb.setPowered(((id >> 4) & 0b1) == 1);
         nb.setAttached(((id >> 5) & 0b1) == 1);
+        nb.setDisarmed(((id >> 6) & 0b1) == 1);
 
+    }
+
+    public static void setDefaultId(Tripwire nb) {
+        nb.setFace(BlockFace.SOUTH, false);
+        nb.setFace(BlockFace.NORTH, false);
+        nb.setFace(BlockFace.EAST, false);
+        nb.setFace(BlockFace.WEST, false);
+
+        nb.setPowered(false);
+        nb.setAttached(false);
+        nb.setDisarmed(false);
     }
 
     public static int getId(Tripwire nb) {
@@ -51,7 +77,19 @@ public class CustomStringType implements CustomBlockType {
 
         num = (num << 1) | (nb.isPowered() ? 1 : 0);
         num = (num << 1) | (nb.isAttached() ? 1 : 0);
+        num = (num << 1) | (nb.isDisarmed() ? 1 : 0);
 
         return num - 1;
+    }
+
+    public static String toBlocksate(int id) {
+        id++;
+        return "south=" + (((id) & 0b1) == 1) +
+                ",north=" + (((id >> 1) & 0b1) == 1) +
+                ",east=" + (((id >> 2) & 0b1) == 1) +
+                ",west=" + (((id >> 3) & 0b1) == 1) +
+                ",powered=" + (((id >> 4) & 0b1) == 1) +
+                ",attached=" + (((id >> 5) & 0b1) == 1) +
+                ",disarmed=" + (((id >> 6) & 0b1) == 1);
     }
 }

@@ -1,0 +1,41 @@
+package su.nezushin.openitems.utils;
+
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import su.nezushin.openitems.OpenItems;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
+
+public class OpenItemsConfig {
+
+    public static FileConfiguration config;
+
+    public static List<String> resourcePackCopyDestinations;
+
+    public static void init() {
+        var plugin = OpenItems.getInstance();
+        if (!new File(plugin.getDataFolder() + File.separator + "config.yml").exists()) {
+            plugin.getConfig().options().copyDefaults(true);
+            plugin.saveDefaultConfig();
+        }
+
+
+        config = plugin.getConfig();
+
+
+        resourcePackCopyDestinations = config.getStringList("resourcepack.copy-destinations");
+
+        var messages = new File(plugin.getDataFolder() + File.separator + "messages.yml");
+        if (!messages.exists()) {
+            plugin.saveResource("messages.yml", true);
+        }
+        Message.load(YamlConfiguration.loadConfiguration(messages));
+    }
+
+    public static List<File> getResourcePackCopyDestinationFiles() {
+        return resourcePackCopyDestinations.stream().map(i -> Path.of(i).isAbsolute() ? new File(i) : new File(Bukkit.getPluginsFolder(), i)).toList();
+    }
+}
