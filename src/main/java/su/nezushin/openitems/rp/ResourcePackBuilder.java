@@ -2,10 +2,10 @@ package su.nezushin.openitems.rp;
 
 import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.OpenItems;
-import su.nezushin.openitems.blocks.types.CustomTripwireType;
+import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
-import su.nezushin.openitems.blocks.types.CustomNoteblockType;
+import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,10 +68,10 @@ public class ResourcePackBuilder {
         }
 
         this.blockIdCache.getRegistredNoteblockIds().forEach((k, v) -> {
-            OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomNoteblockType(v));
+            OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomNoteblockModel(v));
         });
         this.blockIdCache.getRegistredTripwireIds().forEach((k, v) -> {
-            OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomTripwireType(v));
+            OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomTripwireModel(v));
         });
     }
 

@@ -1,6 +1,5 @@
 package su.nezushin.openitems.blocks;
 
-import io.papermc.paper.event.block.BlockBreakBlockEvent;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Tripwire;
@@ -10,24 +9,16 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
-import org.bukkit.event.entity.EntityAirChangeEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
-import org.bukkit.event.world.StructureGrowEvent;
 import su.nezushin.openitems.OpenItems;
-import su.nezushin.openitems.blocks.types.CustomBlockType;
-import su.nezushin.openitems.blocks.types.CustomTripwireType;
+import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.utils.Utils;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-
 public class CustomBlocksListener implements Listener {
-
 
     @EventHandler
     public void chunkLoad(ChunkLoadEvent e) {
@@ -44,12 +35,14 @@ public class CustomBlocksListener implements Listener {
     @EventHandler
     public void explode(BlockExplodeEvent e) {
         e.blockList().removeIf(i -> {
-            var blockId = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(i);
-            if (blockId == null) return false;
-            var blockType = OpenItems.getInstance().getModelRegistry().getBlockTypes().get(blockId);
-            if (blockType == null) return false;
-            if (blockType.canBeBlown()) {
-                OpenItems.getInstance().getBlocks().getPlacedBlocks().remove(i);
+            var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(i);
+            if (placedBlock == null) return false;
+            if (placedBlock.canBeBlown()) {
+                if (Math.random() < e.getYield())//Check if we need to drop block as item
+                    OpenItems.getInstance().getBlocks().destroyBlock(i);
+                else
+                    OpenItems.getInstance().getBlocks().removeBlock(i);
+
 
                 i.setType(Material.AIR);
                 e.blockList().remove(i);
@@ -62,12 +55,14 @@ public class CustomBlocksListener implements Listener {
     @EventHandler
     public void explode(EntityExplodeEvent e) {
         e.blockList().removeIf(i -> {
-            var blockId = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(i);
-            if (blockId == null) return false;
-            var blockType = OpenItems.getInstance().getModelRegistry().getBlockTypes().get(blockId);
-            if (blockType == null) return false;
-            if (blockType.canBeBlown()) {
-                OpenItems.getInstance().getBlocks().getPlacedBlocks().remove(i);
+            var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(i);
+            if (placedBlock == null) return false;
+            if (placedBlock.canBeBlown()) {
+                if (Math.random() < e.getYield())//Check if we need to drop block as item
+                    OpenItems.getInstance().getBlocks().destroyBlock(i);
+                else
+                    OpenItems.getInstance().getBlocks().removeBlock(i);
+
                 i.setType(Material.AIR);
                 e.blockList().remove(i);
                 return false;
@@ -78,30 +73,21 @@ public class CustomBlocksListener implements Listener {
 
     @EventHandler
     public void burn(BlockBurnEvent e) {
-        var blockId = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(e.getBlock());
-        if (blockId == null) return;
-        var blockType = OpenItems.getInstance().getModelRegistry().getBlockTypes().get(blockId);
-        if (blockType == null) return;
-        if (blockType.canBurn()) {
-            OpenItems.getInstance().getBlocks().getPlacedBlocks().remove(e.getBlock());
+        var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(e.getBlock());
+        if (placedBlock == null) return;
+        if (placedBlock.canBurn()) {
+            OpenItems.getInstance().getBlocks().removeBlock(e.getBlock());
             return;
         }
         e.setCancelled(true);
-    }
-
-    @EventHandler
-    public void breakBlock(BlockBreakBlockEvent e) {
-
     }
 
     @EventHandler
     public void entityChange(EntityChangeBlockEvent e) {
-        var blockId = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(e.getBlock());
-        if (blockId == null) return;
-        var blockType = OpenItems.getInstance().getModelRegistry().getBlockTypes().get(blockId);
-        if (blockType == null) return;
-        if (blockType.canBeReplaced()) {
-            OpenItems.getInstance().getBlocks().getPlacedBlocks().remove(e.getBlock());
+        var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(e.getBlock());
+        if (placedBlock == null) return;
+        if (placedBlock.canBeReplaced()) {
+            OpenItems.getInstance().getBlocks().removeBlock(e.getBlock());
             return;
         }
 
@@ -109,25 +95,19 @@ public class CustomBlocksListener implements Listener {
     }
 
     @EventHandler
-    public void structureGrow(StructureGrowEvent e) {
-        e.getBlocks().removeIf(i -> {
-            var blockId = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(i.getBlock());
-            if (blockId == null) return false;
-            var blockType = OpenItems.getInstance().getModelRegistry().getBlockTypes().get(blockId);
-            if (blockType == null) return false;
-            if (blockType.canBeReplaced()) {
-                OpenItems.getInstance().getBlocks().getPlacedBlocks().remove(i);
-                return false;
-            }
-            return true;
-        });
-
-    }
-
-    @EventHandler
     public void blockFromTo(BlockFromToEvent e) {
-        System.out.println(e.getBlock());
-        System.out.println(e.getToBlock());
+        var block = e.getToBlock();
+        if (!block.getType().equals(Material.TRIPWIRE))
+            return;
+
+        var blocks = OpenItems.getInstance().getBlocks();
+
+        var blockId = blocks.getPlacedBlocks().get(block);
+
+        if (blockId == null)
+            return;
+
+        e.setCancelled(true);
     }
 
 
@@ -140,17 +120,17 @@ public class CustomBlocksListener implements Listener {
         if (blocks.getPlacedBlocks().containsKey(block)) {
             e.setCancelled(true);
             var blockType = OpenItems.getInstance().getModelRegistry().getBlockTypes()
-                    .get(blocks.getPlacedBlocks().get(block));
+                    .get(blocks.getPlacedBlocks().get(block).getId());
 
             if (blockType != null && blockType.applyOnPhysics()) {
                 var blockData = e.getChangedBlockData();
                 blockType.apply(blockData);
-                block.setBlockData(blockData);
+                block.setBlockData(blockData, false);
             }
             return;
         } else if (block.getType().equals(Material.TRIPWIRE) && e.getChangedBlockData() instanceof Tripwire blockData) {
-            CustomTripwireType.setDefaultId(blockData);
-            block.setBlockData(blockData);
+            CustomTripwireModel.setDefaultId(blockData);
+            block.setBlockData(blockData, false);
         }
         for (var face : Utils.getBlockFacesForChorus())
             if (blocks.getPlacedBlocks().containsKey(block.getRelative(face))) {
@@ -167,7 +147,7 @@ public class CustomBlocksListener implements Listener {
         if (!blocks.getPlacedBlocks().containsKey(block)) return;
         e.setDropItems(false);
 
-        blocks.removeBlock(block);
+        blocks.destroyBlock(block);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -187,7 +167,10 @@ public class CustomBlocksListener implements Listener {
 
         blockType.apply(block);
 
-        blocks.getPlacedBlocks().put(block, id);
+        item = item.clone();
+        item.setAmount(1);
+
+        blocks.getPlacedBlocks().put(block, new BlockLocationStore(block.getX(), block.getY(), block.getZ(), item));
         blocks.saveChunk(block.getChunk());
     }
 
@@ -201,5 +184,10 @@ public class CustomBlocksListener implements Listener {
         if (block == null) return;
         if (!blocks.getPlacedBlocks().containsKey(block)) return;
         if (!player.isSneaking()) e.setUseInteractedBlock(Event.Result.DENY);
+    }
+
+    @EventHandler
+    public void note(NotePlayEvent e) {
+        e.setCancelled(true);
     }
 }

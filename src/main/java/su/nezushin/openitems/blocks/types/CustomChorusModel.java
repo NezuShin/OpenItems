@@ -6,10 +6,10 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.MultipleFacing;
 import su.nezushin.openitems.utils.Utils;
 
-public class CustomChorusType extends CustomBlockType {
+public class CustomChorusModel implements CustomBlockModel {
     private int id;
 
-    public CustomChorusType(int id) {
+    public CustomChorusModel(int id) {
         this.id = id;
     }
 

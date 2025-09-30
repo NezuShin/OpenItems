@@ -5,7 +5,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.util.BlockVector;
 import org.codehaus.plexus.util.FileUtils;
-import su.nezushin.openitems.blocks.BlockStore;
+import su.nezushin.openitems.blocks.BlockDataStore;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -72,16 +72,6 @@ public class Utils {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-    }
-
-
-
-    public static BlockVector createBlockVector(BlockStore b) {
-        return new BlockVector(b.getX(), b.getY(), b.getZ());
-    }
-
-    public static BlockVector createBlockVector(Block b) {
-        return new BlockVector(b.getX(), b.getY(), b.getZ());
     }
 
     public static String createPath(String path, String file) {

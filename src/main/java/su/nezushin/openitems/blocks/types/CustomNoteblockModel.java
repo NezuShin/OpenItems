@@ -1,6 +1,5 @@
 package su.nezushin.openitems.blocks.types;
 
-import com.google.common.collect.Lists;
 import org.bukkit.Instrument;
 import org.bukkit.Material;
 import org.bukkit.Note;
@@ -8,13 +7,11 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.NoteBlock;
-import su.nezushin.openitems.blocks.blockstates.NoteblockBlockstate;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CustomNoteblockType extends CustomBlockType {
+public class CustomNoteblockModel implements CustomBlockModel {
 
     private static Map<Instrument, String> instrumentToBlockstate = new HashMap<>();
 
@@ -47,7 +44,7 @@ public class CustomNoteblockType extends CustomBlockType {
 
     private Map<BlockFace, Integer> faceMap = new HashMap<>();
 
-    public CustomNoteblockType(int id) {
+    public CustomNoteblockModel(int id) {
         this.id = id;
     }
 

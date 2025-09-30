@@ -51,7 +51,8 @@ public class ItemEditCommand implements CommandExecutor, TabCompleter {
             } else if (args[0].equalsIgnoreCase("name")) {
                 var newName = new ArrayList<>(Arrays.asList(args));
                 newName.removeFirst();
-                item.setData(DataComponentTypes.ITEM_NAME, MiniMessage.miniMessage().deserialize(Message.translateCodes(String.join(" ", newName))));
+                item.setData(DataComponentTypes.ITEM_NAME, MiniMessage.miniMessage().deserialize(
+                        Message.translateCodes(String.join(" ", newName))));
             } else if (args[0].equalsIgnoreCase("max_damage")) {
                 item.setData(DataComponentTypes.MAX_DAMAGE, parseInt(args[1]));
             } else if (args[0].equalsIgnoreCase("damage")) {
@@ -59,7 +60,34 @@ public class ItemEditCommand implements CommandExecutor, TabCompleter {
             } else if (args[0].equalsIgnoreCase("max_stack_size")) {
                 item.setData(DataComponentTypes.MAX_STACK_SIZE, parseInt(args[1]));
             } else if (args[0].equalsIgnoreCase("block")) {
-                item = BlockNBTUtil.setBlockId(item, args[1]);
+                var block = BlockNBTUtil.getBlockData(item);
+                if (args.length > 1) {
+                    if (args[1].equalsIgnoreCase("model")) {
+                        item = BlockNBTUtil.setBlockId(item, args[2]);
+                        block = BlockNBTUtil.getBlockData(item);
+                    } else if (block != null) {
+                        if (args.length > 2) {
+                            if (args[1].equalsIgnoreCase("drop_on_destroy")) {
+                                block.setDropOnDestroy(args[2].equalsIgnoreCase("true"));
+                            } else if (args[1].equalsIgnoreCase("can_be_blown")) {
+                                block.setCanBeBlown(args[2].equalsIgnoreCase("true"));
+                            } else if (args[1].equalsIgnoreCase("can_burn")) {
+                                block.setCanBurn(args[2].equalsIgnoreCase("true"));
+                            } else if (args[1].equalsIgnoreCase("can_be_replaced")) {
+                                block.setCanBeReplaced(args[2].equalsIgnoreCase("true"));
+                            }
+                        }
+                        item = block.applyData();
+                    }
+                }
+                if (block == null) {
+                    Message.err_block_id_not_set.send(p);
+                    return true;
+                }
+
+                Message.current_block_data.replace("{drop-on-destroy}", "" + block.dropOnDestroy(),
+                        "{can-be-blown}", "" + block.canBeBlown(), "{can-burn}", "" + block.canBurn(),
+                        "{model}", block.getId(), "{can-be-replaced}", "" + block.canBeReplaced()).send(p);
             }
 
 
@@ -83,17 +111,32 @@ public class ItemEditCommand implements CommandExecutor, TabCompleter {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
         if (args.length == 1) {
-            return Lists.newArrayList("name", "model", "max_damage", "max_stack_size", "block").stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[0])).toList();
+            return Lists.newArrayList("name", "model", "max_damage", "max_stack_size", "block")
+                    .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[0])).toList();
         }
 
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("model") && args.length > 1) {
-                return OpenItems.getInstance().getModelRegistry().getItems().stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
+                return OpenItems.getInstance().getModelRegistry().getItems()
+                        .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
             } else if (args[0].equalsIgnoreCase("block") && args.length > 1) {
-                return OpenItems.getInstance().getModelRegistry().getBlockTypes().keySet().stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
+                return Lists.newArrayList("drop_on_destroy", "can_be_blown", "can_burn", "can_be_replaced",
+                                "model")
+                        .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
             }
 
             return List.of();
+        }
+
+        if (args.length == 3) {
+            if (args[0].equalsIgnoreCase("block")) {
+                if (args[1].equalsIgnoreCase("model"))
+                    return OpenItems.getInstance().getModelRegistry().getBlockTypes().keySet().stream()
+                            .filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();
+                else
+                    return Lists.newArrayList("true", "false").stream()
+                            .filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();
+            }
         }
         return List.of();
     }

@@ -1,16 +1,13 @@
 package su.nezushin.openitems.blocks;
 
 import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
-import org.bukkit.Instrument;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import su.nezushin.openitems.OpenItems;
-import su.nezushin.openitems.blocks.types.CustomBlockType;
-import su.nezushin.openitems.blocks.types.CustomNoteblockType;
+import su.nezushin.openitems.gson.ItemStackGsonAdapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,13 +16,10 @@ import java.util.Map;
 
 public class CustomBlocks {
 
-    private Map<Block, String> placedBlocks = new HashMap<>();
+    private Map<Block, BlockLocationStore> placedBlocks = new HashMap<>();
 
 
     public CustomBlocks() {
-        //blockTypes.put("ns:teleporter", new CustomNoteblockType(CustomNoteblockType.getId(Instrument.BASS_DRUM, 0, false)));
-        //blockTypes.put("ns:teleporter", new CustomNoteblockType(CustomNoteblockType.getId(Instrument.PIANO, 0, true)));
-
         Bukkit.getPluginManager().registerEvents(new CustomBlocksListener(), OpenItems.getInstance());
 
         for (var world : Bukkit.getWorlds())
@@ -33,19 +27,19 @@ public class CustomBlocks {
                 loadChunk(chunk);
     }
 
-    public Map<Block, String> getPlacedBlocks() {
+    public Map<Block, BlockLocationStore> getPlacedBlocks() {
         return placedBlocks;
     }
 
     public void saveChunk(Chunk chunk) {
-        List<BlockStore> list = new ArrayList<>();
+        List<BlockDataStore> list = new ArrayList<>();
 
         for (var i : this.placedBlocks.entrySet()
                 .stream().filter(i -> i.getKey().getChunk().equals(chunk)).toList()) {
-            list.add(new BlockStore(i.getValue(), i.getKey().getX(), i.getKey().getY(), i.getKey().getZ()));
+            list.add(i.getValue());
         }
         OpenItems.async(() -> {
-            var str = new Gson().toJson(list);
+            var str = ItemStackGsonAdapter.createGson().toJson(list);
             OpenItems.sync(() -> {
                 chunk.getPersistentDataContainer().set(OpenItems.CUSTOM_BLOCKS_KEY, PersistentDataType.STRING, str);
             });
@@ -59,20 +53,38 @@ public class CustomBlocks {
         if (str == null)
             return;
         OpenItems.async(() -> {
-            var listType = new TypeToken<ArrayList<BlockStore>>() {
+            var listType = new TypeToken<ArrayList<BlockLocationStore>>() {
             }.getType();
 
-            List<BlockStore> list = new Gson().fromJson(str, listType);
+            List<BlockLocationStore> list = ItemStackGsonAdapter.createGson().fromJson(str, listType);
             OpenItems.sync(() -> {
-                for (var i : list)
-                    this.placedBlocks.put(chunk.getWorld().getBlockAt(i.getX(), i.getY(), i.getZ()), i.getId());
+                for (var i : list) {
+                    if (!i.load()) {
+                        OpenItems.sync(() -> {
+                            saveChunk(chunk);
+                        });
+                        continue;
+                    }
+
+                    this.placedBlocks.put(chunk.getWorld().getBlockAt(i.getX(), i.getY(), i.getZ()), i);
+                }
             });
         });
     }
 
     public void removeBlock(Block block) {
         this.placedBlocks.remove(block);
+        block.setType(Material.AIR);
         this.saveChunk(block.getChunk());
+    }
+
+    public void destroyBlock(Block block) {
+        var placedBlock = this.placedBlocks.remove(block);
+        block.setType(Material.AIR);
+        if (placedBlock.dropOnDestroy())
+            block.getWorld().dropItem(block.getLocation().add(0.5, 0.1, 0.5), placedBlock.getItemToDrop());
+        this.saveChunk(block.getChunk());
+
     }
 
     public void cleanChunk(Chunk chunk) {

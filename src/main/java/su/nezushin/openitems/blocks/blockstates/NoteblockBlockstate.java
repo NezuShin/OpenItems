@@ -1,6 +1,6 @@
 package su.nezushin.openitems.blocks.blockstates;
 
-import su.nezushin.openitems.blocks.types.CustomNoteblockType;
+import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +11,7 @@ public class NoteblockBlockstate {
 
     public NoteblockBlockstate(Map<String, Integer> noteblockIds) {
         for (var i : noteblockIds.entrySet()) {
-            variants.put(CustomNoteblockType.toBlocksate(i.getValue()), new BlockstateModel(i.getKey()));
+            variants.put(CustomNoteblockModel.toBlocksate(i.getValue()), new BlockstateModel(i.getKey()));
         }
     }
 

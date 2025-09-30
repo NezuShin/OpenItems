@@ -1,15 +1,15 @@
 package su.nezushin.openitems;
 
-import su.nezushin.openitems.blocks.types.CustomBlockType;
+import su.nezushin.openitems.blocks.types.CustomBlockModel;
 
 import java.util.*;
 
 public class ModelRegistry {
     private Set<String> items = new HashSet<>();
 
-    private Map<String, CustomBlockType> blockTypes = new HashMap<>();
+    private Map<String, CustomBlockModel> blockTypes = new HashMap<>();
 
-    public Map<String, CustomBlockType> getBlockTypes() {
+    public Map<String, CustomBlockModel> getBlockTypes() {
         return blockTypes;
     }
 

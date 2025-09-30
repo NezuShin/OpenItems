@@ -1,17 +1,15 @@
 package su.nezushin.openitems.blocks.types;
 
-import org.bukkit.Instrument;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Tripwire;
 
-public class CustomTripwireType extends CustomBlockType {
+public class CustomTripwireModel implements CustomBlockModel {
     private int id;
 
-    public CustomTripwireType(int id) {
+    public CustomTripwireModel(int id) {
         this.id = id;
     }
 
