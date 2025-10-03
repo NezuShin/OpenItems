@@ -1,13 +1,26 @@
 messages:
-  err-u-should-have-item-in-hand: 'You should hold item in hand'
-  err-u-dont-have-permission: 'You do not have permission!'
-  err-player-only: 'This command is for players only!'
-  err-nan: '"{nan}" is not a number!'
-  err-block-id-not-set: 'You should set block model first!'
+  err-u-should-have-item-in-hand: '<red>You should hold item in hand'
+  err-u-dont-have-permission: '<red>You do not have permission to do this!'
+  err-player-only: '<red>This command is for players only!'
+  err-nan: '<red>"{nan}" is not a number!'
+  err-block-id-not-set: '<red>You should set block model first!'
   current-block-data:
-    - 'block data:'
-    - 'Model: {model}'
-    - 'Drop on destroy: {drop-on-destroy}'
-    - 'Can be blown: {can-be-blown}'
-    - 'Can burn (noteblocks only): {can-burn}'
-    - 'Can be replaced by entity: {can-be-replaced}'
+    - '<reset><gray>Block data:'
+    - '<reset><#08c0c2>Model<grey>:<#008f9a> {model}'
+    - '<reset><#08c0c2>Drop on destroy<grey>:<#008f9a> {drop-on-destroy}'
+    - '<reset><#08c0c2>Can be blown<grey>:<#008f9a> {can-be-blown}'
+    - '<reset><#08c0c2>Can burn (noteblocks only)<grey>:<#008f9a> {can-burn}'
+    - '<reset><#08c0c2>Can be replaced by entity<grey>:<#008f9a> {can-be-replaced}'
+  oedit-help:
+    - "<reset><gray>OEdit help:"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit model'>/oedit <#08c0c2>model <model path><grey> - <#008f9a>set item model"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit name'>/oedit <#08c0c2>name <item name><grey> - <#008f9a>set item name (minimessage and ampersand formats supported)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit max_damage'>/oedit <#08c0c2>max_damage <max damage><grey> - <#008f9a>set max item damage (durability)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit damage'>/oedit <#08c0c2>damage <damage><grey> - <#008f9a>set current item damage (durability)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit max_stack_size'>/oedit <#08c0c2>max_stack_size <max stack size><grey> - <#008f9a>set item max stack size"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block model'>/oedit <#08c0c2>block model <model path><grey> - <#008f9a>set block model for item (when placed); make possible to place this item as block"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_destroy'>/oedit <#08c0c2>block drop_on_destroy <true/false><grey> - <#008f9a>make block drop item when mined/exploded/etc"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block can_be_blown'>/oedit <#08c0c2>block can_be_blown <true/false><grey> - <#008f9a>set block vulnerable for explosions"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block can_burn'>/oedit <#08c0c2>block can_burn <true/false><grey> - <#008f9a>set block burnable (noteblock-based blocks only)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block can_be_replaced'>/oedit <#08c0c2>block can_be_replaced <true/false><grey> - <#008f9a>set block can be affected (broken) by entity? (EntityChangeBlockEvent)"
+    - "<reset><gray>Note that you should hold item in hand to modify it"

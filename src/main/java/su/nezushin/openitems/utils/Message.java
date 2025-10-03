@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 public enum Message {
 
     err_u_should_have_item_in_hand, err_u_dont_have_permission, err_player_only, err_nan, err_block_id_not_set,
-    current_block_data;
+    current_block_data, oedit_help;
 
     private List<String> list = Lists.newArrayList("");
 

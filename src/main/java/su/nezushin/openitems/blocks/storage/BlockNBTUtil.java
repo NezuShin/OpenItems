@@ -1,4 +1,4 @@
-package su.nezushin.openitems.blocks;
+package su.nezushin.openitems.blocks.storage;
 
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.inventory.ItemStack;

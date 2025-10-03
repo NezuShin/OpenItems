@@ -47,7 +47,6 @@ public class BlockIdCache {
     }
 
     public void build() throws IOException {
-
         var blockstatesDir = new File(OpenItems.getInstance().getDataFolder(), "build/assets/minecraft/blockstates");
 
         blockstatesDir.mkdirs();
@@ -57,12 +56,11 @@ public class BlockIdCache {
 
         Files.writeString(noteblockIdCache.toPath(), new Gson().toJson(new NoteblockBlockstate(this.noteblockIds)), Charsets.UTF_8);
         Files.writeString(tripwireIdCache.toPath(), new Gson().toJson(new TripwireBlockstate(this.tripwireIds)), Charsets.UTF_8);
-
-
     }
 
     public void cleanRegistred() {
         this.registredNoteblockIds.clear();
+        this.registredTripwireIds.clear();
     }
 
     public void save() throws IOException {

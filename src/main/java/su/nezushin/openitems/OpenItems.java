@@ -42,6 +42,7 @@ public final class OpenItems extends JavaPlugin {
 
     public void load() {
         OpenItemsConfig.init();
+        this.resourcePackBuilder.loadRegistry();
         this.resourcePackBuilder.build();
     }
 

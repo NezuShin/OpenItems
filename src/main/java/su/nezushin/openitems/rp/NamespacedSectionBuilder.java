@@ -2,16 +2,16 @@ package su.nezushin.openitems.rp;
 
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
+import com.google.gson.Gson;
 import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.rp.equipment.EquipmentModel;
+import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 //
 public class NamespacedSectionBuilder {
@@ -50,6 +50,9 @@ public class NamespacedSectionBuilder {
         var handheldDir = new File(this.sectionDir, "textures/item/handheld");
 
         var noteblockDir = new File(this.sectionDir, "textures/block/noteblock");
+        var tripwireDir = new File(this.sectionDir, "models/block/tripwire");
+
+        var equipmentDir = new File(this.sectionDir, "textures/entity/equipment");
 
         if (this.config.isAllowAutogen()) {
             scanForItemTextures(generatedDir, "item", pngFilesGenerated, new ArrayList<>());
@@ -65,10 +68,9 @@ public class NamespacedSectionBuilder {
         for (var i : pngFilesHandheld)
             createItemModel(i, this.config.getHandheldModelTemplate());
 
+        generateEquipmentModels(equipmentDir);
 
-        var tripwireDir = new File(this.sectionDir, "models/block/tripwire");
-
-        prepareModels(pngFilesNoteblock);
+        generateNoteblockModels(pngFilesNoteblock);
         scanForTripwireModels(tripwireDir, "block");
 
         scanForItemModels(new File(this.sectionDir, "models/item"), "");
@@ -82,6 +84,26 @@ public class NamespacedSectionBuilder {
             return path + "/" + name;
         }
 
+    }
+
+    //find all equipment textures
+    public void scanForEquipment(File file, String layer, String path, boolean appendPath, Map<String, List<String>> layerNameMap) {
+        if (!file.isDirectory()) {
+            var mapPath = Utils.createPath(path, Utils.getFileName(file));
+            var list = layerNameMap.getOrDefault(mapPath, new ArrayList<>());
+
+            //map.put(layer, new ResourcePackScanFile(file, path, Utils.getFileName(file)));
+            list.add(layer);
+
+            layerNameMap.put(mapPath, list);
+            return;
+        }
+
+        if (appendPath)
+            path = Utils.createPath(path, file);
+        for (File i : file.listFiles()) {
+            scanForEquipment(i, layer, path, true, layerNameMap);
+        }
     }
 
     //scan for item models to add it into /items dir
@@ -113,6 +135,8 @@ public class NamespacedSectionBuilder {
 
     //scan for models to add it into block registry and /items dir
     public void scanForTripwireModels(File file, String path) throws IOException {
+        if (!OpenItemsConfig.enableTripwires)
+            return;
         if (!file.exists())
             return;
         if (!file.isDirectory()) {
@@ -130,10 +154,25 @@ public class NamespacedSectionBuilder {
         path = Utils.createPath(path, file);
         for (File i : file.listFiles())
             scanForTripwireModels(i, path);
-
     }
 
-    private void prepareModels(List<ResourcePackScanFile> scanFiles) throws IOException {
+    private void generateEquipmentModels(File equipmentDir) throws IOException {
+        if (!equipmentDir.exists())
+            return;
+        Map<String, List<String>> layerNameMap = new HashMap<>();
+        for (var i : equipmentDir.listFiles()) {
+            scanForEquipment(i, i.getName(), "", false, layerNameMap);
+        }
+
+        for (var i : layerNameMap.entrySet()) {
+            var equipmentModelFile = new File(this.outputDir, "equipment/" + i.getKey() + ".json");
+            equipmentModelFile.getParentFile().mkdirs();
+            Files.write(new Gson().toJson(new EquipmentModel(this.namespace + ":" + i.getKey(), i.getValue())).getBytes(StandardCharsets.UTF_8),
+                    equipmentModelFile);
+        }
+    }
+
+    private void generateNoteblockModels(List<ResourcePackScanFile> scanFiles) throws IOException {
         /*
 
         case 1 - cube (each for every side):
@@ -212,7 +251,7 @@ public class NamespacedSectionBuilder {
         return scanFiles.stream().filter(i -> i.pathAndName().equalsIgnoreCase(name)).findFirst().orElse(null);
     }
 
-
+    //For handheld and generated models
     private void createItemModel(ResourcePackScanFile scanFile, String template) throws IOException {
 
         var modelPath = this.namespace + ":" + scanFile.path() + "/" + scanFile.name();
@@ -228,6 +267,7 @@ public class NamespacedSectionBuilder {
         createRegularTemplateItem(modelPath, scanFile.path(), scanFile.name());
     }
 
+    //Add link to model in /items dir
     private void createRegularTemplateItem(String modelPath, String itemPath, String itemName) throws IOException {
         var itemDir = new File(this.outputDir, "items/" + itemPath);
 

@@ -15,6 +15,8 @@ public class OpenItemsConfig {
 
     public static List<String> resourcePackCopyDestinations;
 
+    public static boolean replaceTripwiresOnChunkLoad = true, enableTripwires = true;
+
     public static void init() {
         var plugin = OpenItems.getInstance();
         if (!new File(plugin.getDataFolder() + File.separator + "config.yml").exists()) {
@@ -24,6 +26,9 @@ public class OpenItemsConfig {
 
 
         config = plugin.getConfig();
+
+        replaceTripwiresOnChunkLoad = config.getBoolean("blocks.replace-tripwires-on-chunk-load", true);
+        enableTripwires = config.getBoolean("blocks.enable-tripwires", true);
 
 
         resourcePackCopyDestinations = config.getStringList("resourcepack.copy-destinations");

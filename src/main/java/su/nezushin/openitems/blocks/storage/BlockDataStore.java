@@ -1,7 +1,12 @@
-package su.nezushin.openitems.blocks;
+package su.nezushin.openitems.blocks.storage;
 
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.inventory.ItemStack;
+import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.blocks.types.CustomBlockModel;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class BlockDataStore {
     protected boolean canBurn = true, canBeBlown = true, canBeReplaced = true, dropOnDestroy = true;
@@ -9,6 +14,8 @@ public class BlockDataStore {
     protected String id;
 
     protected ItemStack itemToDrop;
+
+    protected Map<String, Object> arbitraryData = new HashMap<>();
 
     public BlockDataStore(ItemStack itemToDrop) {
         this.itemToDrop = itemToDrop;
@@ -86,6 +93,15 @@ public class BlockDataStore {
 
     public String getId() {
         return id;
+    }
+
+
+    public Map<String, Object> getArbitraryData() {
+        return arbitraryData;
+    }
+
+    public CustomBlockModel getModel() {
+        return OpenItems.getInstance().getModelRegistry().getBlockTypes().get(this.id);
     }
 
     public ItemStack getItemToDrop() {

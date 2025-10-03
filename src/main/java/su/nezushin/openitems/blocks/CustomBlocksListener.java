@@ -1,5 +1,7 @@
 package su.nezushin.openitems.blocks;
 
+import com.google.common.collect.Sets;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Tripwire;
@@ -15,8 +17,15 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.blocks.storage.BlockLocationStore;
+import su.nezushin.openitems.blocks.storage.BlockNBTUtil;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
+import su.nezushin.openitems.events.CustomBlockBreakEvent;
+import su.nezushin.openitems.events.CustomBlockPlaceEvent;
+import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
+
+import java.util.Set;
 
 public class CustomBlocksListener implements Listener {
 
@@ -97,6 +106,8 @@ public class CustomBlocksListener implements Listener {
     @EventHandler
     public void blockFromTo(BlockFromToEvent e) {
         var block = e.getToBlock();
+        if (!OpenItemsConfig.enableTripwires)
+            return;
         if (!block.getType().equals(Material.TRIPWIRE))
             return;
 
@@ -115,6 +126,8 @@ public class CustomBlocksListener implements Listener {
     public void blockPhysics(BlockPhysicsEvent e) {
         var block = e.getBlock();
 
+        var isTripwire = block.getType().equals(Material.TRIPWIRE);
+
 
         var blocks = OpenItems.getInstance().getBlocks();
         if (blocks.getPlacedBlocks().containsKey(block)) {
@@ -128,7 +141,7 @@ public class CustomBlocksListener implements Listener {
                 block.setBlockData(blockData, false);
             }
             return;
-        } else if (block.getType().equals(Material.TRIPWIRE) && e.getChangedBlockData() instanceof Tripwire blockData) {
+        } else if (isTripwire && OpenItemsConfig.enableTripwires && e.getChangedBlockData() instanceof Tripwire blockData) {
             CustomTripwireModel.setDefaultId(blockData);
             block.setBlockData(blockData, false);
         }
@@ -144,8 +157,20 @@ public class CustomBlocksListener implements Listener {
         var block = e.getBlock();
         var blocks = OpenItems.getInstance().getBlocks();
 
-        if (!blocks.getPlacedBlocks().containsKey(block)) return;
+        var placedBlock = blocks.getPlacedBlocks().get(block);
+
+        if (placedBlock == null) return;
+
         e.setDropItems(false);
+
+        var event = new CustomBlockBreakEvent(block, placedBlock, e);
+
+        Bukkit.getPluginManager().callEvent(event);
+
+        if (event.isCancelled()) {
+            e.setCancelled(true);
+            return;
+        }
 
         blocks.destroyBlock(block);
     }
@@ -165,12 +190,24 @@ public class CustomBlocksListener implements Listener {
 
         if (blockType == null) return;
 
-        blockType.apply(block);
-
         item = item.clone();
         item.setAmount(1);
+        var placedBlock = new BlockLocationStore(block.getX(), block.getY(), block.getZ(), item);
 
-        blocks.getPlacedBlocks().put(block, new BlockLocationStore(block.getX(), block.getY(), block.getZ(), item));
+
+        var event = new CustomBlockPlaceEvent(block, placedBlock, e);
+
+        Bukkit.getPluginManager().callEvent(event);
+
+        if (event.isCancelled()) {
+            e.setCancelled(true);
+            return;
+        }
+
+        blockType.apply(block);
+
+
+        blocks.getPlacedBlocks().put(block, placedBlock);
         blocks.saveChunk(block.getChunk());
     }
 

@@ -23,6 +23,15 @@ public class ResourcePackBuilder {
         }
     }
 
+    public void loadRegistry() {
+        try {
+            loadCache();
+            fillRegistry();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
     public void loadCache() throws IOException {
         this.blockIdCache = new BlockIdCache();
         this.blockIdCache.load();

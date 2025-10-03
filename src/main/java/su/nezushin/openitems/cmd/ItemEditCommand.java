@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nezushin.openitems.utils.Message;
 import su.nezushin.openitems.OpenItems;
-import su.nezushin.openitems.blocks.BlockNBTUtil;
+import su.nezushin.openitems.blocks.storage.BlockNBTUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,6 +40,11 @@ public class ItemEditCommand implements CommandExecutor, TabCompleter {
 
         if (item == null || item.getType().isAir()) {
             Message.err_u_should_have_item_in_hand.send(p);
+            return true;
+        }
+
+        if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
+            Message.oedit_help.send(p);
             return true;
         }
 
@@ -111,7 +116,7 @@ public class ItemEditCommand implements CommandExecutor, TabCompleter {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
         if (args.length == 1) {
-            return Lists.newArrayList("name", "model", "max_damage", "max_stack_size", "block")
+            return Lists.newArrayList("name", "model", "max_damage", "max_stack_size", "block", "help")
                     .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[0])).toList();
         }
 

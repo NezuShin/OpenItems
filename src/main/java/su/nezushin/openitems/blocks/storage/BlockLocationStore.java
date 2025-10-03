@@ -1,7 +1,5 @@
-package su.nezushin.openitems.blocks;
+package su.nezushin.openitems.blocks.storage;
 
-import de.tr7zw.nbtapi.NBTItem;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.ItemStack;
 
 public class BlockLocationStore extends BlockDataStore {
