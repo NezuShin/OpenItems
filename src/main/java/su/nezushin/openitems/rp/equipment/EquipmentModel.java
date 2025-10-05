@@ -6,7 +6,9 @@ import su.nezushin.openitems.rp.NamespacedSectionBuilder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+/**
+ * Used for resource pack json serialization
+ */
 public class EquipmentModel {
 
     private Map<String, List<EquipmentModelTexture>> layers = new HashMap<>();

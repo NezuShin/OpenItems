@@ -1,6 +1,7 @@
 package su.nezushin.openitems.blocks.storage;
 
 import de.tr7zw.nbtapi.NBTItem;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemStack;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.types.CustomBlockModel;
@@ -8,14 +9,15 @@ import su.nezushin.openitems.blocks.types.CustomBlockModel;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents custom block properties. Used to be stored in custom item data
+ */
 public class BlockDataStore {
     protected boolean canBurn = true, canBeBlown = true, canBeReplaced = true, dropOnDestroy = true;
 
     protected String id;
 
     protected ItemStack itemToDrop;
-
-    protected Map<String, Object> arbitraryData = new HashMap<>();
 
     public BlockDataStore(ItemStack itemToDrop) {
         this.itemToDrop = itemToDrop;
@@ -87,23 +89,31 @@ public class BlockDataStore {
         this.canBeReplaced = canBeReplaced;
     }
 
+    /**
+     * Set should itemToDrop be dropped
+     */
     public void setDropOnDestroy(boolean dropOnDestroy) {
         this.dropOnDestroy = dropOnDestroy;
     }
 
+    /**
+     * @return custom block model id
+     */
     public String getId() {
         return id;
     }
 
-
-    public Map<String, Object> getArbitraryData() {
-        return arbitraryData;
-    }
-
+    /**
+     * @return custom block model
+     */
     public CustomBlockModel getModel() {
         return OpenItems.getInstance().getModelRegistry().getBlockTypes().get(this.id);
     }
 
+
+    /**
+     * @return item used to place this custom block
+     */
     public ItemStack getItemToDrop() {
         return itemToDrop;
     }

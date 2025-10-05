@@ -1,7 +1,7 @@
 package su.nezushin.openitems.blocks;
 
-import com.google.common.collect.Sets;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Tripwire;
@@ -21,13 +21,66 @@ import su.nezushin.openitems.blocks.storage.BlockLocationStore;
 import su.nezushin.openitems.blocks.storage.BlockNBTUtil;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.CustomBlockBreakEvent;
+import su.nezushin.openitems.events.CustomBlockDropItemEvent;
 import su.nezushin.openitems.events.CustomBlockPlaceEvent;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
 
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CustomBlocksListener implements Listener {
+
+    private Map<Block, BlockLocationStore> brokenBlocks = new HashMap<>();
+
+    @EventHandler
+    public void breakBlock(BlockBreakEvent e) {
+        var block = e.getBlock();
+        var blocks = OpenItems.getInstance().getBlocks();
+
+        var placedBlock = blocks.getPlacedBlocks().get(block);
+
+        if (placedBlock == null) return;
+
+        //e.setDropItems(false);
+        var event = new CustomBlockBreakEvent(block, placedBlock, e);
+
+        Bukkit.getPluginManager().callEvent(event);
+
+        if (event.isCancelled() || e.isCancelled()) {
+            e.setCancelled(true);
+            return;
+        }
+        if (e.getPlayer().getGameMode() != GameMode.CREATIVE)
+            brokenBlocks.put(block, placedBlock);
+        OpenItems.getInstance().getBlocks().destroyBlock(e.getBlock(), false, false);
+    }
+
+    //Compatibility with other Bukkit plugins
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void blockDropItemEvent(BlockDropItemEvent e) {
+        var block = e.getBlock();
+        var placedBlock = brokenBlocks.remove(block);
+
+        if (placedBlock == null)
+            return;
+
+        e.getItems().clear();
+
+        if (placedBlock.dropOnDestroy()) {
+            var item = block.getWorld().dropItem(block.getLocation().add(0.5, 0.1, 0.5), placedBlock.getItemToDrop());
+
+            e.getItems().add(item);
+        }
+
+        var event = new CustomBlockDropItemEvent(block, placedBlock, e);
+
+        Bukkit.getPluginManager().callEvent(event);
+
+        if (event.isCancelled())
+            e.setCancelled(true);
+
+    }
 
     @EventHandler
     public void chunkLoad(ChunkLoadEvent e) {
@@ -47,11 +100,7 @@ public class CustomBlocksListener implements Listener {
             var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(i);
             if (placedBlock == null) return false;
             if (placedBlock.canBeBlown()) {
-                if (Math.random() < e.getYield())//Check if we need to drop block as item
-                    OpenItems.getInstance().getBlocks().destroyBlock(i);
-                else
-                    OpenItems.getInstance().getBlocks().removeBlock(i);
-
+                OpenItems.getInstance().getBlocks().destroyBlock(i, Math.random() < e.getYield(), true);
 
                 i.setType(Material.AIR);
                 e.blockList().remove(i);
@@ -67,10 +116,7 @@ public class CustomBlocksListener implements Listener {
             var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(i);
             if (placedBlock == null) return false;
             if (placedBlock.canBeBlown()) {
-                if (Math.random() < e.getYield())//Check if we need to drop block as item
-                    OpenItems.getInstance().getBlocks().destroyBlock(i);
-                else
-                    OpenItems.getInstance().getBlocks().removeBlock(i);
+                OpenItems.getInstance().getBlocks().destroyBlock(i, Math.random() < e.getYield(), true);
 
                 i.setType(Material.AIR);
                 e.blockList().remove(i);
@@ -85,7 +131,7 @@ public class CustomBlocksListener implements Listener {
         var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(e.getBlock());
         if (placedBlock == null) return;
         if (placedBlock.canBurn()) {
-            OpenItems.getInstance().getBlocks().removeBlock(e.getBlock());
+            OpenItems.getInstance().getBlocks().destroyBlock(e.getBlock(), false, true);
             return;
         }
         e.setCancelled(true);
@@ -96,7 +142,7 @@ public class CustomBlocksListener implements Listener {
         var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(e.getBlock());
         if (placedBlock == null) return;
         if (placedBlock.canBeReplaced()) {
-            OpenItems.getInstance().getBlocks().removeBlock(e.getBlock());
+            OpenItems.getInstance().getBlocks().destroyBlock(e.getBlock(), false, true);
             return;
         }
 
@@ -145,34 +191,11 @@ public class CustomBlocksListener implements Listener {
             CustomTripwireModel.setDefaultId(blockData);
             block.setBlockData(blockData, false);
         }
-        for (var face : Utils.getBlockFacesForChorus())
+        for (var face : Utils.getMainBlockFaces())
             if (blocks.getPlacedBlocks().containsKey(block.getRelative(face))) {
                 e.setCancelled(true);
                 return;
             }
-    }
-
-    @EventHandler
-    public void breakBlock(BlockBreakEvent e) {
-        var block = e.getBlock();
-        var blocks = OpenItems.getInstance().getBlocks();
-
-        var placedBlock = blocks.getPlacedBlocks().get(block);
-
-        if (placedBlock == null) return;
-
-        e.setDropItems(false);
-
-        var event = new CustomBlockBreakEvent(block, placedBlock, e);
-
-        Bukkit.getPluginManager().callEvent(event);
-
-        if (event.isCancelled()) {
-            e.setCancelled(true);
-            return;
-        }
-
-        blocks.destroyBlock(block);
     }
 
     @EventHandler(priority = EventPriority.HIGH)

@@ -23,11 +23,7 @@ public class Utils {
         return r;
     }
 
-    public static BlockFace[] getBlockFacesForTripwire() {
-        return new BlockFace[]{BlockFace.SOUTH, BlockFace.NORTH, BlockFace.EAST, BlockFace.WEST};
-    }
-
-    public static BlockFace[] getBlockFacesForChorus() {
+    public static BlockFace[] getMainBlockFaces() {
         return new BlockFace[]{BlockFace.DOWN, BlockFace.UP, BlockFace.SOUTH, BlockFace.NORTH, BlockFace.EAST, BlockFace.WEST};
     }
 
@@ -81,6 +77,22 @@ public class Utils {
 
     public static String getFileName(File file) {
         return file.getName().substring(0, file.getName().lastIndexOf("."));
+    }
+
+    public static String intToUnicodeEscapeSequence(int codepoint) {
+        return String.format("\\u%04X", codepoint);
+    }
+
+    public static String charToUnicodeEscapeSequence(char c) {
+        return intToUnicodeEscapeSequence(c);
+    }
+
+    public static char unicodeEscapeSequenceToChar(String sequence) {
+        return (char) unicodeEscapeSequenceToInt(sequence);
+    }
+
+    public static int unicodeEscapeSequenceToInt(String sequence) {
+        return Integer.parseInt(sequence.substring(2), 16);
     }
 
 }

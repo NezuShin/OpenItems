@@ -2,9 +2,16 @@ package su.nezushin.openitems.blocks.storage;
 
 import org.bukkit.inventory.ItemStack;
 
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Represents placed custom block properties. Used to be stored in custom chunk data
+ */
 public class BlockLocationStore extends BlockDataStore {
     private int x, y, z;
 
+    protected Map<String, Object> arbitraryData = new HashMap<>();
 
     public BlockLocationStore(int x, int y, int z, ItemStack itemToDrop) {
         super(itemToDrop);
@@ -30,7 +37,13 @@ public class BlockLocationStore extends BlockDataStore {
         return z;
     }
 
-    public ItemStack getItemToDrop() {
-        return itemToDrop;
+
+    /**
+     * Any arbitrary data of custom block can be stored here
+     *
+     * @return Map with arbitrary data. Can store everything implements ConfigurationSerializable
+     */
+    public Map<String, Object> getArbitraryData() {
+        return arbitraryData;
     }
 }

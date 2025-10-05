@@ -13,7 +13,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-//
+/**
+ * Builder and generator for every namespace
+ */
 public class NamespacedSectionBuilder {
 
     private String namespace;
@@ -46,6 +48,9 @@ public class NamespacedSectionBuilder {
         //for blocks with parent minecraft:cube_all
         List<ResourcePackScanFile> pngFilesNoteblock = new ArrayList<>();
 
+        //for font images
+        List<ResourcePackScanFile> pngFilesEmoji = new ArrayList<>();
+
         var generatedDir = new File(this.sectionDir, "textures/item/generated");
         var handheldDir = new File(this.sectionDir, "textures/item/handheld");
 
@@ -54,10 +59,13 @@ public class NamespacedSectionBuilder {
 
         var equipmentDir = new File(this.sectionDir, "textures/entity/equipment");
 
+        var fontDir = new File(this.sectionDir, "textures/font/emoji");
+
         if (this.config.isAllowAutogen()) {
-            scanForItemTextures(generatedDir, "item", pngFilesGenerated, new ArrayList<>());
-            scanForItemTextures(handheldDir, "item", pngFilesHandheld, new ArrayList<>());
-            scanForItemTextures(noteblockDir, "block", pngFilesNoteblock, new ArrayList<>());
+            scanForTextures(generatedDir, "item", pngFilesGenerated);
+            scanForTextures(handheldDir, "item", pngFilesHandheld);
+            scanForTextures(noteblockDir, "block", pngFilesNoteblock);
+            scanForTextures(fontDir, "font", pngFilesEmoji);
         }
 
         Utils.copyFolder(this.sectionDir, outputDir, this.sectionDir, this.config.getDirectoriesIgnoreList(), this.config.getExtensionsIgnoreList());
@@ -67,6 +75,17 @@ public class NamespacedSectionBuilder {
 
         for (var i : pngFilesHandheld)
             createItemModel(i, this.config.getHandheldModelTemplate());
+
+        var fontImageCache = OpenItems.getInstance().getResourcePackBuilder().getFontImagesIdCache();
+
+        for (var i : pngFilesEmoji) {
+            var path = this.namespace + ":" + i.pathAndName();
+            var id = fontImageCache.getOrCreateFontImageId(path);
+            var data = this.config.getFontImageData(path);
+            data.setFile(data.getFile() + ".png");
+            data.setSymbol(String.valueOf((char) id));
+            fontImageCache.getRegisteredCharIds().put(path, data);
+        }
 
         generateEquipmentModels(equipmentDir);
 
@@ -118,18 +137,17 @@ public class NamespacedSectionBuilder {
     }
 
     //scan for textures to create model and add to /items dir
-    public void scanForItemTextures(File file, String path, List<ResourcePackScanFile> pngFiles, List<File> ignoreDirs) {
+    public void scanForTextures(File file, String path, List<ResourcePackScanFile> pngFiles) {
         if (!file.isDirectory()) {
             if (file.getName().toLowerCase().endsWith(".png")) {
                 pngFiles.add(new ResourcePackScanFile(file, path, Utils.getFileName(file)));
             }
             return;
         }
-        if (ignoreDirs.contains(file)) return;
 
         path = Utils.createPath(path, file);
         for (File i : file.listFiles())
-            scanForItemTextures(i, path, pngFiles, ignoreDirs);
+            scanForTextures(i, path, pngFiles);
 
     }
 
@@ -148,7 +166,7 @@ public class NamespacedSectionBuilder {
             var blockIdCache = OpenItems.getInstance().getResourcePackBuilder().getBlockIdCache();
 
             var id = blockIdCache.getOrCreateTripwireId(modelPath);
-            blockIdCache.getRegistredTripwireIds().put(modelPath, id);
+            blockIdCache.getRegisteredTripwireIds().put(modelPath, id);
             return;
         }
         path = Utils.createPath(path, file);
@@ -238,7 +256,7 @@ public class NamespacedSectionBuilder {
         var blockIdCache = OpenItems.getInstance().getResourcePackBuilder().getBlockIdCache();
 
         var id = blockIdCache.getOrCreateNoteblockId(modelPath);
-        blockIdCache.getRegistredNoteblockIds().put(modelPath, id);
+        blockIdCache.getRegisteredNoteblockIds().put(modelPath, id);
 
         modelDir.mkdirs();
 

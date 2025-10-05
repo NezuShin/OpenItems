@@ -42,7 +42,7 @@ public class CustomChorusModel implements CustomBlockModel {
     }
 
     public static void setId(MultipleFacing nb, int id) {
-        for (var i : Utils.getBlockFacesForChorus()) {
+        for (var i : Utils.getMainBlockFaces()) {
             nb.setFace(i, (id & 1) == 1);
             id = id >> 1;
         }
@@ -50,7 +50,7 @@ public class CustomChorusModel implements CustomBlockModel {
 
     public static int getId(MultipleFacing nb) {
         var num = 0;
-        for (var i : Utils.getBlockFacesForChorus()) {
+        for (var i : Utils.getMainBlockFaces()) {
             num = (num << 1) | (nb.hasFace(i) ? 1 : 0);
         }
 

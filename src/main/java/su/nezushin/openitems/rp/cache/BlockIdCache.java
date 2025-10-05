@@ -1,10 +1,10 @@
-package su.nezushin.openitems.rp;
+package su.nezushin.openitems.rp.cache;
 
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import su.nezushin.openitems.OpenItems;
-import su.nezushin.openitems.blocks.blockstates.NoteblockBlockstate;
-import su.nezushin.openitems.blocks.blockstates.TripwireBlockstate;
+import su.nezushin.openitems.rp.blockstates.NoteblockBlockstate;
+import su.nezushin.openitems.rp.blockstates.TripwireBlockstate;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,13 +12,16 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BlockIdCache {
+/**
+ * Used to store and assign new ids for blocks
+ */
+public class BlockIdCache extends JsonCache {
 
     private Map<String, Integer> noteblockIds = new HashMap<>();
-    private Map<String, Integer> registredNoteblockIds = new HashMap<>();
+    private Map<String, Integer> registeredNoteblockIds = new HashMap<>();
 
     private Map<String, Integer> tripwireIds = new HashMap<>();
-    private Map<String, Integer> registredTripwireIds = new HashMap<>();
+    private Map<String, Integer> registeredTripwireIds = new HashMap<>();
 
     private int nextNoteblockId = 1;
     private int nextTripwireId = 1;
@@ -58,35 +61,25 @@ public class BlockIdCache {
         Files.writeString(tripwireIdCache.toPath(), new Gson().toJson(new TripwireBlockstate(this.tripwireIds)), Charsets.UTF_8);
     }
 
-    public void cleanRegistred() {
-        this.registredNoteblockIds.clear();
-        this.registredTripwireIds.clear();
+    public void cleanRegistered() {
+        this.registeredNoteblockIds.clear();
+        this.registeredTripwireIds.clear();
     }
 
-    public void save() throws IOException {
-        var blockIdCache = new File(OpenItems.getInstance().getDataFolder(), "block-id-cache.json");
-
-        Files.writeString(blockIdCache.toPath(), new Gson().toJson(this), Charsets.UTF_8);
-    }
-
-    public void load() throws IOException {
-        var blockIdCache = new File(OpenItems.getInstance().getDataFolder(), "block-id-cache.json");
-
-        if (!blockIdCache.exists())
-            return;
-
-        new Gson().fromJson(Files.readString(blockIdCache.toPath(), Charsets.UTF_8), BlockIdCache.class);
+    @Override
+    protected String getName() {
+        return "block-id-cache";
     }
 
     public Map<String, Integer> getNoteblockIds() {
         return noteblockIds;
     }
 
-    public Map<String, Integer> getRegistredNoteblockIds() {
-        return registredNoteblockIds;
+    public Map<String, Integer> getRegisteredNoteblockIds() {
+        return registeredNoteblockIds;
     }
 
-    public Map<String, Integer> getRegistredTripwireIds() {
-        return registredTripwireIds;
+    public Map<String, Integer> getRegisteredTripwireIds() {
+        return registeredTripwireIds;
     }
 }

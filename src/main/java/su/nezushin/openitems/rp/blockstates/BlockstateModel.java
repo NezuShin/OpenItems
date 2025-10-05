@@ -1,5 +1,8 @@
-package su.nezushin.openitems.blocks.blockstates;
+package su.nezushin.openitems.rp.blockstates;
 
+/**
+ * Used for resource pack json serialization
+ */
 public class BlockstateModel {
 
     private String model;

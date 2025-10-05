@@ -23,4 +23,18 @@ messages:
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_be_blown'>/oedit <#08c0c2>block can_be_blown <true/false><grey> - <#008f9a>set block vulnerable for explosions"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_burn'>/oedit <#08c0c2>block can_burn <true/false><grey> - <#008f9a>set block burnable (noteblock-based blocks only)"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_be_replaced'>/oedit <#08c0c2>block can_be_replaced <true/false><grey> - <#008f9a>set block can be affected (broken) by entity? (EntityChangeBlockEvent)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit equipment model'>/oedit <#08c0c2equipment model <model path><grey> - Set armor model; make possible to equip item as armor<#008f9a>)"
     - "<reset><gray>Note that you should hold item in hand to modify it"
+
+
+  started-build: "<reset><#08c0c2>Starting resource pack build..."
+  build-end-done: "<reset><green>Build done!"
+  build-end-err: "<reset><red>Build error. Check console"
+
+  registry-loaded:
+    - "<reset><#008f9a>Loaded <#08c0c2>{items}<#008f9a> item models"
+    - "<reset><#008f9a>Loaded <#08c0c2>{equipment}<#008f9a> equipment entries "
+    - "<reset><#008f9a>Loaded <#08c0c2>{block-types-total}<#008f9a> block models (total)"
+    - "<reset><#008f9a>Loaded <#08c0c2>{block-types-tripwire}<#008f9a> block models (tripwire)"
+    - "<reset><#008f9a>Loaded <#08c0c2>{block-types-noteblock}<#008f9a> block models (noteblock)"
+    - "<reset><#008f9a>Loaded <#08c0c2>{block-types-chorus}<#008f9a> block models (chorus)"

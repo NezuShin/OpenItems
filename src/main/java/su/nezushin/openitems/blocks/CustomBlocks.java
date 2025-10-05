@@ -13,7 +13,7 @@ import su.nezushin.openitems.blocks.storage.BlockLocationStore;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.CustomBlockLoadEvent;
 import su.nezushin.openitems.events.CustomBlockUnloadEvent;
-import su.nezushin.openitems.gson.ItemStackGsonAdapter;
+import su.nezushin.openitems.gson.ConfigurationSerializableGsonAdapter;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 
 import java.util.*;
@@ -46,7 +46,7 @@ public class CustomBlocks {
             list.add(i.getValue());
         }
         OpenItems.async(() -> {
-            var str = ItemStackGsonAdapter.createGson().toJson(list);
+            var str = ConfigurationSerializableGsonAdapter.createGson().toJson(list);
             OpenItems.sync(() -> {
                 chunk.getPersistentDataContainer().set(OpenItems.CUSTOM_BLOCKS_KEY, PersistentDataType.STRING, str);
             });
@@ -98,7 +98,7 @@ public class CustomBlocks {
             var listType = new TypeToken<ArrayList<BlockLocationStore>>() {
             }.getType();
 
-            List<BlockLocationStore> list = ItemStackGsonAdapter.createGson().fromJson(str, listType);
+            List<BlockLocationStore> list = ConfigurationSerializableGsonAdapter.createGson().fromJson(str, listType);
             OpenItems.sync(() -> {
                 for (var i : list) {
 
@@ -119,17 +119,14 @@ public class CustomBlocks {
         });
     }
 
-    public void removeBlock(Block block) {
-        this.placedBlocks.remove(block);
-        block.setType(Material.AIR);
-        this.saveChunk(block.getChunk());
-    }
-
-    public void destroyBlock(Block block) {
+    public void destroyBlock(Block block, boolean dropItem, boolean setAir) {
         var placedBlock = this.placedBlocks.remove(block);
-        block.setType(Material.AIR);
-        if (placedBlock.dropOnDestroy())
+        if (setAir)
+            block.setType(Material.AIR);
+
+        if (placedBlock.dropOnDestroy() && dropItem) {
             block.getWorld().dropItem(block.getLocation().add(0.5, 0.1, 0.5), placedBlock.getItemToDrop());
+        }
         this.saveChunk(block.getChunk());
 
     }

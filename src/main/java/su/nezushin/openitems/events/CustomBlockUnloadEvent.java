@@ -5,7 +5,9 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.block.BlockEvent;
 import org.jetbrains.annotations.NotNull;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
-
+/**
+ * Called for every custom block when loading chunk
+ */
 public class CustomBlockUnloadEvent extends BlockEvent {
     private static final HandlerList handlerList = new HandlerList();
 

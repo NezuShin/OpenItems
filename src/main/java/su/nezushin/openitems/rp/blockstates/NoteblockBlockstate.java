@@ -1,10 +1,12 @@
-package su.nezushin.openitems.blocks.blockstates;
+package su.nezushin.openitems.rp.blockstates;
 
 import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
 
 import java.util.HashMap;
 import java.util.Map;
-
+/**
+ * Used for resource pack json serialization
+ */
 public class NoteblockBlockstate {
 
     private Map<String, BlockstateModel> variants = new HashMap<>();

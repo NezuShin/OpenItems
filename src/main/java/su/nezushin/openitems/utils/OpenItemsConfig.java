@@ -15,7 +15,7 @@ public class OpenItemsConfig {
 
     public static List<String> resourcePackCopyDestinations;
 
-    public static boolean replaceTripwiresOnChunkLoad = true, enableTripwires = true;
+    public static boolean replaceTripwiresOnChunkLoad = true, enableTripwires = true, callBlockDropItemEvent = true;
 
     public static void init() {
         var plugin = OpenItems.getInstance();

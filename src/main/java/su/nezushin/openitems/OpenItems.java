@@ -4,7 +4,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
 import su.nezushin.openitems.blocks.CustomBlocks;
-import su.nezushin.openitems.cmd.ItemEditCommand;
+import su.nezushin.openitems.cmd.OEditCommand;
+import su.nezushin.openitems.cmd.OItemsCommand;
 import su.nezushin.openitems.rp.ResourcePackBuilder;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
@@ -35,7 +36,8 @@ public final class OpenItems extends JavaPlugin {
         //Bukkit.getPluginManager().registerEvents(new TestListener(), instance);
 
 
-        getCommand("oedit").setExecutor(new ItemEditCommand());
+        getCommand("oedit").setExecutor(new OEditCommand());
+        getCommand("openitems").setExecutor(new OItemsCommand());
 
         Utils.resyncCommands();
     }

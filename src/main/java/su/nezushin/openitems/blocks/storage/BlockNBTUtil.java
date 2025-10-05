@@ -5,6 +5,11 @@ import org.bukkit.inventory.ItemStack;
 
 public class BlockNBTUtil {
 
+    /**
+     * Get block model from item
+     *
+     * @return model id
+     */
     public static String getBlockId(ItemStack item) {
         var nbtItem = new NBTItem(item);
 
@@ -16,6 +21,13 @@ public class BlockNBTUtil {
         return customBlockData.getString("id");
     }
 
+
+    /**
+     * Set block model to item
+     *
+     * @param id - model id
+     * @return new item with set block model
+     */
     public static ItemStack setBlockId(ItemStack item, String id) {
         var nbtItem = new NBTItem(item);
         var customBlockData = nbtItem.getOrCreateCompound("openitems_custom_block");
@@ -25,6 +37,12 @@ public class BlockNBTUtil {
         return nbtItem.getItem();
     }
 
+
+    /**
+     * Get data to be applied when block placed
+     *
+     * @return block data to be applied
+     */
     public static BlockDataStore getBlockData(ItemStack item) {
         var blockStore = new BlockDataStore(item);
 
@@ -33,6 +51,12 @@ public class BlockNBTUtil {
         return blockStore;
     }
 
+    /**
+     * Clear any info about block behavior
+     *
+     * @param item item to clear
+     * @return new item without block data
+     */
     public static ItemStack clearBlockId(ItemStack item) {
         var nbtItem = new NBTItem(item);
 

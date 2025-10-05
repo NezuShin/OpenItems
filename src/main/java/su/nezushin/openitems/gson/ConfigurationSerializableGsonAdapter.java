@@ -12,9 +12,13 @@ import org.bukkit.inventory.ItemStack;
 
 import java.io.IOException;
 
-public class ItemStackGsonAdapter extends TypeAdapter<ItemStack> {
+
+/**
+ * Adapter needed to save any arbitrary data that implements ConfigurationSerializable (ItemStacks, Locations, etc)
+ */
+public class ConfigurationSerializableGsonAdapter extends TypeAdapter<ConfigurationSerializable> {
     @Override
-    public void write(JsonWriter out, ItemStack value) throws IOException {
+    public void write(JsonWriter out, ConfigurationSerializable value) throws IOException {
         var yamlConf = new YamlConfiguration();
 
         yamlConf.set("data", value);
@@ -23,7 +27,7 @@ public class ItemStackGsonAdapter extends TypeAdapter<ItemStack> {
     }
 
     @Override
-    public ItemStack read(JsonReader in) throws IOException {
+    public ConfigurationSerializable read(JsonReader in) throws IOException {
         var yamlConf = new YamlConfiguration();
 
         try {
@@ -37,7 +41,7 @@ public class ItemStackGsonAdapter extends TypeAdapter<ItemStack> {
 
     public static Gson createGson() {
         return new GsonBuilder().
-                registerTypeHierarchyAdapter(ItemStack.class, new ItemStackGsonAdapter())
+                registerTypeHierarchyAdapter(ConfigurationSerializable.class, new ConfigurationSerializableGsonAdapter())
                 .create();
     }
 }

@@ -4,35 +4,35 @@ import org.bukkit.block.Block;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.block.BlockEvent;
 import org.jetbrains.annotations.NotNull;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
 
 /**
- * Called when player brakes custom block in world.
- * <p>
- * You can get original BlockBreakEvent using getSource() method.
+ * Called after CustomBlockBreakEvent if dropOnDestroy set to true in BlockLocationStore.
+ * If the block break is cancelled, this event won't be called.
  */
-public class CustomBlockBreakEvent extends BlockEvent implements Cancellable {
+public class CustomBlockDropItemEvent extends BlockEvent implements Cancellable {
     private static final HandlerList handlerList = new HandlerList();
 
-    private BlockLocationStore brokenBlock;
+    private BlockLocationStore placedBlock;
 
-    private BlockBreakEvent source;
+    private BlockDropItemEvent source;
 
     private boolean cancelled = false;
 
-    public CustomBlockBreakEvent(@NotNull Block block, BlockLocationStore brokenBlock, BlockBreakEvent source) {
+    public CustomBlockDropItemEvent(@NotNull Block block, BlockLocationStore placedBlock, BlockDropItemEvent source) {
         super(block);
-        this.brokenBlock = brokenBlock;
+        this.placedBlock = placedBlock;
         this.source = source;
     }
 
-    public BlockLocationStore getBrokenBlock() {
-        return brokenBlock;
+    public BlockLocationStore getPlacedBlock() {
+        return placedBlock;
     }
 
-    public BlockBreakEvent getSource() {
+    public BlockDropItemEvent getSource() {
         return source;
     }
 

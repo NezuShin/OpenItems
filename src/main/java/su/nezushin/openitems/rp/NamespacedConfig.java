@@ -1,10 +1,14 @@
 package su.nezushin.openitems.rp;
 
 import com.google.common.collect.Lists;
+import su.nezushin.openitems.rp.font.FontImage;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents config for every namespcace; All yml configs for namcespace should be located in OpenItems/contents/\<namespace\>/configs/
+ */
 public class NamespacedConfig {
 
     private boolean allowAutogen = true;
@@ -32,6 +36,11 @@ public class NamespacedConfig {
     public NamespacedConfig() {
 
     }
+
+    public FontImage getFontImageData(String path) {
+        return new FontImage(8, 8, path);
+    }
+
 
     public boolean isAllowAutogen() {
         return allowAutogen;

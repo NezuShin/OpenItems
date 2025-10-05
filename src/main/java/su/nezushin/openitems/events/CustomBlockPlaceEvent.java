@@ -10,6 +10,10 @@ import su.nezushin.openitems.blocks.storage.BlockLocationStore;
 
 /**
  * Called when player places custom block in world
+ *
+ * You can get original BlockPlaceEvent using getSource() method.
+ *
+ * Better to modify custom block after one tick after event called
  */
 public class CustomBlockPlaceEvent extends BlockEvent implements Cancellable {
     private static final HandlerList handlerList = new HandlerList();
