@@ -3,7 +3,9 @@ package su.nezushin.openitems.utils;
 import org.bukkit.Bukkit;
 import org.bukkit.block.BlockFace;
 import org.codehaus.plexus.util.FileUtils;
+import su.nezushin.openitems.OpenItems;
 
+import javax.imageio.ImageIO;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -93,6 +95,59 @@ public class Utils {
 
     public static int unicodeEscapeSequenceToInt(String sequence) {
         return Integer.parseInt(sequence.substring(2), 16);
+    }
+
+
+    /**
+     * Check if texture pack has texture that limits mip map level.
+     * read <a href="https://gist.github.com/HalbFettKaese/c193caeccc94b793b29981aa38170ea6">...</a>
+     * @return list of "wrong" texture files
+     * @throws IOException
+     */
+    public static List<MipMapFile> checkMipMap() throws IOException {
+        var returnList = new ArrayList<MipMapFile>();
+        for (var i : OpenItems.getInstance().getResourcePackBuilder().getAllTextures()
+                .stream().filter(i -> !i.getAbsolutePath().contains("/font/")).toList()) {
+            var image = ImageIO.read(i);
+
+            if (!isPowerOfTwo(image.getHeight()) || !isPowerOfTwo(image.getWidth())) {
+                var hasMcmeta = new File(i.getParent(), i.getName() + ".mcmeta").exists();
+
+                if (hasMcmeta && ((((double) image.getHeight()) / ((double) image.getWidth())) % 1) != 0)
+                    returnList.add(new MipMapFile(i, image.getHeight(), image.getWidth()));
+            }
+        }
+        return returnList;
+    }
+
+
+    /**
+     * convert File (like OpenItems/contents/namespace/textures/item/test.png) to string namespace:textures/item/test.png
+     *
+     * @param file
+     * @return
+     */
+    public static String getFileAsNamespacedPath(File file) {
+
+        var contentsDir = OpenItems.getInstance().getResourcePackBuilder().getContentsDirectory();
+
+
+        var relPath = file.getAbsolutePath().replace(contentsDir.getAbsolutePath(), "")
+                .replace(File.separator, "/");
+
+        if (relPath.startsWith("/"))
+            relPath = relPath.substring(1);
+        var index = relPath.indexOf("/");
+        var namespace = relPath.substring(0, index);
+
+        return namespace + ":" + relPath.substring(index + 1);
+    }
+
+    public static record MipMapFile(File file, int height, int width) {
+    }
+
+    public static boolean isPowerOfTwo(int n) {
+        return n > 0 && (n & (n - 1)) == 0;
     }
 
 }

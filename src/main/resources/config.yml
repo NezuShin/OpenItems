@@ -4,6 +4,9 @@ resourcepack:
 #   - 'Resourceloader/packs/OpenItems'
 #   - 'C:\Users\nezushin\my-resource-packs\etc'
 
+  build-on-enable: true
+  disable-mip-map-warning: false
+
 blocks:
   #ensure all vanilla tripwires in loaded chunk is with vanilla texture
   replace-tripwires-on-chunk-load: true

@@ -7,11 +7,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Called when plugin done building resource pack
  */
-public class AsyncOpenItemsBuildDoneEvent extends Event {
+public class AsyncBuildDoneEvent extends Event {
     private static final HandlerList handlerList = new HandlerList();
 
-    public AsyncOpenItemsBuildDoneEvent(boolean async) {
-        super(async);
+    public AsyncBuildDoneEvent() {
+        super(true);
     }
 
     @Override

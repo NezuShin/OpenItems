@@ -12,13 +12,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * Used to store and assign new ids (symbols) for blocks. Assigns Private Use Area symbols (starts from \uE000)
  */
-public class FontImagesIdCache extends JsonCache {
+public class FontImageIdCache extends JsonCache {
 
     private Map<String, Integer> charIds = new HashMap<>();
     private Map<String, FontImage> registeredCharIds = new HashMap<>();

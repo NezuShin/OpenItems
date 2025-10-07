@@ -25,6 +25,6 @@ public abstract class JsonCache {
         if (!cacheFile.exists())
             return;
 
-        new Gson().fromJson(Files.readString(cacheFile.toPath(), Charsets.UTF_8), FontImagesIdCache.class);
+        new Gson().fromJson(Files.readString(cacheFile.toPath(), Charsets.UTF_8), FontImageIdCache.class);
     }
 }

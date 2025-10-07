@@ -5,31 +5,90 @@ messages:
   err-nan: '<red>"{nan}" is not a number!'
   err-block-id-not-set: '<red>You should set block model first!'
   current-block-data:
-    - '<reset><gray>Block data:'
+    - '<reset><gray>------------------<#008f9a>Block data<reset><gray>-----------------'
     - '<reset><#08c0c2>Model<grey>:<#008f9a> {model}'
     - '<reset><#08c0c2>Drop on destroy<grey>:<#008f9a> {drop-on-destroy}'
     - '<reset><#08c0c2>Can be blown<grey>:<#008f9a> {can-be-blown}'
     - '<reset><#08c0c2>Can burn (noteblocks only)<grey>:<#008f9a> {can-burn}'
-    - '<reset><#08c0c2>Can be replaced by entity<grey>:<#008f9a> {can-be-replaced}'
-  oedit-help:
-    - "<reset><gray>OEdit help:"
-    - "<reset><#08c0c2><click:suggest_command:'/oedit model'>/oedit <#08c0c2>model <model path><grey> - <#008f9a>set item model"
-    - "<reset><#08c0c2><click:suggest_command:'/oedit name'>/oedit <#08c0c2>name <item name><grey> - <#008f9a>set item name (minimessage and ampersand formats supported)"
-    - "<reset><#08c0c2><click:suggest_command:'/oedit max_damage'>/oedit <#08c0c2>max_damage <max damage><grey> - <#008f9a>set max item damage (durability)"
-    - "<reset><#08c0c2><click:suggest_command:'/oedit damage'>/oedit <#08c0c2>damage <damage><grey> - <#008f9a>set current item damage (durability)"
-    - "<reset><#08c0c2><click:suggest_command:'/oedit max_stack_size'>/oedit <#08c0c2>max_stack_size <max stack size><grey> - <#008f9a>set item max stack size"
+  current-equipment-data:
+    - '<reset><gray>------------------<#008f9a>Equipment data<reset><gray>-----------------'
+    - '<reset><#08c0c2>Model<grey>:<#008f9a> {model}'
+    - '<reset><#08c0c2>Slot<grey>:<#008f9a> {slot}'
+    - '<reset><#08c0c2>Equip on interact<grey>:<#008f9a> {equip-on-interact}'
+    - '<reset><#08c0c2>Equip sound<grey>:<#008f9a> {equip-sound}'
+    - '<reset><#08c0c2>Shear sound<grey>:<#008f9a> {shear-sound}'
+    - '<reset><#08c0c2>Camera overlay<grey>:<#008f9a> {camera-overlay}'
+    - '<reset><#08c0c2>Swappable<grey>:<#008f9a> {swappable}'
+    - '<reset><#08c0c2>Can be sheared<grey>:<#008f9a> {can-be-sheared}'
+    - '<reset><#08c0c2>Damage on hurt<grey>:<#008f9a> {damage-on-hurt}'
+    - '<reset><#08c0c2>Dispensable<grey>:<#008f9a> {dispensable}'
+  current-item-data:
+    - '<reset><gray>------------------<#008f9a>Item data<reset><gray>-----------------'
+    - '<reset><#08c0c2>Model<grey>:<#008f9a> {model}'
+    - '<reset><#08c0c2>Name<grey>:<#008f9a> <reset>{name}'
+    - '<reset><#08c0c2>Custom name<grey>:<#008f9a> <reset>{custom-name}'
+    - '<reset><#08c0c2>Max damage (Durability)<grey>:<#008f9a> {max-damage}'
+    - '<reset><#08c0c2>Damage<grey>:<#008f9a> {damage}'
+    - '<reset><#08c0c2>Max stack size<grey>:<#008f9a> {max-stack-size}'
+    - '<reset><#08c0c2>Hide tooltip<grey>:<#008f9a> {hide-tooltip}'
+    - '<reset><#08c0c2>Repair cost<grey>:<#008f9a> {repair-cost}'
+
+  translatable-component: '<reset><#008f9a><grey>(<#008f9a>Translatable<grey>)<reset>'
+
+
+  oedit-help-general:
+    - '<reset><gray>------------------<#008f9a>OEdit general help<reset><gray>-----------------'
+    - "<reset><#08c0c2><click:suggest_command:'/oedit help item'>/oedit <#08c0c2>help item <#008f9a>show help about item properties"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit help block'>/oedit <#08c0c2>help block <#008f9a>show help about block properties"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit help equipment'>/oedit <#08c0c2>help equipment <#008f9a>show help about equipment (armor) properties"
+    - "<reset><gray>Note that you should hold item in hand to modify it"
+
+  oedit-help-item:
+    - '<reset><gray>------------------<#008f9a>OEdit item help<reset><gray>-----------------'
+    - "<reset><#08c0c2><click:suggest_command:'/oedit item'>/oedit <#08c0c2>item<grey> - <#008f9a>show info about item"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit item model'>/oedit <#08c0c2>item model <model path><grey> - <#008f9a>set item model"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit item name'>/oedit <#08c0c2>item name <item name><grey> - <#008f9a>set item name (minimessage and ampersand formats supported)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit item name'>/oedit <#08c0c2>item custom_name <item custom name><grey> - <#008f9a>set item custom name (like in anvil) (minimessage and ampersand formats supported)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit item max_damage'>/oedit <#08c0c2>item max_damage <max damage><grey> - <#008f9a>set max item damage (durability)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit item damage'>/oedit <#08c0c2>item damage <damage><grey> - <#008f9a>set current item damage (durability)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit item repair_cost'>/oedit <#08c0c2>item repair_cost <repair cost><grey> - <#008f9a>set anvil repair cost for item"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit item hide_tooltip'>/oedit <#08c0c2>item hide_tooltip <true/false><grey> - <#008f9a>hide item tooltip"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit item use_cooldown'>/oedit <#08c0c2>item use_cooldown <seconds> <cooldown id><grey> - <#008f9a>set item cooldown"
+
+
+  oedit-help-block:
+    - '<reset><gray>------------------<#008f9a>OEdit block help<reset><gray>-----------------'
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block'>/oedit <#08c0c2>block<grey> - <#008f9a>show info about block"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block model'>/oedit <#08c0c2>block model <model path><grey> - <#008f9a>set block model for item (when placed); make possible to place this item as block"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_destroy'>/oedit <#08c0c2>block drop_on_destroy <true/false><grey> - <#008f9a>make block drop item when mined/exploded/etc"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_be_blown'>/oedit <#08c0c2>block can_be_blown <true/false><grey> - <#008f9a>set block vulnerable for explosions"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_burn'>/oedit <#08c0c2>block can_burn <true/false><grey> - <#008f9a>set block burnable (noteblock-based blocks only)"
-    - "<reset><#08c0c2><click:suggest_command:'/oedit block can_be_replaced'>/oedit <#08c0c2>block can_be_replaced <true/false><grey> - <#008f9a>set block can be affected (broken) by entity? (EntityChangeBlockEvent)"
-    - "<reset><#08c0c2><click:suggest_command:'/oedit equipment model'>/oedit <#08c0c2equipment model <model path><grey> - Set armor model; make possible to equip item as armor<#008f9a>)"
-    - "<reset><gray>Note that you should hold item in hand to modify it"
+
+
+  oedit-help-equipment:
+    - '<reset><gray>------------------<#008f9a>OEdit equipment help<reset><gray>-----------------'
+    - "<reset><#08c0c2><click:suggest_command:'/oedit equipment'>/oedit <#08c0c2>equipment<grey> - <#008f9a>show info about equipment"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit equipment model'>/oedit <#08c0c2>equipment model <model path><grey> - set armor model; make possible to equip item as armor<#008f9a>)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit equipment camera_overlay'>/oedit <#08c0c2>equipment camera_overlay <model path><grey> - set camera overlay for item<#008f9a>)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit equipment can_be_sheared'>/oedit <#08c0c2>equipment can_be_sheared <true/false><grey> - set possible to unequip item from mob using shears (like snowman's pumpkin)<#008f9a>)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit equipment shear_sound'>/oedit <#08c0c2>equipment shear_sound <sound path><grey> - set shear sound<#008f9a>)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit equipment equip_sound'>/oedit <#08c0c2>equipment equip_sound <sound path><grey> - set equip sound<#008f9a>)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit equipment swappable'>/oedit <#08c0c2>equipment swappable <true/false><grey> - set can be equipped by right-clicking<#008f9a>)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit equipment equip_on_interact'>/oedit <#08c0c2>equipment equip_on_interact <true/false><grey> - set possible to equip onto target mob by right-clicking<#008f9a>)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit equipment dispensable'>/oedit <#08c0c2>equipment dispensable <true/false><grey> - set possible to equip item using dispenser<#008f9a>)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit equipment damage_on_hurt'>/oedit <#08c0c2>equipment damage_on_hurt <true/false><grey> - decrease durability when hte wearing entity is damaged<#008f9a>)"
 
 
   started-build: "<reset><#08c0c2>Starting resource pack build..."
   build-end-done: "<reset><green>Build done!"
   build-end-err: "<reset><red>Build error. Check console"
+
+  mip-map-end-err: "<reset><red>MipMap check error. Check console"
+  mip-map-end-done: "<reset><#08c0c2>MipMap Limitations:"
+  mip-map-limitation: "<reset><#08c0c2>{width}x{height} - {file}"
+  mip-map-end-not-found: "<reset><green>No MipMap Limitations found!"
+
+  build-mip-map-warning: "<reset><yellow>There is textures that may limit mip level on client. Consider checking it with command <reset><#08c0c2><click:suggest_command:'/openitems scan-mip-map'>/openitems scan-mip-map "
 
   registry-loaded:
     - "<reset><#008f9a>Loaded <#08c0c2>{items}<#008f9a> item models"
@@ -38,3 +97,8 @@ messages:
     - "<reset><#008f9a>Loaded <#08c0c2>{block-types-tripwire}<#008f9a> block models (tripwire)"
     - "<reset><#008f9a>Loaded <#08c0c2>{block-types-noteblock}<#008f9a> block models (noteblock)"
     - "<reset><#008f9a>Loaded <#08c0c2>{block-types-chorus}<#008f9a> block models (chorus)"
+
+
+  config-load-start: '<reset><#008f9a>Loading config....'
+  config-load-err: '<reset><red>Load error. Check console'
+  config-load-success: '<reset><#008f9a>Reloaded!'

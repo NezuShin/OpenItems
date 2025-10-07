@@ -16,7 +16,10 @@ import java.util.regex.Pattern;
 public enum Message {
 
     err_u_should_have_item_in_hand, err_u_dont_have_permission, err_player_only, err_nan, err_block_id_not_set,
-    current_block_data, oedit_help, started_build, build_end_done, build_end_err, registry_loaded;
+    current_block_data, oedit_help_general, oedit_help_item, oedit_help_block, oedit_help_equipment, started_build,
+    build_end_done, build_end_err, registry_loaded, config_load_start, build_mip_map_warning,
+    config_load_err, config_load_success, current_equipment_data, current_item_data, translatable_component,
+    mip_map_end_err, mip_map_end_done, mip_map_limitation,  mip_map_end_not_found;
 
     private List<String> list = Lists.newArrayList("");
 
@@ -114,6 +117,7 @@ public enum Message {
         public ChatMessageSender send(CommandSender p) {
             try {
                 for (String string : msg) {
+
                     p.sendMessage(MiniMessage.miniMessage().deserialize(string));
                 }
             } catch (Exception e) {

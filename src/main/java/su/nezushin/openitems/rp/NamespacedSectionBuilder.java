@@ -35,6 +35,14 @@ public class NamespacedSectionBuilder {
         this.outputDir = new File(OpenItems.getInstance().getDataFolder(), "build/assets/" + this.namespace);
     }
 
+    public List<File> getAllTextures() {
+        List<ResourcePackScanFile> scanFiles = new ArrayList<>();
+
+        scanForTextures(new File(this.sectionDir, "textures"), "", scanFiles);
+
+        return scanFiles.stream().map(ResourcePackScanFile::file).toList();
+    }
+
     public void build() throws IOException {
         this.outputDir.mkdirs();
 
@@ -97,7 +105,7 @@ public class NamespacedSectionBuilder {
 
     }
 
-    record ResourcePackScanFile(File file, String path, String name) {
+    private record ResourcePackScanFile(File file, String path, String name) {
 
         public String pathAndName() {
             return path + "/" + name;

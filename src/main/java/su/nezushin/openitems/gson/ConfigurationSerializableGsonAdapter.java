@@ -33,7 +33,7 @@ public class ConfigurationSerializableGsonAdapter extends TypeAdapter<Configurat
         try {
             yamlConf.loadFromString(in.nextString());
 
-            return yamlConf.getItemStack("data");
+            return (ConfigurationSerializable) yamlConf.get("data");
         } catch (InvalidConfigurationException e) {
             throw new RuntimeException(e);
         }

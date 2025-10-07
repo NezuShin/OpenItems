@@ -1,26 +1,36 @@
 package su.nezushin.openitems.cmd;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Equippable;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
+import io.papermc.paper.datacomponent.item.UseCooldown;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nezushin.openitems.utils.Message;
 import su.nezushin.openitems.OpenItems;
-import su.nezushin.openitems.blocks.storage.BlockNBTUtil;
+import su.nezushin.openitems.utils.NBTUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class OEditCommand implements CommandExecutor, TabCompleter {
     @Override
@@ -39,7 +49,19 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
-            Message.oedit_help.send(p);
+            if (args.length > 1) {
+                if (args[1].equalsIgnoreCase("item")) {
+                    Message.oedit_help_item.send(p);
+                    return true;
+                } else if (args[1].equalsIgnoreCase("block")) {
+                    Message.oedit_help_block.send(p);
+                    return true;
+                } else if (args[1].equalsIgnoreCase("equipment")) {
+                    Message.oedit_help_equipment.send(p);
+                    return true;
+                }
+            }
+            Message.oedit_help_general.send(p);
             return true;
         }
 
@@ -52,26 +74,64 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
 
         try {
 
+            if (args[0].equalsIgnoreCase("item")) {
+                if (args.length > 2) {
+                    if (args[1].equalsIgnoreCase("model")) {
+                        item.setData(DataComponentTypes.ITEM_MODEL, Key.key(args[2]));
+                    } else if (args[1].equalsIgnoreCase("name")) {
+                        var newName = new ArrayList<>(Arrays.asList(args));
+                        newName.removeFirst();
+                        newName.removeFirst();
+                        item.setData(DataComponentTypes.ITEM_NAME, MiniMessage.miniMessage().deserialize(
+                                Message.translateCodes(String.join(" ", newName))));
+                    } else if (args[1].equalsIgnoreCase("custom_name")) {
+                        var newName = new ArrayList<>(Arrays.asList(args));
+                        newName.removeFirst();
+                        newName.removeFirst();
+                        item.setData(DataComponentTypes.CUSTOM_NAME, MiniMessage.miniMessage().deserialize(
+                                Message.translateCodes(String.join(" ", newName))));
+                    } else if (args[1].equalsIgnoreCase("max_damage")) {
+                        item.setData(DataComponentTypes.MAX_DAMAGE, parseInt(args[2]));
+                    } else if (args[1].equalsIgnoreCase("damage")) {
+                        item.setData(DataComponentTypes.DAMAGE, parseInt(args[2]));
+                    } else if (args[1].equalsIgnoreCase("max_stack_size")) {
+                        item.setData(DataComponentTypes.MAX_STACK_SIZE, parseInt(args[2]));
+                    } else if (args[1].equalsIgnoreCase("repair_cost")) {
+                        item.setData(DataComponentTypes.REPAIR_COST, parseInt(args[2]));
+                    } else if (args[1].equalsIgnoreCase("hide_tooltip")) {
+                        item.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay()
+                                .hideTooltip(args[2].equalsIgnoreCase("true")));
+                    } else if (args.length > 3) {
+                        if (args[1].equalsIgnoreCase("use_cooldown")) {
+                            item.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(parseFloat(args[2])).cooldownGroup(Key.key(args[3])));
+                        }
+                    }
+                }
 
-            if (args[0].equalsIgnoreCase("model")) {
-                item.setData(DataComponentTypes.ITEM_MODEL, Key.key(args[1]));
-            } else if (args[0].equalsIgnoreCase("name")) {
-                var newName = new ArrayList<>(Arrays.asList(args));
-                newName.removeFirst();
-                item.setData(DataComponentTypes.ITEM_NAME, MiniMessage.miniMessage().deserialize(
-                        Message.translateCodes(String.join(" ", newName))));
-            } else if (args[0].equalsIgnoreCase("max_damage")) {
-                item.setData(DataComponentTypes.MAX_DAMAGE, parseInt(args[1]));
-            } else if (args[0].equalsIgnoreCase("damage")) {
-                item.setData(DataComponentTypes.DAMAGE, parseInt(args[1]));
-            } else if (args[0].equalsIgnoreCase("max_stack_size")) {
-                item.setData(DataComponentTypes.MAX_STACK_SIZE, parseInt(args[1]));
+                var tooltipDisplay = item.getData(DataComponentTypes.TOOLTIP_DISPLAY);
+                var repairCost = item.getData(DataComponentTypes.REPAIR_COST);
+
+
+                Message.current_item_data.replace(
+                                "{model}", String.valueOf(item.getData(DataComponentTypes.ITEM_MODEL)),
+                                "{name}", formatMinimessage(item.getData(DataComponentTypes.ITEM_NAME)),
+                                "{custom-name}", formatMinimessage(item.getData(DataComponentTypes.CUSTOM_NAME)),
+                                "{max-damage}", String.valueOf(item.getData(DataComponentTypes.MAX_DAMAGE)),
+                                "{damage}", String.valueOf(item.getData(DataComponentTypes.DAMAGE)),
+                                "{max-stack-size}", String.valueOf(item.getData(DataComponentTypes.MAX_STACK_SIZE)),
+                                "{hide-tooltip}", (tooltipDisplay != null ? String.valueOf(tooltipDisplay.hideTooltip()) : "false"),
+                                "{repair-cost}", (repairCost != null ? String.format("%.2f", repairCost.floatValue()) : "0")
+
+
+                        )
+                        .send(p);
+
             } else if (args[0].equalsIgnoreCase("block")) {
-                var block = BlockNBTUtil.getBlockData(item);
+                var block = NBTUtil.getBlockData(item);
                 if (args.length > 1) {
                     if (args[1].equalsIgnoreCase("model")) {
-                        item = BlockNBTUtil.setBlockId(item, args[2]);
-                        block = BlockNBTUtil.getBlockData(item);
+                        item = NBTUtil.setBlockId(item, args[2]);
+                        block = NBTUtil.getBlockData(item);
                     } else if (block != null) {
                         if (args.length > 2) {
                             if (args[1].equalsIgnoreCase("drop_on_destroy")) {
@@ -103,15 +163,40 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
 
 
                 if (args.length > 2) {
+
+                    //keyed
                     if (args[1].equalsIgnoreCase("model")) {
-
-
                         data = data.toBuilder().assetId(Key.key(args[2])).build();
-
                         item.setData(DataComponentTypes.EQUIPPABLE, data);
-                    } else if (args[1].equalsIgnoreCase("slot")) {
-
-
+                    } else if (args[1].equalsIgnoreCase("camera_overlay")) {
+                        data = data.toBuilder().cameraOverlay(Key.key(args[2])).build();
+                        item.setData(DataComponentTypes.EQUIPPABLE, data);
+                    } else if (args[1].equalsIgnoreCase("shear_sound")) {
+                        data = data.toBuilder().shearSound(Key.key(args[2])).build();
+                        item.setData(DataComponentTypes.EQUIPPABLE, data);
+                    } else if (args[1].equalsIgnoreCase("equip_sound")) {
+                        data = data.toBuilder().equipSound(Key.key(args[2])).build();
+                        item.setData(DataComponentTypes.EQUIPPABLE, data);
+                    }
+                    /* true/false  */
+                    else if (args[1].equalsIgnoreCase("equip_on_interact")) {
+                        data = data.toBuilder().equipOnInteract(args[2].equalsIgnoreCase("true")).build();
+                        item.setData(DataComponentTypes.EQUIPPABLE, data);
+                    } else if (args[1].equalsIgnoreCase("dispensable")) {
+                        data = data.toBuilder().dispensable(args[2].equalsIgnoreCase("true")).build();
+                        item.setData(DataComponentTypes.EQUIPPABLE, data);
+                    } else if (args[1].equalsIgnoreCase("damage_on_hurt")) {
+                        data = data.toBuilder().damageOnHurt(args[2].equalsIgnoreCase("true")).build();
+                        item.setData(DataComponentTypes.EQUIPPABLE, data);
+                    } else if (args[1].equalsIgnoreCase("can_be_sheared")) {
+                        data = data.toBuilder().canBeSheared(args[2].equalsIgnoreCase("true")).build();
+                        item.setData(DataComponentTypes.EQUIPPABLE, data);
+                    } else if (args[1].equalsIgnoreCase("swappable")) {
+                        data = data.toBuilder().swappable(args[2].equalsIgnoreCase("true")).build();
+                        item.setData(DataComponentTypes.EQUIPPABLE, data);
+                    }
+                    /* equippable stupid hack */
+                    else if (args[1].equalsIgnoreCase("slot")) {
                         data = Equippable.equippable(EquipmentSlot.valueOf(args[2].toUpperCase()))
                                 .assetId(data.assetId())
                                 .allowedEntities(data.allowedEntities())
@@ -127,8 +212,30 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
 
                         item.setData(DataComponentTypes.EQUIPPABLE, data);
                     }
+                    /* custom */
+                    /* not used now!!! else if (args[1].equalsIgnoreCase("ignore_damage_types")) {
+                        var ignoreDamageTypes = new ArrayList<>(Arrays.asList(args));
+                        ignoreDamageTypes.removeFirst();
+                        ignoreDamageTypes.removeFirst();
+
+                        item = NBTUtil.setIgnoreDamageCauses(item, ignoreDamageTypes.stream().map(i -> i.toUpperCase())
+                                .toList());
+                    }*/
                 }
 
+                Message.current_equipment_data.replace(
+                        "{model}", String.valueOf(data.assetId()),
+                        "{equip-on-interact}", String.valueOf(data.equipOnInteract()),
+                        "{equip-sound}", String.valueOf(data.equipSound().toString()),
+                        "{shear-sound}", String.valueOf(data.shearSound().toString()),
+                        "{camera-overlay}", String.valueOf(data.cameraOverlay()),
+                        "{slot}", data.slot().toString().toLowerCase(),
+                        "{swappable}", String.valueOf(data.swappable()),
+                        "{can-be-sheared}", String.valueOf(data.canBeSheared()),
+                        "{damage-on-hurt}", String.valueOf(data.damageOnHurt()),
+                        "{dispensable}", String.valueOf(data.dispensable())
+
+                ).send(sender);
             }
 
 
@@ -141,6 +248,11 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    public String formatMinimessage(Component component) {
+        return component == null ? "null" : (MiniMessage.miniMessage().serialize(component) +
+                (component instanceof TranslatableComponent ? (" " + Message.translatable_component.get()) : ""));
+    }
+
     public int parseInt(String str) {
         try {
             return Integer.parseInt(str);
@@ -149,31 +261,54 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
         }
     }
 
+    public float parseFloat(String str) {
+        try {
+            return Float.parseFloat(str);
+        } catch (NumberFormatException ex) {
+            throw new CommandException(Message.err_nan.replace("{nan}", str));
+        }
+    }
+
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
         if (args.length == 1) {
-            return Lists.newArrayList("name", "model", "max_damage", "max_stack_size", "block", "help", "equipment")
+            return Lists.newArrayList("item", "block", "help", "equipment")
                     .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[0])).toList();
         }
 
         if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("model")) {
-                return OpenItems.getInstance().getModelRegistry().getItems()
+            if (args[0].equalsIgnoreCase("item"))
+                return Lists.newArrayList("name", "custom_name", "model", "max_damage", "max_stack_size",
+                                "repair_cost", "hide_tooltip")
                         .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
-            } else if (args[0].equalsIgnoreCase("block")) {
+
+            if (args[0].equalsIgnoreCase("block"))
                 return Lists.newArrayList("drop_on_destroy", "can_be_blown", "can_burn", "can_be_replaced",
                                 "model")
                         .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
-            } else if (args[0].equalsIgnoreCase("equipment")) {
-                return Lists.newArrayList("model", "slot")
-                        .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
-            }
 
+            if (args[0].equalsIgnoreCase("equipment"))
+                return Lists.newArrayList("swappable", "can_be_sheared", "damage_on_hurt", "dispensable",
+                                "equip_on_interact", "equip_sound", "shear_sound", "camera_overlay", "slot")
+                        .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
+
+            if (args[0].equalsIgnoreCase("help"))
+                return Lists.newArrayList("item", "block", "equipment")
+                        .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
             return List.of();
         }
 
-        if (args.length == 3) {
-            if (args[0].equalsIgnoreCase("block")) {
+        if (args.length >= 3) {
+            if (args[0].equalsIgnoreCase("item")) {
+                if (args[1].equalsIgnoreCase("model"))
+                    return OpenItems.getInstance().getModelRegistry().getItems()
+                            .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();
+                if (Sets.newHashSet("repair_cost", "hide_tooltip").contains(args[1]))
+                    return Stream.of("true", "false")
+                            .filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();
+
+
+            } else if (args[0].equalsIgnoreCase("block")) {
                 if (args[1].equalsIgnoreCase("model"))
                     return OpenItems.getInstance().getModelRegistry().getBlockTypes().keySet().stream()
                             .filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();
@@ -187,6 +322,18 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                 else if (args[1].equalsIgnoreCase("slot"))
                     return Arrays.stream(EquipmentSlot.values()).map(i -> i.name().toLowerCase())
                             .filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();
+                else if (Sets.newHashSet("equip_on_interact", "dispensable",
+                                "damage_on_hurt", "can_be_sheared", "swappable")
+                        .contains(args[1]))
+                    return Stream.of("true", "false")
+                            .filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();
+                else if (Sets.newHashSet("equip_sound", "shear_sound")
+                        .contains(args[1]))
+                    return RegistryAccess.registryAccess().getRegistry(RegistryKey.SOUND_EVENT).keyStream()
+                            .map(NamespacedKey::toString).filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();
+                else if (args[1].equalsIgnoreCase("ignore_damage_types"))
+                    return Arrays.stream(EntityDamageEvent.DamageCause.values()).map(i -> i.name().toLowerCase())
+                            .filter(i -> StringUtil.startsWithIgnoreCase(i, args[args.length - 1])).toList();
             }
         }
         return List.of();

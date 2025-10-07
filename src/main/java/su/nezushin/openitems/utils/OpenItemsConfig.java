@@ -15,7 +15,7 @@ public class OpenItemsConfig {
 
     public static List<String> resourcePackCopyDestinations;
 
-    public static boolean replaceTripwiresOnChunkLoad = true, enableTripwires = true, callBlockDropItemEvent = true;
+    public static boolean replaceTripwiresOnChunkLoad = true, enableTripwires = true, buildOnEnable, disableMipMapWarning;
 
     public static void init() {
         var plugin = OpenItems.getInstance();
@@ -29,6 +29,10 @@ public class OpenItemsConfig {
 
         replaceTripwiresOnChunkLoad = config.getBoolean("blocks.replace-tripwires-on-chunk-load", true);
         enableTripwires = config.getBoolean("blocks.enable-tripwires", true);
+
+        buildOnEnable = config.getBoolean("resourcepack.build-on-enable", true);
+
+        disableMipMapWarning = config.getBoolean("disable-mip-map-warning", false);
 
 
         resourcePackCopyDestinations = config.getStringList("resourcepack.copy-destinations");

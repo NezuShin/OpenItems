@@ -4,9 +4,11 @@ import org.bukkit.Bukkit;
 import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
-import su.nezushin.openitems.events.AsyncOpenItemsBuildDoneEvent;
+import su.nezushin.openitems.events.AsyncBuildDoneEvent;
+import su.nezushin.openitems.events.AsyncRegistryLoadedEvent;
 import su.nezushin.openitems.rp.cache.BlockIdCache;
-import su.nezushin.openitems.rp.cache.FontImagesIdCache;
+import su.nezushin.openitems.rp.cache.FontImageIdCache;
+import su.nezushin.openitems.utils.Message;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
 import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
@@ -14,6 +16,9 @@ import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Main builder. Used to build resource pack and load registry
@@ -21,7 +26,8 @@ import java.util.ArrayList;
 public class ResourcePackBuilder {
 
     private BlockIdCache blockIdCache;
-    private FontImagesIdCache fontImagesIdCache;
+    private FontImageIdCache fontImageIdCache;
+    private boolean hasMipMapProblem = false;
 
     public ResourcePackBuilder() {
         try {
@@ -44,28 +50,45 @@ public class ResourcePackBuilder {
         this.blockIdCache = new BlockIdCache();
         this.blockIdCache.load();
 
-        this.fontImagesIdCache = new FontImagesIdCache();
-        this.fontImagesIdCache.load();
+        this.fontImageIdCache = new FontImageIdCache();
+        this.fontImageIdCache.load();
     }
 
+    public List<File> getAllTextures() {
+        var list = new ArrayList<File>();
+
+        for (var i : getContentNamespaces())
+            list.addAll(new NamespacedSectionBuilder(i.getName(), i).getAllTextures());
+
+        return list;
+    }
+
+    public File getContentsDirectory() {
+        return new File(OpenItems.getInstance().getDataFolder(), "contents");
+    }
+
+    private List<File> getContentNamespaces() {
+        var contents = getContentsDirectory();
+
+        contents.mkdirs();
+
+        return Arrays.stream(Objects.requireNonNull(contents.listFiles())).filter(File::isDirectory).toList();
+    }
 
     public boolean build() {
         try {
+            var startTime = System.currentTimeMillis();
             OpenItems.getInstance().getModelRegistry().setLock(false);
             this.loadCache();
             this.clean();
 
-            var contents = new File(OpenItems.getInstance().getDataFolder(), "contents");
 
-            contents.mkdirs();
-
-            for (var i : contents.listFiles())
-                if (i.isDirectory()) new NamespacedSectionBuilder(i.getName(), i).build();
+            for (var i : getContentNamespaces()) new NamespacedSectionBuilder(i.getName(), i).build();
 
             this.blockIdCache.build();
             this.blockIdCache.save();
-            this.fontImagesIdCache.build();
-            this.fontImagesIdCache.save();
+            this.fontImageIdCache.build();
+            this.fontImageIdCache.save();
 
             fillRegistry();
 
@@ -75,46 +98,60 @@ public class ResourcePackBuilder {
                 var build = new File(OpenItems.getInstance().getDataFolder(), "build");
                 Utils.copyFolder(build, out, build, new ArrayList<>(), new ArrayList<>());
             }
-            OpenItems.async(() -> Bukkit.getPluginManager().callEvent(new AsyncOpenItemsBuildDoneEvent(true)));
+
+            if (!OpenItemsConfig.disableMipMapWarning)
+                hasMipMapProblem = !Utils.checkMipMap().isEmpty();
+
+            if (hasMipMapProblem) {
+                Message.build_mip_map_warning.send(Bukkit.getConsoleSender());
+            }
+
+            OpenItems.async(() -> Bukkit.getPluginManager().callEvent(new AsyncBuildDoneEvent()));
             return true;
         } catch (Exception ex) {
             ex.printStackTrace();
             return false;
-        } finally {
-            OpenItems.getInstance().getModelRegistry().setLock(true);
         }
     }
 
     public void fillRegistry() throws IOException {
-        var contents = new File(OpenItems.getInstance().getDataFolder(), "build/assets");
+        try {
+            OpenItems.getInstance().getModelRegistry().setLock(false);
+            var contents = new File(OpenItems.getInstance().getDataFolder(), "build/assets");
 
-        for (var namespace : contents.listFiles()) {
-            if (namespace.isDirectory()) {
-                var items = new File(namespace, "items");
-                if (items.exists() && items.isDirectory()) scanForItems(items, namespace.getName(), "",
-                        false,
-                        (str) -> OpenItems.getInstance().getModelRegistry().getItems().add(str));
+            for (var namespace : contents.listFiles()) {
+                if (namespace.isDirectory()) {
+                    var items = new File(namespace, "items");
+                    if (items.exists() && items.isDirectory()) scanForItems(items, namespace.getName(), "",
+                            false,
+                            (str) -> OpenItems.getInstance().getModelRegistry().getItems().add(str));
 
-                var equipment = new File(namespace, "equipment");
-                if (items.exists() && items.isDirectory()) scanForItems(equipment, namespace.getName(), "",
-                        false,
-                        (str) -> OpenItems.getInstance().getModelRegistry().getEquipment().add(str));
+                    var equipment = new File(namespace, "equipment");
+                    if (items.exists() && items.isDirectory()) scanForItems(equipment, namespace.getName(), "",
+                            false,
+                            (str) -> OpenItems.getInstance().getModelRegistry().getEquipment().add(str));
 
+                }
             }
+
+
+            this.blockIdCache.getRegisteredNoteblockIds().forEach((k, v) -> {
+                OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomNoteblockModel(v));
+            });
+            this.blockIdCache.getRegisteredTripwireIds().forEach((k, v) -> {
+                OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomTripwireModel(v));
+            });
+
+            this.fontImageIdCache.getRegisteredCharIds().forEach((k, v) -> {
+                OpenItems.getInstance().getModelRegistry().getFontImages().put(k, v.getSymbol());
+            });
+
+            OpenItems.async(() -> Bukkit.getPluginManager().callEvent(new AsyncRegistryLoadedEvent()));
+        } catch (Exception ex) {
+            throw ex;
+        } finally {
+            OpenItems.getInstance().getModelRegistry().setLock(true);
         }
-
-
-
-        this.blockIdCache.getRegisteredNoteblockIds().forEach((k, v) -> {
-            OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomNoteblockModel(v));
-        });
-        this.blockIdCache.getRegisteredTripwireIds().forEach((k, v) -> {
-            OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomTripwireModel(v));
-        });
-
-        this.fontImagesIdCache.getRegisteredCharIds().forEach((k, v) -> {
-            OpenItems.getInstance().getModelRegistry().getFontImages().put(k, v.getSymbol());
-        });
     }
 
     private interface Callback<T> {
@@ -134,21 +171,26 @@ public class ResourcePackBuilder {
 
     public void clean() throws IOException {
         this.blockIdCache.cleanRegistered();
-        this.fontImagesIdCache.cleanRegistered();
+        this.fontImageIdCache.cleanRegistered();
         OpenItems.getInstance().getModelRegistry().clear();
         var dir = new File(OpenItems.getInstance().getDataFolder(), "build/assets");
 
-
         if (dir.exists()) FileUtils.deleteDirectory(dir);
 
-        OpenItemsConfig.getResourcePackCopyDestinationFiles().forEach(i -> i.delete());
+
+        for (var i : OpenItemsConfig.getResourcePackCopyDestinationFiles())
+            FileUtils.deleteDirectory(i);
     }
 
-    public FontImagesIdCache getFontImagesIdCache() {
-        return fontImagesIdCache;
+    public FontImageIdCache getFontImagesIdCache() {
+        return fontImageIdCache;
     }
 
     public BlockIdCache getBlockIdCache() {
         return blockIdCache;
+    }
+
+    public boolean isHasMipMapProblem() {
+        return hasMipMapProblem;
     }
 }

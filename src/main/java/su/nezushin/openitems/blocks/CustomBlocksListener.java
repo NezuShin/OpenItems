@@ -18,7 +18,7 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
-import su.nezushin.openitems.blocks.storage.BlockNBTUtil;
+import su.nezushin.openitems.utils.NBTUtil;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.CustomBlockBreakEvent;
 import su.nezushin.openitems.events.CustomBlockDropItemEvent;
@@ -204,7 +204,7 @@ public class CustomBlocksListener implements Listener {
         var block = e.getBlock();
         if (item == null || item.getType().isAir()) return;
 
-        var id = BlockNBTUtil.getBlockId(item);
+        var id = NBTUtil.getBlockId(item);
 
         if (id == null) return;
         var blocks = OpenItems.getInstance().getBlocks();

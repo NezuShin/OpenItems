@@ -3,6 +3,7 @@ package su.nezushin.openitems;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
+import su.nezushin.openitems.armor.ArmorDamagePreventListener;
 import su.nezushin.openitems.blocks.CustomBlocks;
 import su.nezushin.openitems.cmd.OEditCommand;
 import su.nezushin.openitems.cmd.OItemsCommand;
@@ -31,21 +32,24 @@ public final class OpenItems extends JavaPlugin {
         this.blocks = new CustomBlocks();
         this.resourcePackBuilder = new ResourcePackBuilder();
 
+
         load();
 
-        //Bukkit.getPluginManager().registerEvents(new TestListener(), instance);
-
+        //Bukkit.getPluginManager().registerEvents(new ArmorDamagePreventListener(), instance);
 
         getCommand("oedit").setExecutor(new OEditCommand());
         getCommand("openitems").setExecutor(new OItemsCommand());
 
         Utils.resyncCommands();
+
+
+        if (OpenItemsConfig.buildOnEnable)
+            this.resourcePackBuilder.build();
     }
 
     public void load() {
         OpenItemsConfig.init();
         this.resourcePackBuilder.loadRegistry();
-        this.resourcePackBuilder.build();
     }
 
 
