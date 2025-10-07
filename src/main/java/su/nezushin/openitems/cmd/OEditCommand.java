@@ -134,10 +134,14 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                         block = NBTUtil.getBlockData(item);
                     } else if (block != null) {
                         if (args.length > 2) {
-                            if (args[1].equalsIgnoreCase("drop_on_destroy")) {
-                                block.setDropOnDestroy(args[2].equalsIgnoreCase("true"));
-                            } else if (args[1].equalsIgnoreCase("can_be_blown")) {
-                                block.setCanBeBlown(args[2].equalsIgnoreCase("true"));
+                            if (args[1].equalsIgnoreCase("drop_on_break")) {
+                                block.setDropOnBreak(args[2].equalsIgnoreCase("true"));
+                            } else if (args[1].equalsIgnoreCase("drop_on_destroy_by_liquid")) {
+                                block.setDropOnDestroyByLiquid(args[2].equalsIgnoreCase("true"));
+                            } else if (args[1].equalsIgnoreCase("drop_on_explosion")) {
+                                block.setDropOnExplosion(args[2].equalsIgnoreCase("true"));
+                            } else if (args[1].equalsIgnoreCase("drop_on_burn")) {
+                                block.setDropOnBurn(args[2].equalsIgnoreCase("true"));
                             } else if (args[1].equalsIgnoreCase("can_burn")) {
                                 block.setCanBurn(args[2].equalsIgnoreCase("true"));
                             } else if (args[1].equalsIgnoreCase("can_be_replaced")) {
@@ -152,9 +156,16 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
 
-                Message.current_block_data.replace("{drop-on-destroy}", "" + block.dropOnDestroy(),
-                        "{can-be-blown}", "" + block.canBeBlown(), "{can-burn}", "" + block.canBurn(),
-                        "{model}", block.getId(), "{can-be-replaced}", "" + block.canBeReplaced()).send(p);
+                Message.current_block_data.replace(
+                        "{drop-on-break}", String.valueOf(block.dropOnBreak()),
+                        "{drop-on-destroy-by-liquid}", String.valueOf(block.dropOnDestroyByLiquid()),
+                        "{drop-on-explosion}", String.valueOf(block.dropOnExplosion()),
+                        "{drop-on-burn}", String.valueOf(block.dropOnBurn()),
+                        "{can-be-blown}", String.valueOf(block.canBeBlown()),
+                        "{can-burn}", String.valueOf(block.canBurn()),
+                        "{can-be-destroyed-by-liquid}", String.valueOf(block.canBeDestroyedByLiquid()),
+                        "{model}", block.getId(),
+                        "{can-be-replaced}", String.valueOf(block.canBeReplaced())).send(p);
             } else if (args[0].equalsIgnoreCase("equipment")) {
                 var data = item.getData(DataComponentTypes.EQUIPPABLE);
 
@@ -283,7 +294,8 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                         .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
 
             if (args[0].equalsIgnoreCase("block"))
-                return Lists.newArrayList("drop_on_destroy", "can_be_blown", "can_burn", "can_be_replaced",
+                return Lists.newArrayList("drop_on_break", "drop_on_destroy_by_liquid", "drop_on_explosion",
+                                "drop_on_burn", "can_be_blown", "can_burn", "can_be_replaced",
                                 "model")
                         .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
 

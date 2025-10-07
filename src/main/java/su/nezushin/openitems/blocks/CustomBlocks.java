@@ -5,11 +5,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.block.data.type.Tripwire;
 import org.bukkit.persistence.PersistentDataType;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.storage.BlockDataStore;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
+import su.nezushin.openitems.blocks.types.CustomChorusModel;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.CustomBlockLoadEvent;
 import su.nezushin.openitems.events.CustomBlockUnloadEvent;
@@ -53,9 +55,7 @@ public class CustomBlocks {
         });
     }
 
-    public void scanForWrongTripwires(Chunk chunk) {
-        if (!OpenItemsConfig.replaceTripwiresOnChunkLoad)
-            return;
+    public void scanForWrongBlockModels(Chunk chunk) {
 
         var world = chunk.getWorld();
         var snapshot = chunk.getChunkSnapshot();
@@ -65,21 +65,29 @@ public class CustomBlocks {
 
         OpenItems.async(() -> {
             var list = new ArrayList<int[]>();
-            //snapshot.getBlockType()
             for (var x = 0; x < 16; x++)
                 for (var z = 0; z < 16; z++)
-                    for (var y = minHeight; y < maxHeight; y++)
-                        if (snapshot.getBlockType(x, y, z) == Material.TRIPWIRE) {
+                    for (var y = minHeight; y < maxHeight; y++) {
+                        var blockType = snapshot.getBlockType(x, y, z);
+                        if (blockType == Material.TRIPWIRE && OpenItemsConfig.replaceTripwiresOnChunkLoad)
                             list.add(new int[]{x, y, z});
-                        }
+                        if (blockType == Material.CHORUS_PLANT && OpenItemsConfig.replaceChorusPlantsOnChunkLoad)
+                            list.add(new int[]{x, y, z});
+                    }
 
             if (!list.isEmpty())
                 OpenItems.sync(() -> {
                     for (var i : list) {
-                        var block = world.getBlockAt(i[0], i[1], i[2]);
-                        if (!this.placedBlocks.containsKey(block) && block.getBlockData() instanceof Tripwire tripwire) {
-                            CustomTripwireModel.setDefaultId(tripwire);
-                            block.setBlockData(tripwire, false);
+                        var block = chunk.getBlock(i[0], i[1], i[2]);
+
+                        if (!this.placedBlocks.containsKey(block)) {
+                            if (block.getBlockData() instanceof Tripwire tripwire) {
+                                CustomTripwireModel.setDefaultId(tripwire);
+                                block.setBlockData(tripwire, false);
+                            } else if (block.getBlockData() instanceof MultipleFacing mf) {
+                                CustomChorusModel.setDefaultId(mf);
+                                block.setBlockData(mf, false);
+                            }
                         }
 
                     }
@@ -92,8 +100,10 @@ public class CustomBlocks {
         var str = chunk.getPersistentDataContainer().get(
                 OpenItems.CUSTOM_BLOCKS_KEY, PersistentDataType.STRING);
 
-        if (str == null)
+        if (str == null) {
+            scanForWrongBlockModels(chunk);
             return;
+        }
         OpenItems.async(() -> {
             var listType = new TypeToken<ArrayList<BlockLocationStore>>() {
             }.getType();
@@ -114,7 +124,7 @@ public class CustomBlocks {
                     this.placedBlocks.put(block, i);
                     Bukkit.getPluginManager().callEvent(new CustomBlockLoadEvent(block, i));
                 }
-                scanForWrongTripwires(chunk);
+                scanForWrongBlockModels(chunk);
             });
         });
     }
@@ -124,9 +134,9 @@ public class CustomBlocks {
         if (setAir)
             block.setType(Material.AIR);
 
-        if (placedBlock.dropOnDestroy() && dropItem) {
+        if (dropItem)
             block.getWorld().dropItem(block.getLocation().add(0.5, 0.1, 0.5), placedBlock.getItemToDrop());
-        }
+
         this.saveChunk(block.getChunk());
 
     }

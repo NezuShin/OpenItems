@@ -15,7 +15,7 @@ public class CustomChorusModel implements CustomBlockModel {
 
     @Override
     public void apply(Block b) {
-        b.setType(Material.TRIPWIRE);
+        b.setType(Material.CHORUS_PLANT);
         if (b.getBlockData() instanceof MultipleFacing t) {
             setId(t, this.id);
             b.setBlockData(t);
@@ -42,10 +42,15 @@ public class CustomChorusModel implements CustomBlockModel {
     }
 
     public static void setId(MultipleFacing nb, int id) {
+        id--;
         for (var i : Utils.getMainBlockFaces()) {
             nb.setFace(i, (id & 1) == 1);
             id = id >> 1;
         }
+    }
+
+    public static void setDefaultId(MultipleFacing multipleFacing) {
+        setId(multipleFacing, 64);
     }
 
     public static int getId(MultipleFacing nb) {
@@ -54,6 +59,16 @@ public class CustomChorusModel implements CustomBlockModel {
             num = (num << 1) | (nb.hasFace(i) ? 1 : 0);
         }
 
-        return num;
+        return num + 1;
+    }
+
+    public static String toBlocksate(int id) {
+        id--;
+        return "down=" + (((id) & 0b1) == 1) +
+                ",up=" + (((id >> 1) & 0b1) == 1) +
+                ",south=" + (((id >> 2) & 0b1) == 1) +
+                ",north=" + (((id >> 3) & 0b1) == 1) +
+                ",east=" + (((id >> 4) & 0b1) == 1) +
+                ",west=" + (((id >> 5) & 0b1) == 1);
     }
 }

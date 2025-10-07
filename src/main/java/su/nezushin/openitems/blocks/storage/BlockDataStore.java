@@ -1,19 +1,16 @@
 package su.nezushin.openitems.blocks.storage;
 
 import de.tr7zw.nbtapi.NBTItem;
-import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemStack;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.types.CustomBlockModel;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Represents custom block properties. Used to be stored in custom item data
  */
 public class BlockDataStore {
-    protected boolean canBurn = true, canBeBlown = true, canBeReplaced = true, dropOnDestroy = true;
+    protected boolean canBurn = true, canBeBlown = true, canBeReplaced = true, dropOnBreak = true,
+            dropOnExplosion = true, dropOnDestroyByLiquid = true, canBeDestroyedByLiquid = true, dropOnBurn = true;
 
     protected String id;
 
@@ -41,7 +38,9 @@ public class BlockDataStore {
         canBeBlown = compound.getBoolean("can_be_blown");
         canBeReplaced = compound.getBoolean("can_be_replaced");
         canBurn = compound.getBoolean("can_burn");
-        dropOnDestroy = compound.getBoolean("drop_on_destroy");
+        dropOnBreak = compound.getBoolean("drop_on_break");
+        dropOnExplosion = compound.getBoolean("drop_on_explosion");
+        dropOnDestroyByLiquid = compound.getBoolean("drop_on_destroy_by_liquid");
 
         return true;
     }
@@ -54,7 +53,9 @@ public class BlockDataStore {
         compound.setBoolean("can_be_blown", this.canBeBlown);
         compound.setBoolean("can_be_replaced", this.canBeReplaced);
         compound.setBoolean("can_burn", this.canBurn);
-        compound.setBoolean("drop_on_destroy", this.dropOnDestroy);
+        compound.setBoolean("drop_on_break", this.dropOnBreak);
+        compound.setBoolean("drop_on_explosion", this.dropOnExplosion);
+        compound.setBoolean("drop_on_destroy_by_liquid", this.dropOnDestroyByLiquid);
 
 
         return this.itemToDrop = nbtItem.getItem();
@@ -73,8 +74,8 @@ public class BlockDataStore {
         return canBeReplaced;
     }
 
-    public boolean dropOnDestroy() {
-        return dropOnDestroy;
+    public boolean dropOnBreak() {
+        return dropOnBreak;
     }
 
     public void setCanBurn(boolean canBurn) {
@@ -89,11 +90,43 @@ public class BlockDataStore {
         this.canBeReplaced = canBeReplaced;
     }
 
+    public void setDropOnExplosion(boolean dropOnExplosion) {
+        this.dropOnExplosion = dropOnExplosion;
+    }
+
+    public void setDropOnDestroyByLiquid(boolean dropOnDestroyByLiquid) {
+        this.dropOnDestroyByLiquid = dropOnDestroyByLiquid;
+    }
+
+    public boolean canBeDestroyedByLiquid() {
+        return canBeDestroyedByLiquid;
+    }
+
+    public void setCanBeDestroyedByLiquid(boolean canBeDestroyedByLiquid) {
+        this.canBeDestroyedByLiquid = canBeDestroyedByLiquid;
+    }
+
+    public boolean dropOnDestroyByLiquid() {
+        return dropOnDestroyByLiquid;
+    }
+
+    public boolean dropOnExplosion() {
+        return dropOnExplosion;
+    }
+
+    public boolean dropOnBurn() {
+        return dropOnBurn;
+    }
+
+    public void setDropOnBurn(boolean dropOnBurn) {
+        this.dropOnBurn = dropOnBurn;
+    }
+
     /**
-     * Set should itemToDrop be dropped
+     * Set should itemToDrop be dropped when player break block
      */
-    public void setDropOnDestroy(boolean dropOnDestroy) {
-        this.dropOnDestroy = dropOnDestroy;
+    public void setDropOnBreak(boolean dropOnBreak) {
+        this.dropOnBreak = dropOnBreak;
     }
 
     /**

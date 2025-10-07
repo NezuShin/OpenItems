@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.block.data.type.Tripwire;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -18,11 +19,10 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
+import su.nezushin.openitems.blocks.types.CustomChorusModel;
+import su.nezushin.openitems.events.*;
 import su.nezushin.openitems.utils.NBTUtil;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
-import su.nezushin.openitems.events.CustomBlockBreakEvent;
-import su.nezushin.openitems.events.CustomBlockDropItemEvent;
-import su.nezushin.openitems.events.CustomBlockPlaceEvent;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
 
@@ -67,7 +67,7 @@ public class CustomBlocksListener implements Listener {
 
         e.getItems().clear();
 
-        if (placedBlock.dropOnDestroy()) {
+        if (placedBlock.dropOnBreak()) {
             var item = block.getWorld().dropItem(block.getLocation().add(0.5, 0.1, 0.5), placedBlock.getItemToDrop());
 
             e.getItems().add(item);
@@ -100,7 +100,16 @@ public class CustomBlocksListener implements Listener {
             var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(i);
             if (placedBlock == null) return false;
             if (placedBlock.canBeBlown()) {
-                OpenItems.getInstance().getBlocks().destroyBlock(i, Math.random() < e.getYield(), true);
+
+                var event = new CustomBlockExplodeEvent(i, placedBlock, e);
+
+                Bukkit.getPluginManager().callEvent(event);
+
+                if (event.isCancelled())
+                    return true;
+
+                OpenItems.getInstance().getBlocks().destroyBlock(i, placedBlock.dropOnExplosion()
+                        && Math.random() < e.getYield(), true);
 
                 i.setType(Material.AIR);
                 e.blockList().remove(i);
@@ -116,7 +125,17 @@ public class CustomBlocksListener implements Listener {
             var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(i);
             if (placedBlock == null) return false;
             if (placedBlock.canBeBlown()) {
-                OpenItems.getInstance().getBlocks().destroyBlock(i, Math.random() < e.getYield(), true);
+
+                var event = new CustomBlockExplodeEvent(i, placedBlock, e);
+
+                Bukkit.getPluginManager().callEvent(event);
+
+                if (event.isCancelled())
+                    return true;
+
+
+                OpenItems.getInstance().getBlocks().destroyBlock(i, placedBlock.dropOnExplosion()
+                        && Math.random() < e.getYield(), true);
 
                 i.setType(Material.AIR);
                 e.blockList().remove(i);
@@ -131,7 +150,16 @@ public class CustomBlocksListener implements Listener {
         var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(e.getBlock());
         if (placedBlock == null) return;
         if (placedBlock.canBurn()) {
-            OpenItems.getInstance().getBlocks().destroyBlock(e.getBlock(), false, true);
+            var event = new CustomBlockBurnEvent(e.getBlock(), placedBlock, e);
+
+            Bukkit.getPluginManager().callEvent(event);
+
+            if (event.isCancelled()) {
+                e.setCancelled(true);
+                return;
+            }
+
+            OpenItems.getInstance().getBlocks().destroyBlock(e.getBlock(), placedBlock.dropOnBurn(), true);
             return;
         }
         e.setCancelled(true);
@@ -159,20 +187,72 @@ public class CustomBlocksListener implements Listener {
 
         var blocks = OpenItems.getInstance().getBlocks();
 
-        var blockId = blocks.getPlacedBlocks().get(block);
+        var placedBlock = blocks.getPlacedBlocks().get(block);
 
-        if (blockId == null)
+        if (placedBlock == null)
             return;
 
+        if (placedBlock.canBeDestroyedByLiquid()) {
+            blocks.destroyBlock(block, placedBlock.dropOnDestroyByLiquid(), true);
+            e.setCancelled(true);
+            block.getState().update(true, true);
+            return;
+        }
+
         e.setCancelled(true);
+    }
+
+    @EventHandler
+    public void chorusGrow(BlockSpreadEvent e) {
+        var block = e.getSource();
+        if (!OpenItemsConfig.enableChorus)
+            return;
+        if (!block.getType().equals(Material.CHORUS_FLOWER))
+            return;
+        OpenItems.sync(() -> {
+            if (!(block.getBlockData() instanceof MultipleFacing multipleFacing))
+                return;
+
+            CustomChorusModel.setDefaultId(multipleFacing);
+            block.setBlockData(multipleFacing);
+        });
+    }
+
+    @EventHandler
+    public void chorusGrow(BlockGrowEvent e) {
+        var block = e.getBlock();
+        var newState = e.getNewState();
+
+        if (!newState.getType().equals(Material.CHORUS_FLOWER))
+            return;
+
+        var blocks = OpenItems.getInstance().getBlocks();
+
+        for (var face : Utils.getMainBlockFaces()) {
+            var b = block.getRelative(face);
+
+            if (!b.getType().equals(Material.CHORUS_PLANT))
+                continue;
+
+            if (!(b.getBlockData() instanceof MultipleFacing mf))
+                continue;
+
+            var placedBlock = blocks.getPlacedBlocks().get(b);
+
+            if (placedBlock != null) {
+                placedBlock.getModel().apply(mf);
+            } else {
+                CustomChorusModel.setDefaultId(mf);
+            }
+            b.setBlockData(mf, false);
+
+        }
     }
 
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void blockPhysics(BlockPhysicsEvent e) {
         var block = e.getBlock();
-
-        var isTripwire = block.getType().equals(Material.TRIPWIRE);
 
 
         var blocks = OpenItems.getInstance().getBlocks();
@@ -187,8 +267,13 @@ public class CustomBlocksListener implements Listener {
                 block.setBlockData(blockData, false);
             }
             return;
-        } else if (isTripwire && OpenItemsConfig.enableTripwires && e.getChangedBlockData() instanceof Tripwire blockData) {
+        } else if (block.getType().equals(Material.TRIPWIRE) && OpenItemsConfig.enableTripwires
+                && e.getChangedBlockData() instanceof Tripwire blockData) {
             CustomTripwireModel.setDefaultId(blockData);
+            block.setBlockData(blockData, false);
+        } else if (block.getType().equals(Material.CHORUS_PLANT) && OpenItemsConfig.enableChorus
+                && e.getChangedBlockData() instanceof MultipleFacing blockData) {
+            CustomChorusModel.setDefaultId(blockData);
             block.setBlockData(blockData, false);
         }
         for (var face : Utils.getMainBlockFaces())

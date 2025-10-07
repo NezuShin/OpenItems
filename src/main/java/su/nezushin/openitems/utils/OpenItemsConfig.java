@@ -15,7 +15,7 @@ public class OpenItemsConfig {
 
     public static List<String> resourcePackCopyDestinations;
 
-    public static boolean replaceTripwiresOnChunkLoad = true, enableTripwires = true, buildOnEnable, disableMipMapWarning;
+    public static boolean replaceTripwiresOnChunkLoad = true, replaceChorusPlantsOnChunkLoad = true, enableTripwires = true, enableChorus = true, buildOnEnable, disableMipMapWarning;
 
     public static void init() {
         var plugin = OpenItems.getInstance();
@@ -28,7 +28,9 @@ public class OpenItemsConfig {
         config = plugin.getConfig();
 
         replaceTripwiresOnChunkLoad = config.getBoolean("blocks.replace-tripwires-on-chunk-load", true);
+        replaceChorusPlantsOnChunkLoad = config.getBoolean("blocks.replace-chorus-plants-on-chunk-load", true);
         enableTripwires = config.getBoolean("blocks.enable-tripwires", true);
+        enableChorus = config.getBoolean("blocks.enable-chorus", true);
 
         buildOnEnable = config.getBoolean("resourcepack.build-on-enable", true);
 

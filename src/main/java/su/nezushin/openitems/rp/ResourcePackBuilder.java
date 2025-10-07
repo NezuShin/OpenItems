@@ -3,6 +3,7 @@ package su.nezushin.openitems.rp;
 import org.bukkit.Bukkit;
 import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.blocks.types.CustomChorusModel;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.AsyncBuildDoneEvent;
 import su.nezushin.openitems.events.AsyncRegistryLoadedEvent;
@@ -140,6 +141,9 @@ public class ResourcePackBuilder {
             });
             this.blockIdCache.getRegisteredTripwireIds().forEach((k, v) -> {
                 OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomTripwireModel(v));
+            });
+            this.blockIdCache.getRegisteredChorusIds().forEach((k, v) -> {
+                OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomChorusModel(v));
             });
 
             this.fontImageIdCache.getRegisteredCharIds().forEach((k, v) -> {

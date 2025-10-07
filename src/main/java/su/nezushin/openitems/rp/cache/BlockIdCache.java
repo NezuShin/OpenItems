@@ -3,6 +3,7 @@ package su.nezushin.openitems.rp.cache;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.rp.blockstates.ChorusBlockstate;
 import su.nezushin.openitems.rp.blockstates.NoteblockBlockstate;
 import su.nezushin.openitems.rp.blockstates.TripwireBlockstate;
 
@@ -23,8 +24,12 @@ public class BlockIdCache extends JsonCache {
     private Map<String, Integer> tripwireIds = new HashMap<>();
     private Map<String, Integer> registeredTripwireIds = new HashMap<>();
 
+    private Map<String, Integer> chorusIds = new HashMap<>();
+    private Map<String, Integer> registeredChorusIds = new HashMap<>();
+
     private int nextNoteblockId = 1;
     private int nextTripwireId = 1;
+    private int nextChorusId = 1;
 
 
     public int getOrCreateNoteblockId(String name) {
@@ -49,6 +54,17 @@ public class BlockIdCache extends JsonCache {
         return id;
     }
 
+    public int getOrCreateChorusId(String name) {
+        var id = chorusIds.get(name);
+
+        if (id == null) {
+            id = nextChorusId++;
+            chorusIds.put(name, id);
+        }
+
+        return id;
+    }
+
     public void build() throws IOException {
         var blockstatesDir = new File(OpenItems.getInstance().getDataFolder(), "build/assets/minecraft/blockstates");
 
@@ -56,9 +72,11 @@ public class BlockIdCache extends JsonCache {
 
         var noteblockIdCache = new File(blockstatesDir, "note_block.json");
         var tripwireIdCache = new File(blockstatesDir, "tripwire.json");
+        var chorusIdCache = new File(blockstatesDir, "chorus_plant.json");
 
         Files.writeString(noteblockIdCache.toPath(), new Gson().toJson(new NoteblockBlockstate(this.noteblockIds)), Charsets.UTF_8);
         Files.writeString(tripwireIdCache.toPath(), new Gson().toJson(new TripwireBlockstate(this.tripwireIds)), Charsets.UTF_8);
+        Files.writeString(chorusIdCache.toPath(), new Gson().toJson(new ChorusBlockstate(this.chorusIds)), Charsets.UTF_8);
     }
 
     public void cleanRegistered() {
@@ -81,5 +99,9 @@ public class BlockIdCache extends JsonCache {
 
     public Map<String, Integer> getRegisteredTripwireIds() {
         return registeredTripwireIds;
+    }
+
+    public Map<String, Integer> getRegisteredChorusIds() {
+        return registeredChorusIds;
     }
 }

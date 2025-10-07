@@ -70,6 +70,8 @@ public class ModelRegistry {
                 "{block-types-noteblock}", String.valueOf(blockTypes.values().stream()
                         .filter(i -> i instanceof CustomNoteblockModel).count()),
                 "{block-types-chorus}", String.valueOf(blockTypes.values().stream()
+                        .filter(i -> i instanceof CustomChorusModel).count()),
+                "{font-images}", String.valueOf(blockTypes.values().stream()
                         .filter(i -> i instanceof CustomChorusModel).count())
         ).send(sender);
     }

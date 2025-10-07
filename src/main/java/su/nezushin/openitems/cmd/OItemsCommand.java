@@ -93,7 +93,7 @@ public class OItemsCommand implements CommandExecutor, TabCompleter {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
 
         if (args.length == 1) {
-            return Lists.newArrayList("build", "emoji", "reload")
+            return Lists.newArrayList("build", "emoji", "reload", "scan-mip-map")
                     .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[0])).toList();
         }
         if (args.length == 2) {

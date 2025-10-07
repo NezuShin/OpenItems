@@ -62,8 +62,9 @@ public class NamespacedSectionBuilder {
         var generatedDir = new File(this.sectionDir, "textures/item/generated");
         var handheldDir = new File(this.sectionDir, "textures/item/handheld");
 
-        var noteblockDir = new File(this.sectionDir, "textures/block/noteblock");
+        var noteblockDir = new File(this.sectionDir, "textures/block/note_block");
         var tripwireDir = new File(this.sectionDir, "models/block/tripwire");
+        var chorusDir = new File(this.sectionDir, "models/block/chorus_plant");
 
         var equipmentDir = new File(this.sectionDir, "textures/entity/equipment");
 
@@ -99,6 +100,7 @@ public class NamespacedSectionBuilder {
 
         generateNoteblockModels(pngFilesNoteblock);
         scanForTripwireModels(tripwireDir, "block");
+        scanForChorusModels(chorusDir, "block");
 
         scanForItemModels(new File(this.sectionDir, "models/item"), "");
 
@@ -180,6 +182,29 @@ public class NamespacedSectionBuilder {
         path = Utils.createPath(path, file);
         for (File i : file.listFiles())
             scanForTripwireModels(i, path);
+    }
+
+    //scan for models to add it into block registry and /items dir
+    public void scanForChorusModels(File file, String path) throws IOException {
+        if (!OpenItemsConfig.enableChorus)
+            return;
+        if (!file.exists())
+            return;
+        if (!file.isDirectory()) {
+            createRegularTemplateItem(this.namespace + ":" + path + "/" + Utils.getFileName(file),
+                    path.replaceFirst("block ", ""), Utils.getFileName(file));
+
+            var modelPath = this.namespace + ":" + path + "/" + Utils.getFileName(file);
+
+            var blockIdCache = OpenItems.getInstance().getResourcePackBuilder().getBlockIdCache();
+
+            var id = blockIdCache.getOrCreateChorusId(modelPath);
+            blockIdCache.getRegisteredChorusIds().put(modelPath, id);
+            return;
+        }
+        path = Utils.createPath(path, file);
+        for (File i : file.listFiles())
+            scanForChorusModels(i, path);
     }
 
     private void generateEquipmentModels(File equipmentDir) throws IOException {
