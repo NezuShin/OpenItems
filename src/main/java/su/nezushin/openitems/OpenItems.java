@@ -6,6 +6,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import su.nezushin.openitems.blocks.CustomBlocks;
 import su.nezushin.openitems.cmd.OEditCommand;
 import su.nezushin.openitems.cmd.OItemsCommand;
+import su.nezushin.openitems.papi.FontImageExpansion;
 import su.nezushin.openitems.rp.ResourcePackBuilder;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
@@ -53,6 +54,9 @@ public final class OpenItems extends JavaPlugin {
     public void load() {
         OpenItemsConfig.init();
         this.resourcePackBuilder.loadRegistry();
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            new FontImageExpansion().register();
+        }
     }
 
 

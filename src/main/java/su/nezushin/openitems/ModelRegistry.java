@@ -24,7 +24,8 @@ public class ModelRegistry {
     //block model id's taken from build/assets/minecraft/blockstates/note_block.json and tripwire.json
     private Map<String, CustomBlockModel> blockTypes = new HashMap<>();
 
-    public Map<String, String> fontImages = new HashMap<>();
+    //font images, key is emoji id, value is the symbol
+    private Map<String, String> fontImages = new HashMap<>();
 
     public Map<String, CustomBlockModel> getBlockTypes() {
         return blockTypes;

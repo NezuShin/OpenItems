@@ -4,6 +4,7 @@ main: su.nezushin.openitems.OpenItems
 api-version: '1.21'
 author: NezuShin
 depend: [NBTAPI]
+softdepend: [PlaceholderAPI]
 commands:
   oedit: {}
   openitems:
