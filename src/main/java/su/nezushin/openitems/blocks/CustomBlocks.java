@@ -50,7 +50,7 @@ public class CustomBlocks {
         OpenItems.async(() -> {
             var str = ConfigurationSerializableGsonAdapter.createGson().toJson(list);
             OpenItems.sync(() -> {
-                chunk.getPersistentDataContainer().set(OpenItems.CUSTOM_BLOCKS_KEY, PersistentDataType.STRING, str);
+                chunk.getPersistentDataContainer().set(OpenItems.CUSTOM_BLOCKS_CHUNK_KEY, PersistentDataType.STRING, str);
             });
         });
     }
@@ -62,6 +62,12 @@ public class CustomBlocks {
 
         var minHeight = world.getMinHeight();
         var maxHeight = world.getMaxHeight();
+
+        var val = chunk.getPersistentDataContainer().get(
+                OpenItems.CUSTOM_BLOCKS_CHECKED_CHUNK_KEY, PersistentDataType.BOOLEAN);
+
+        if (val != null)
+            return;
 
         OpenItems.async(() -> {
             var list = new ArrayList<int[]>();
@@ -91,6 +97,8 @@ public class CustomBlocks {
                         }
 
                     }
+                    chunk.getPersistentDataContainer().set(
+                            OpenItems.CUSTOM_BLOCKS_CHECKED_CHUNK_KEY, PersistentDataType.BOOLEAN, true);
                 });
         });
 
@@ -98,7 +106,7 @@ public class CustomBlocks {
 
     public void loadChunk(Chunk chunk) {
         var str = chunk.getPersistentDataContainer().get(
-                OpenItems.CUSTOM_BLOCKS_KEY, PersistentDataType.STRING);
+                OpenItems.CUSTOM_BLOCKS_CHUNK_KEY, PersistentDataType.STRING);
 
         if (str == null) {
             scanForWrongBlockModels(chunk);
@@ -131,14 +139,15 @@ public class CustomBlocks {
 
     public void destroyBlock(Block block, boolean dropItem, boolean setAir) {
         var placedBlock = this.placedBlocks.remove(block);
-        if (setAir)
+        if (setAir) {
             block.setType(Material.AIR);
+            block.getState().update(true, true);
+        }
 
         if (dropItem)
             block.getWorld().dropItem(block.getLocation().add(0.5, 0.1, 0.5), placedBlock.getItemToDrop());
 
         this.saveChunk(block.getChunk());
-
     }
 
     public void cleanChunk(Chunk chunk) {

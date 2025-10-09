@@ -8,7 +8,7 @@ messages:
     - '<reset><gray>------------------<#008f9a>Block data<reset><gray>-----------------'
     - '<reset><#08c0c2>Model<grey>:<#008f9a> {model}'
     - '<reset><#08c0c2>Drop when broken by player<grey>:<#008f9a> {drop-on-break}'
-    - '<reset><#08c0c2>Drop when destroyed by liquid (tripwire only)<grey>:<#008f9a> {drop-on-destroy-by-liquid}'
+    - '<reset><#08c0c2>Drop when destroyed by liquid (tripwire and chorus only)<grey>:<#008f9a> {drop-on-destroy-by-liquid}'
     - '<reset><#08c0c2>Drop when destroyed by explosion<grey>:<#008f9a> {drop-on-explosion}'
     - '<reset><#08c0c2>Drop when destroyed by fire (noteblock only)<grey>:<#008f9a> {drop-on-burn}'
     - '<reset><#08c0c2>Can be blown<grey>:<#008f9a> {can-be-blown}'
@@ -64,9 +64,13 @@ messages:
     - '<reset><gray>------------------<#008f9a>OEdit block help<reset><gray>-----------------'
     - "<reset><#08c0c2><click:suggest_command:'/oedit block'>/oedit <#08c0c2>block<grey> - <#008f9a>show info about block"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block model'>/oedit <#08c0c2>block model <model path><grey> - <#008f9a>set block model for item (when placed); make possible to place this item as block"
-    - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_destroy'>/oedit <#08c0c2>block drop_on_destroy <true/false><grey> - <#008f9a>make block drop item when mined/exploded/etc"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_break'>/oedit <#08c0c2>block drop_on_break <true/false><grey> - <#008f9a>make block drop item when mined by player"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_destroy_by_liquid'>/oedit <#08c0c2>block drop_on_destroy_by_liquid <true/false><grey> - <#008f9a>make block drop item when destroyed by liquids"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_explosion'>/oedit <#08c0c2>block drop_on_explosion <true/false><grey> - <#008f9a>make block drop item when exploded"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_burn'>/oedit <#08c0c2>block drop_on_burn <true/false><grey> - <#008f9a>make block drop item when burnt"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_be_blown'>/oedit <#08c0c2>block can_be_blown <true/false><grey> - <#008f9a>set block vulnerable for explosions"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_burn'>/oedit <#08c0c2>block can_burn <true/false><grey> - <#008f9a>set block burnable (noteblock-based blocks only)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block can_be_destroyed_by_liquid'>/oedit <#08c0c2>block can_be_destroyed_by_liquid <true/false><grey> - <#008f9a>set block can be destroyed by liquid (tipwire and chorus-based blocks only)"
 
 
   oedit-help-equipment:

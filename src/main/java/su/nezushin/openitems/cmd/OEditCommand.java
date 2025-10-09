@@ -146,6 +146,8 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                                 block.setCanBurn(args[2].equalsIgnoreCase("true"));
                             } else if (args[1].equalsIgnoreCase("can_be_replaced")) {
                                 block.setCanBeReplaced(args[2].equalsIgnoreCase("true"));
+                            } else if (args[1].equalsIgnoreCase("can_be_destroyed_by_liquid")) {
+                                block.setCanBeDestroyedByLiquid(args[2].equalsIgnoreCase("true"));
                             }
                         }
                         item = block.applyData();
@@ -296,7 +298,7 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
             if (args[0].equalsIgnoreCase("block"))
                 return Lists.newArrayList("drop_on_break", "drop_on_destroy_by_liquid", "drop_on_explosion",
                                 "drop_on_burn", "can_be_blown", "can_burn", "can_be_replaced",
-                                "model")
+                                "model", "can_be_destroyed_by_liquid")
                         .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
 
             if (args[0].equalsIgnoreCase("equipment"))

@@ -3,7 +3,6 @@ package su.nezushin.openitems;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
-import su.nezushin.openitems.armor.ArmorDamagePreventListener;
 import su.nezushin.openitems.blocks.CustomBlocks;
 import su.nezushin.openitems.cmd.OEditCommand;
 import su.nezushin.openitems.cmd.OItemsCommand;
@@ -18,12 +17,16 @@ public final class OpenItems extends JavaPlugin {
     private ModelRegistry modelRegistry;
     private ResourcePackBuilder resourcePackBuilder;
 
-    public static NamespacedKey CUSTOM_BLOCKS_KEY;
+    public static NamespacedKey CUSTOM_BLOCKS_CHUNK_KEY;
+
+
+    public static NamespacedKey CUSTOM_BLOCKS_CHECKED_CHUNK_KEY;
 
     @Override
     public void onLoad() {
         instance = this;
-        CUSTOM_BLOCKS_KEY = new NamespacedKey(OpenItems.getInstance(), "custom_blocks");
+        CUSTOM_BLOCKS_CHUNK_KEY = new NamespacedKey(OpenItems.getInstance(), "custom_blocks");
+        CUSTOM_BLOCKS_CHECKED_CHUNK_KEY = new NamespacedKey(OpenItems.getInstance(), "custom_blocks_checked");
     }
 
     @Override

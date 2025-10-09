@@ -36,11 +36,13 @@ public class BlockDataStore {
 
         id = compound.getString("id");
         canBeBlown = compound.getBoolean("can_be_blown");
+        canBeDestroyedByLiquid = compound.getBoolean("can_be_destroyed_by_liquid");
         canBeReplaced = compound.getBoolean("can_be_replaced");
         canBurn = compound.getBoolean("can_burn");
         dropOnBreak = compound.getBoolean("drop_on_break");
         dropOnExplosion = compound.getBoolean("drop_on_explosion");
         dropOnDestroyByLiquid = compound.getBoolean("drop_on_destroy_by_liquid");
+
 
         return true;
     }
@@ -52,6 +54,7 @@ public class BlockDataStore {
         compound.setString("id", this.id);
         compound.setBoolean("can_be_blown", this.canBeBlown);
         compound.setBoolean("can_be_replaced", this.canBeReplaced);
+        compound.setBoolean("can_be_destroyed_by_liquid", this.canBeDestroyedByLiquid);
         compound.setBoolean("can_burn", this.canBurn);
         compound.setBoolean("drop_on_break", this.dropOnBreak);
         compound.setBoolean("drop_on_explosion", this.dropOnExplosion);

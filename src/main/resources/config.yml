@@ -12,5 +12,7 @@ blocks:
   replace-tripwires-on-chunk-load: true
   replace-chorus-plants-on-chunk-load: true
 
+
+
   #Enable tripwire-based custom blocks? Default vanilla tripwire mechanic will be broken if enabled
   enable-tripwires: true

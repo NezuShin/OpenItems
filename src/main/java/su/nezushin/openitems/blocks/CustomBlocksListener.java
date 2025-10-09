@@ -180,10 +180,10 @@ public class CustomBlocksListener implements Listener {
     @EventHandler
     public void blockFromTo(BlockFromToEvent e) {
         var block = e.getToBlock();
-        if (!OpenItemsConfig.enableTripwires)
+
+        if (!block.getType().equals(Material.TRIPWIRE) && !block.getType().equals(Material.CHORUS_PLANT))
             return;
-        if (!block.getType().equals(Material.TRIPWIRE))
-            return;
+
 
         var blocks = OpenItems.getInstance().getBlocks();
 
@@ -256,17 +256,16 @@ public class CustomBlocksListener implements Listener {
 
 
         var blocks = OpenItems.getInstance().getBlocks();
+
         if (blocks.getPlacedBlocks().containsKey(block)) {
             e.setCancelled(true);
-            var blockType = OpenItems.getInstance().getModelRegistry().getBlockTypes()
-                    .get(blocks.getPlacedBlocks().get(block).getId());
+            var blockType = blocks.getPlacedBlocks().get(block).getModel();
 
             if (blockType != null && blockType.applyOnPhysics()) {
-                var blockData = e.getChangedBlockData();
+                var blockData = block.getBlockData();//e.getChangedBlockData();
                 blockType.apply(blockData);
                 block.setBlockData(blockData, false);
             }
-            return;
         } else if (block.getType().equals(Material.TRIPWIRE) && OpenItemsConfig.enableTripwires
                 && e.getChangedBlockData() instanceof Tripwire blockData) {
             CustomTripwireModel.setDefaultId(blockData);
@@ -276,11 +275,13 @@ public class CustomBlocksListener implements Listener {
             CustomChorusModel.setDefaultId(blockData);
             block.setBlockData(blockData, false);
         }
-        for (var face : Utils.getMainBlockFaces())
-            if (blocks.getPlacedBlocks().containsKey(block.getRelative(face))) {
+        for (var face : Utils.getMainBlockFaces()) {
+            var relative = block.getRelative(face);
+            if (blocks.getPlacedBlocks().containsKey(relative)) {
                 e.setCancelled(true);
                 return;
             }
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -316,6 +317,8 @@ public class CustomBlocksListener implements Listener {
 
 
         blocks.getPlacedBlocks().put(block, placedBlock);
+        //block.getState().update(true, true);
+
         blocks.saveChunk(block.getChunk());
     }
 
