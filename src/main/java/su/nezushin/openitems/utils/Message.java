@@ -19,7 +19,9 @@ public enum Message {
     current_block_data, oedit_help_general, oedit_help_item, oedit_help_block, oedit_help_equipment, started_build,
     build_end_done, build_end_err, registry_loaded, config_load_start, build_mip_map_warning,
     config_load_err, config_load_success, current_equipment_data, current_item_data, translatable_component,
-    mip_map_end_err, mip_map_end_done, mip_map_limitation,  mip_map_end_not_found;
+    mip_map_end_err, mip_map_end_done, mip_map_limitation,  mip_map_end_not_found, oedit_break_speed_multiplier,
+    oedit_break_speed_multiplier_tool, oedit_break_speed_multiplier_material, oedit_break_speed_multiplier_model,
+    oedit_break_speed_multiplier_none, oedit_break_speed_grade_list, oedit_break_speed_grade_delimiter;
 
     private List<String> list = Lists.newArrayList("");
 

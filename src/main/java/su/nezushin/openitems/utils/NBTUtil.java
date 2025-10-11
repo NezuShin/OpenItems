@@ -74,7 +74,7 @@ public class NBTUtil {
      * Need this functionality to prevent helmet durability damage on falling
      *
      * @param item
-     * @param DamageCause damage types from registry to prevent armor durability damage
+     * @param damageTypes damage types from registry to prevent armor durability damage
      * @return item with set nbt tag openitems_ignore_damage_types
      */
     public static ItemStack setIgnoreDamageCauses(ItemStack item, List<String> damageTypes) {

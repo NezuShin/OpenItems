@@ -19,8 +19,7 @@ public final class OpenItems extends JavaPlugin {
     private ResourcePackBuilder resourcePackBuilder;
 
     public static NamespacedKey CUSTOM_BLOCKS_CHUNK_KEY;
-
-
+    
     public static NamespacedKey CUSTOM_BLOCKS_CHECKED_CHUNK_KEY;
 
     @Override

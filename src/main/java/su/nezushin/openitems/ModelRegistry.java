@@ -45,6 +45,11 @@ public class ModelRegistry {
     }
 
     //synchronized collections for async resource pack scan and build
+
+    /**
+     * Sets collections synchronized for building time. After building, builder should set it back to unmodifiable.
+     * @param lock set all collections unmodifiable
+     */
     public void setLock(boolean lock) {
         if (lock) {
             items = Collections.unmodifiableSet(new HashSet<>(items));

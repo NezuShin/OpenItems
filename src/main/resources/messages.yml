@@ -63,6 +63,7 @@ messages:
   oedit-help-block:
     - '<reset><gray>------------------<#008f9a>OEdit block help<reset><gray>-----------------'
     - "<reset><#08c0c2><click:suggest_command:'/oedit block'>/oedit <#08c0c2>block<grey> - <#008f9a>show info about block"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block break_speed_multiplier'>/oedit <#08c0c2>block break_speed_multiplier<grey> - <#008f9a>show info about block break speed modifiers"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block model'>/oedit <#08c0c2>block model <model path><grey> - <#008f9a>set block model for item (when placed); make possible to place this item as block"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_break'>/oedit <#08c0c2>block drop_on_break <true/false><grey> - <#008f9a>make block drop item when mined by player"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_destroy_by_liquid'>/oedit <#08c0c2>block drop_on_destroy_by_liquid <true/false><grey> - <#008f9a>make block drop item when destroyed by liquids"
@@ -71,6 +72,8 @@ messages:
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_be_blown'>/oedit <#08c0c2>block can_be_blown <true/false><grey> - <#008f9a>set block vulnerable for explosions"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_burn'>/oedit <#08c0c2>block can_burn <true/false><grey> - <#008f9a>set block burnable (noteblock-based blocks only)"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_be_destroyed_by_liquid'>/oedit <#08c0c2>block can_be_destroyed_by_liquid <true/false><grey> - <#008f9a>set block can be destroyed by liquid (tipwire and chorus-based blocks only)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block break_speed_multiplier'>/oedit <#08c0c2>block break_speed_multiplier <tool/model/material> <multiplier><grey> - <#008f9a>set block break speed multiplier for tool (e.g. pickaxe), model (e.g. <namespace>:<path>) or material (e.g. diamond)"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block break_speed_multiplier apply_tool_grade_multiplier'>/oedit <#08c0c2>block break_speed_multiplier apply_tool_grade_multiplier [type] [type] [type...]<grey> - <#008f9a> allow setting tool grade multiplier for selected tool types"
 
 
   oedit-help-equipment:
@@ -86,6 +89,24 @@ messages:
     - "<reset><#08c0c2><click:suggest_command:'/oedit equipment dispensable'>/oedit <#08c0c2>equipment dispensable <true/false><grey> - set possible to equip item using dispenser<#008f9a>)"
     - "<reset><#08c0c2><click:suggest_command:'/oedit equipment damage_on_hurt'>/oedit <#08c0c2>equipment damage_on_hurt <true/false><grey> - decrease durability when hte wearing entity is damaged<#008f9a>)"
 
+  oedit-break-speed-multiplier: "<reset><gray>--------------<#008f9a>Block speed multipliers<reset><gray>-------------"
+
+  oedit-break-speed-multiplier-none:
+  - '<reset><#008f9a>There is no speed multipliers for this block'
+  - '<reset><#008f9a>Consider adding preferred tool via <#08c0c2>/oedit block break_speed_multiplier tool <tool> <multiplier>'
+
+  oedit-break-speed-grade-list:    '<reset><#08c0c2>Applied tool grades to: <#008f9a>{values}'
+  oedit-break-speed-grade-delimiter: '<#08c0c2>, <#008f9a>'
+
+  oedit-break-speed-multiplier-tool:
+    - "<reset><grey>(tool) <#08c0c2>{tool} <grey>- <#008f9a>{multiplier}x"
+
+  oedit-break-speed-multiplier-material:
+    - "<reset><grey>(material) <#08c0c2>{material} <grey>- <#008f9a>{multiplier}x"
+
+
+  oedit-break-speed-multiplier-model:
+    - "<reset><grey>(model) <#08c0c2>{model} <grey>- <#008f9a>{multiplier}x"
 
   started-build: "<reset><#08c0c2>Starting resource pack build..."
   build-end-done: "<reset><green>Build done!"

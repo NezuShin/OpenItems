@@ -1,8 +1,12 @@
 package su.nezushin.openitems.blocks;
 
+import com.destroystokyo.paper.MaterialSetTag;
+import com.destroystokyo.paper.MaterialTags;
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.block.data.type.Tripwire;
@@ -14,6 +18,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
@@ -320,6 +325,61 @@ public class CustomBlocksListener implements Listener {
         //block.getState().update(true, true);
 
         blocks.saveChunk(block.getChunk());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void interact(PlayerInteractEvent e) {
+        if (e.getAction() != Action.LEFT_CLICK_BLOCK)
+            return;
+
+        var player = e.getPlayer();
+        var block = e.getClickedBlock();
+        var item = player.getInventory().getItemInMainHand();
+
+
+        var blocks = OpenItems.getInstance().getBlocks();
+
+        var placedBlock = blocks.getPlacedBlocks().get(block);
+
+        if (placedBlock == null)
+            return;
+
+        double modifier = 1;
+
+        if (item == null || item.getType().isAir()) {
+            modifier = placedBlock.getToolSpeedMultipliers().getOrDefault(ToolItemType.HAND, 1.0);
+        } else if (placedBlock.getMaterialSpeedMultipliers().containsKey(item.getType())) {
+            modifier = placedBlock.getMaterialSpeedMultipliers().get(item.getType());
+        } else {
+            var model = item.getDataOrDefault(DataComponentTypes.ITEM_MODEL, null);
+            if (model != null && placedBlock.getModelSpeedMultipliers().containsKey(model.asString())) {
+                modifier = placedBlock.getModelSpeedMultipliers().get(model.asString());
+            } else {
+                var toolType = ToolItemType.valueOf(item.getType());
+                modifier = placedBlock.getToolSpeedMultipliers().getOrDefault(toolType, 1.0);
+                if (placedBlock.getToolSpeedHasGradeMultiplier().contains(toolType))
+                    modifier *= ToolItemType.getTypeModifier(item.getType());
+            }
+        }
+
+        CustomBlockSpeedModifierSetEvent event = new CustomBlockSpeedModifierSetEvent(block, placedBlock, player,
+                item, modifier);
+
+        Bukkit.getPluginManager().callEvent(event);
+
+        modifier = event.getModifier();
+
+        blocks.getBlockBreakSpeedModifiers().apply(player, modifier);
+    }
+
+    @EventHandler
+    public void blockDamageAbort(BlockDamageAbortEvent e) {
+        OpenItems.getInstance().getBlocks().getBlockBreakSpeedModifiers().remove(e.getPlayer());
+    }
+
+    @EventHandler
+    public void blockBreakEvent(BlockBreakEvent e) {
+        OpenItems.getInstance().getBlocks().getBlockBreakSpeedModifiers().remove(e.getPlayer());
     }
 
 

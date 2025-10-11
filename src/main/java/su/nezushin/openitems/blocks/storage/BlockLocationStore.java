@@ -1,6 +1,7 @@
 package su.nezushin.openitems.blocks.storage;
 
 import org.bukkit.inventory.ItemStack;
+import su.nezushin.openitems.OpenItems;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,7 +40,8 @@ public class BlockLocationStore extends BlockDataStore {
 
 
     /**
-     * Any arbitrary data of custom block can be stored here
+     * Any arbitrary data of custom block can be stored here.
+     * Note that after setting arbitrary data you need to save chunk manually using {@code OpenItems.getInstance().getBlocks().saveChunk(chunk);}
      *
      * @return Map with arbitrary data. Can store everything implements ConfigurationSerializable
      */

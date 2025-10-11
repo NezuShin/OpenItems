@@ -1,9 +1,17 @@
 package su.nezushin.openitems.blocks.storage;
 
+import de.tr7zw.nbtapi.NBTCompound;
 import de.tr7zw.nbtapi.NBTItem;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.blocks.ToolItemType;
 import su.nezushin.openitems.blocks.types.CustomBlockModel;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents custom block properties. Used to be stored in custom item data
@@ -13,6 +21,12 @@ public class BlockDataStore {
             dropOnExplosion = true, dropOnDestroyByLiquid = true, canBeDestroyedByLiquid = true, dropOnBurn = true;
 
     protected String id;
+
+    protected Map<ToolItemType, Double> toolSpeedMultipliers = new HashMap<>();
+    protected Map<Material, Double> materialSpeedMultipliers = new HashMap<>();
+    protected Map<String, Double> modelSpeedMultipliers = new HashMap<>();
+
+    protected Set<ToolItemType> toolSpeedHasGradeMultiplier = new HashSet<>();
 
     protected ItemStack itemToDrop;
 
@@ -44,8 +58,34 @@ public class BlockDataStore {
         dropOnDestroyByLiquid = compound.getBoolean("drop_on_destroy_by_liquid");
 
 
+        var speedMultiplier = compound.getCompound("speed_multiplier");
+
+        if (speedMultiplier != null) {
+            compoundToMap(speedMultiplier.getCompound("tools")).forEach((k, v) ->
+                    toolSpeedMultipliers.put(ToolItemType.valueOf(k.toUpperCase()), v));
+            compoundToMap(speedMultiplier.getCompound("materials")).forEach((k, v) ->
+                    materialSpeedMultipliers.put(Material.valueOf(k.toUpperCase()), v));
+            modelSpeedMultipliers.putAll(compoundToMap(speedMultiplier.getCompound("models")));
+
+            var toolsList = speedMultiplier.getStringList("tools_has_grade_multiplier");
+            toolSpeedHasGradeMultiplier = new HashSet<>(toolsList.stream().map(i -> ToolItemType.valueOf(i.toUpperCase())).toList());
+        }
+
         return true;
     }
+
+    private Map<String, Double> compoundToMap(NBTCompound compound) {
+        Map<String, Double> map = new HashMap<>();
+
+        if (compound != null) {
+            for (var i : compound.getKeys()) {
+                map.put(i, compound.getDouble(i));
+            }
+        }
+
+        return map;
+    }
+
 
     public ItemStack applyData() {
         NBTItem nbtItem = new NBTItem(this.itemToDrop);
@@ -60,6 +100,31 @@ public class BlockDataStore {
         compound.setBoolean("drop_on_explosion", this.dropOnExplosion);
         compound.setBoolean("drop_on_destroy_by_liquid", this.dropOnDestroyByLiquid);
 
+        var speedMultiplier = compound.getOrCreateCompound("speed_multiplier");
+
+        var tools = speedMultiplier.getOrCreateCompound("tools");
+        toolSpeedMultipliers.forEach((k, v) -> {
+            if (v != -1)
+                tools.setDouble(k.name(), v);
+            else tools.removeKey(k.name());
+        });
+
+        var materials = speedMultiplier.getOrCreateCompound("materials");
+        materialSpeedMultipliers.forEach((k, v) -> {
+            if (v != -1)
+                materials.setDouble(k.name(), v);
+            else materials.removeKey(k.name());
+
+        });
+
+        var models = speedMultiplier.getOrCreateCompound("models");
+        modelSpeedMultipliers.forEach((k, v) -> {
+            if (v != -1)
+                models.setDouble(k, v);
+            else models.removeKey(k);
+        });
+        var list = speedMultiplier.getStringList("tools_has_grade_multiplier");
+        list.addAll(toolSpeedHasGradeMultiplier.stream().map(Enum::name).toList());
 
         return this.itemToDrop = nbtItem.getItem();
     }
@@ -146,11 +211,26 @@ public class BlockDataStore {
         return OpenItems.getInstance().getModelRegistry().getBlockTypes().get(this.id);
     }
 
-
     /**
      * @return item used to place this custom block
      */
     public ItemStack getItemToDrop() {
         return itemToDrop;
+    }
+
+    public Map<ToolItemType, Double> getToolSpeedMultipliers() {
+        return toolSpeedMultipliers;
+    }
+
+    public Map<Material, Double> getMaterialSpeedMultipliers() {
+        return materialSpeedMultipliers;
+    }
+
+    public Map<String, Double> getModelSpeedMultipliers() {
+        return modelSpeedMultipliers;
+    }
+
+    public Set<ToolItemType> getToolSpeedHasGradeMultiplier() {
+        return toolSpeedHasGradeMultiplier;
     }
 }

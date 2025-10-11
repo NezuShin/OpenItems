@@ -39,6 +39,9 @@ public class ConfigurationSerializableGsonAdapter extends TypeAdapter<Configurat
         }
     }
 
+    /**
+     * @return Gson parser that can save/load every ConfigurationSerializable-based data. e.g. ItemStacks
+     */
     public static Gson createGson() {
         return new GsonBuilder().
                 registerTypeHierarchyAdapter(ConfigurationSerializable.class, new ConfigurationSerializableGsonAdapter())

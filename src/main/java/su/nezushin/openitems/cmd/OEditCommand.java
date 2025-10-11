@@ -12,6 +12,7 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -23,6 +24,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import su.nezushin.openitems.blocks.ToolItemType;
 import su.nezushin.openitems.utils.Message;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.utils.NBTUtil;
@@ -133,7 +135,58 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                         item = NBTUtil.setBlockId(item, args[2]);
                         block = NBTUtil.getBlockData(item);
                     } else if (block != null) {
-                        if (args.length > 2) {
+                        if (args[1].equalsIgnoreCase("break_speed_multiplier")) {
+                            if (args.length >= 4) {
+                                if (args[2].equalsIgnoreCase("apply_tool_grade_multiplier")) {
+                                    var set = block.getToolSpeedHasGradeMultiplier();
+                                    set.clear();
+                                    for (var i = 3; i < args.length; i++) {
+                                        set.add(ToolItemType.valueOf(args[i].toUpperCase()));
+                                    }
+                                } else if (args.length == 5) {
+                                    if (args[2].equalsIgnoreCase("material")) {
+                                        block.getMaterialSpeedMultipliers().put(Material.valueOf(args[3].toUpperCase()),
+                                                (double) parseFloat(args[4]));
+                                    } else if (args[2].equalsIgnoreCase("tool")) {
+                                        block.getToolSpeedMultipliers().put(ToolItemType.valueOf(args[3].toUpperCase()),
+                                                (double) parseFloat(args[4]));
+                                    } else if (args[2].equalsIgnoreCase("model")) {
+                                        block.getModelSpeedMultipliers().put(args[3],
+                                                (double) parseFloat(args[4]));
+                                    }
+                                }
+                            }
+                            if (block.getMaterialSpeedMultipliers().isEmpty()
+                                    && block.getToolSpeedMultipliers().isEmpty()
+                                    && block.getModelSpeedMultipliers().isEmpty())
+                                Message.oedit_break_speed_multiplier_none.send(p);
+                            else
+                                Message.oedit_break_speed_multiplier.send(p);
+                            block.getMaterialSpeedMultipliers().forEach((k, v) -> {
+                                if (v != -1)
+                                    Message.oedit_break_speed_multiplier_material
+                                            .replace("{material}", k.name().toLowerCase(),
+                                                    "{multiplier}", String.format("%.2f", v)).send(p);
+                            });
+                            block.getToolSpeedMultipliers().forEach((k, v) -> {
+                                if (v != -1)
+                                    Message.oedit_break_speed_multiplier_tool
+                                            .replace("{tool}", k.name().toLowerCase(),
+                                                    "{multiplier}", String.format("%.2f", v)).send(p);
+                            });
+                            block.getModelSpeedMultipliers().forEach((k, v) -> {
+                                if (v != -1)
+                                    Message.oedit_break_speed_multiplier_model
+                                            .replace("{model}", k,
+                                                    "{multiplier}", String.format("%.2f", v)).send(p);
+                            });
+                            if (!block.getToolSpeedHasGradeMultiplier().isEmpty())
+                                Message.oedit_break_speed_grade_list.replace("{values}",
+                                                String.join(Message.oedit_break_speed_grade_delimiter.get().toString(),
+                                                        block.getToolSpeedHasGradeMultiplier()
+                                                                .stream().map(i -> i.name().toLowerCase()).toList()))
+                                        .send(p);
+                        } else if (args.length > 2) {
                             if (args[1].equalsIgnoreCase("drop_on_break")) {
                                 block.setDropOnBreak(args[2].equalsIgnoreCase("true"));
                             } else if (args[1].equalsIgnoreCase("drop_on_destroy_by_liquid")) {
@@ -298,7 +351,7 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
             if (args[0].equalsIgnoreCase("block"))
                 return Lists.newArrayList("drop_on_break", "drop_on_destroy_by_liquid", "drop_on_explosion",
                                 "drop_on_burn", "can_be_blown", "can_burn", "can_be_replaced",
-                                "model", "can_be_destroyed_by_liquid")
+                                "model", "can_be_destroyed_by_liquid", "break_speed_multiplier")
                         .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
 
             if (args[0].equalsIgnoreCase("equipment"))
@@ -326,6 +379,21 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                 if (args[1].equalsIgnoreCase("model"))
                     return OpenItems.getInstance().getModelRegistry().getBlockTypes().keySet().stream()
                             .filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();
+                else if (args.length == 3 && args[1].equalsIgnoreCase("break_speed_multiplier"))
+                    return Lists.newArrayList("tool", "material", "model", "apply_tool_grade_multiplier").stream()
+                            .filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();
+                else if (args.length == 4 && args[2].equalsIgnoreCase("tool"))
+                    return Arrays.stream(ToolItemType.values()).map(i -> i.name().toLowerCase())
+                            .filter(i -> StringUtil.startsWithIgnoreCase(i, args[3])).toList();
+                else if (args.length == 4 && args[2].equalsIgnoreCase("material"))
+                    return Arrays.stream(Material.values()).map(i -> i.name().toLowerCase())
+                            .filter(i -> StringUtil.startsWithIgnoreCase(i, args[3])).toList();
+                else if (args.length == 4 && args[2].equalsIgnoreCase("model"))
+                    return OpenItems.getInstance().getModelRegistry().getItems()
+                            .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[3])).toList();
+                else if (args[2].equalsIgnoreCase("apply_tool_grade_multiplier"))
+                    return Arrays.stream(ToolItemType.values()).map(i -> i.name().toLowerCase())
+                            .filter(i -> StringUtil.startsWithIgnoreCase(i, args[args.length - 1])).toList();
                 else
                     return Lists.newArrayList("true", "false").stream()
                             .filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();
@@ -337,7 +405,7 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                     return Arrays.stream(EquipmentSlot.values()).map(i -> i.name().toLowerCase())
                             .filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();
                 else if (Sets.newHashSet("equip_on_interact", "dispensable",
-                                "damage_on_hurt", "can_be_sheared", "swappable")
+                                "damage_on_hurt", "can_be_sheared", "swappable", "model")
                         .contains(args[1]))
                     return Stream.of("true", "false")
                             .filter(i -> StringUtil.startsWithIgnoreCase(i, args[2])).toList();

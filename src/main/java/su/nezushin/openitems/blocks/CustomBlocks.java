@@ -25,8 +25,12 @@ public class CustomBlocks {
     //All loaded blocks in server
     private Map<Block, BlockLocationStore> placedBlocks = new HashMap<>();
 
+    private BlockBreakSpeedModifiers blockBreakSpeedModifiers;
+
     public CustomBlocks() {
         Bukkit.getPluginManager().registerEvents(new CustomBlocksListener(), OpenItems.getInstance());
+
+        blockBreakSpeedModifiers = new BlockBreakSpeedModifiers();
 
         for (var world : Bukkit.getWorlds())
             for (var chunk : world.getLoadedChunks())
@@ -155,5 +159,9 @@ public class CustomBlocks {
                 .stream().filter(i -> i.getKey().getChunk().equals(chunk)).toList()) {
             this.placedBlocks.remove(i.getKey());
         }
+    }
+
+    public BlockBreakSpeedModifiers getBlockBreakSpeedModifiers() {
+        return blockBreakSpeedModifiers;
     }
 }
