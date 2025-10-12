@@ -44,8 +44,9 @@ Even with `minecraft/blockstates/` directory, so be careful and keep it in mind.
 #### Ids for blocks and font images
 
 Ids stored in `OpenItems/font-images-cache.json` and `OpenItems/block-id-cache.json`. 
-Plugin automatically assigns id for new blocks and font images. You may edit these files manually if you want to reassign id of deleted block model or font image.
-You are only do need to edit `noteblockIds`, `tripwireIds`, `chorusIds` and `charIds` fields. Other ones will be replaced by generator.
+Plugin automatically assigns id for new blocks and font images.  
+You may edit these files manually if you want to reassign id of deleted block model or font image.
+No need to edit fields other than `noteblockIds`, `tripwireIds`, `chorusIds` and `charIds`. Other ones will be replaced by generator.
 
 
 #### Handheld and generated textures
@@ -65,7 +66,7 @@ Directory scan format is `OpenItems/contents/<namespace>/textures/entity/equipme
 `happy_ghast_body`.
 
 To create regular armor model, just put your armor textures with same `name.png` to `.../equipment/humanoid` and `.../equipment/humanoid_leggings`.
-Plugin will generate `<namespace>:name` model. You can set model using command `/oedit equipment model <namespace>:name`. \
+Plugin will generate `<namespace>:name` model. You can set model using command `/oedit equipment model <namespace>:name`.
 
 #### Font images and Placeholders
 
