@@ -5,6 +5,7 @@ import com.google.common.io.Files;
 import com.google.gson.Gson;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.rp.equipment.EquipmentModel;
+import su.nezushin.openitems.rp.font.FontImage;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
 
@@ -29,7 +30,7 @@ public class NamespacedSectionBuilder {
     public NamespacedSectionBuilder(String namespace, File sectionDir) {
         this.namespace = namespace;
 
-        this.config = new NamespacedConfig();
+        this.config = new NamespacedConfig(new File(sectionDir, "configs"));
 
         this.sectionDir = sectionDir;
         this.outputDir = new File(OpenItems.getInstance().getDataFolder(), "build/assets/" + this.namespace);
@@ -91,7 +92,24 @@ public class NamespacedSectionBuilder {
             var path = this.namespace + ":" + i.pathAndName();
             var id = fontImageCache.getOrCreateFontImageId(path);
             var data = this.config.getFontImageData(path);
-            data.setFile(data.getFile() + ".png");
+
+            if(data == null){
+                var map = Utils.extractNumbers(i.name());
+
+                var height = map.getOrDefault("h", 9);
+                var ascent = map.getOrDefault("a", 8);
+
+
+                data = new FontImage(height, ascent, path + ".png");
+
+
+                path = Utils.createPath(i.path(), i.name()
+                        .replace("_h" + height, "")
+                        .replace("h" + height, "")
+                        .replace("_a" + ascent, "")
+                        .replace("a" + ascent, ""));
+            }
+
             data.setSymbol(String.valueOf((char) id));
             fontImageCache.getRegisteredCharIds().put(path, data);
         }

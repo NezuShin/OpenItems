@@ -63,7 +63,20 @@ public class OItemsCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(args[1]);
                 return true;
             }
-        } else if (args[0].equalsIgnoreCase("scan-mip-map")) {
+        } else if (args[0].equalsIgnoreCase("font_image")) {
+            if (args.length > 1) {
+                var id = args[1];
+                var fontImage = OpenItems.getInstance().getModelRegistry().getFontImages().get(id);
+
+                if (fontImage == null || fontImage.isEmpty()) {
+                    Message.font_image_not_found.replace("{id}", id).send(sender);
+                    return true;
+                }
+
+                Message.font_image_format.replace("{id}", id, "{font-image}", fontImage).send(sender);
+                return true;
+            }
+        } else if (args[0].equalsIgnoreCase("scan_mip_map")) {
             OpenItems.async(() -> {
                 try {
                     var wrongFiles = Utils.checkMipMap();
@@ -92,13 +105,16 @@ public class OItemsCommand implements CommandExecutor, TabCompleter {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
 
-        if (args.length == 1) {
-            return Lists.newArrayList("build", "emoji", "reload", "scan-mip-map")
+        if (args.length == 1)
+            return Lists.newArrayList("build", "emoji", "reload", "scan_mip_map", "font_image")
                     .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[0])).toList();
-        }
+
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("emoji")) {
                 return OpenItems.getInstance().getModelRegistry().getFontImages().values()
+                        .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
+            } else if (args[0].equalsIgnoreCase("font_image")) {
+                return OpenItems.getInstance().getModelRegistry().getFontImages().keySet()
                         .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
             }
         }

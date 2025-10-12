@@ -9,7 +9,11 @@ import javax.imageio.ImageIO;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils {
 
@@ -150,4 +154,26 @@ public class Utils {
         return n > 0 && (n & (n - 1)) == 0;
     }
 
+
+    /**
+     * Extract height and ascent data from font image file
+     * @param fileName - file name from what take data
+     * @return map with h and a keys
+     */
+    public static Map<String, Integer> extractNumbers(String fileName) {
+        Map<String, Integer> result = new HashMap<>();
+
+
+        Pattern pattern = Pattern.compile("([ha])(\\d+)");
+        Matcher matcher = pattern.matcher(fileName);
+
+        while (matcher.find()) {
+            String key = matcher.group(1);
+            int value = Integer.parseInt(matcher.group(2));
+
+            result.put(key, value);
+        }
+
+        return result;
+    }
 }

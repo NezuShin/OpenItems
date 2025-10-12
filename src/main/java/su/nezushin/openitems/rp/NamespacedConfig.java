@@ -1,8 +1,12 @@
 package su.nezushin.openitems.rp;
 
 import com.google.common.collect.Lists;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import su.nezushin.openitems.rp.font.FontImage;
+import su.nezushin.openitems.utils.Utils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,12 +37,55 @@ public class NamespacedConfig {
 
     private String regularItemTemplate = "{\"model\": {\"type\": \"model\", \"model\": \"{path}\"}}\n";
 
-    public NamespacedConfig() {
+    private List<FileConfiguration> configs = new ArrayList<>();
 
+    private List<FontImageConfig> fontImages = new ArrayList<>();
+
+    record FontImageConfig(int height, int ascent, String path) {
+
+
+        public FontImage toFontImage() {
+            return new FontImage(height, ascent, path + ".png");
+        }
     }
 
+    public NamespacedConfig(File configsDir) {
+        if (!configsDir.exists() || !configsDir.isDirectory())
+            return;
+
+        configs.clear();
+
+        for (var file : configsDir.listFiles())
+            if (file.getName().endsWith(".yml")) {
+                var config = YamlConfiguration.loadConfiguration(file);
+
+                loadFontImages(config);
+                configs.add(config);
+            }
+    }
+
+    private void loadFontImages(FileConfiguration config) {
+        var section = config.getConfigurationSection("font-images");
+        if (section == null)
+            return;
+        for (var i : section.getKeys(false)) {
+            var path = "font-images." + i;
+            this.fontImages.add(new FontImageConfig(
+                    config.getInt(path + ".height", 9),
+                    config.getInt(path + ".ascent", 8),
+                    config.getString(path + ".path")));
+        }
+    }
+
+
     public FontImage getFontImageData(String path) {
-        return new FontImage(8, 8, path);
+        var configFontImage = this.fontImages.stream()
+                .filter(i -> i.path().equalsIgnoreCase(path)).findFirst().orElse(null);
+
+       if(configFontImage == null)
+           return null;
+
+        return configFontImage.toFontImage();
     }
 
 

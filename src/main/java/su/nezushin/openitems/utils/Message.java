@@ -21,7 +21,8 @@ public enum Message {
     config_load_err, config_load_success, current_equipment_data, current_item_data, translatable_component,
     mip_map_end_err, mip_map_end_done, mip_map_limitation,  mip_map_end_not_found, oedit_break_speed_multiplier,
     oedit_break_speed_multiplier_tool, oedit_break_speed_multiplier_material, oedit_break_speed_multiplier_model,
-    oedit_break_speed_multiplier_none, oedit_break_speed_grade_list, oedit_break_speed_grade_delimiter;
+    oedit_break_speed_multiplier_none, oedit_break_speed_grade_list, oedit_break_speed_grade_delimiter,
+    font_image_format, font_image_not_found;
 
     private List<String> list = Lists.newArrayList("");
 

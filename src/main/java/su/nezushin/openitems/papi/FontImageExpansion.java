@@ -26,8 +26,19 @@ public class FontImageExpansion extends PlaceholderExpansion {
     @Override
     public @Nullable String onRequest(OfflinePlayer player, @NotNull String params) {
         if (StringUtil.startsWithIgnoreCase(params, "emoji_")) {
-            return OpenItems.getInstance().getModelRegistry()
-                    .getFontImages().get(params.replaceFirst("emoji_", ""));
+
+
+            var str = params.replaceFirst("emoji_", "");
+
+            var fontImage = OpenItems.getInstance().getModelRegistry()
+                    .getFontImages().get(str);
+
+            if (fontImage != null && !fontImage.isEmpty())
+                return fontImage;
+
+
+            return OpenItems.getInstance().getModelRegistry().getFontImages().get(str.replace(":", "_")
+                    .replace("/", "_"));
         }
 
         return null;

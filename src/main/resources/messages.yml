@@ -117,7 +117,7 @@ messages:
   mip-map-limitation: "<reset><#08c0c2>{width}x{height} - {file}"
   mip-map-end-not-found: "<reset><green>No MipMap Limitations found!"
 
-  build-mip-map-warning: "<reset><yellow>There is textures that may limit mip level on client. Consider checking it with command <reset><#08c0c2><click:suggest_command:'/openitems scan-mip-map'>/openitems scan-mip-map "
+  build-mip-map-warning: "<reset><yellow>There is textures that may limit mip level on client. Consider checking it with command <reset><#08c0c2><click:suggest_command:'/openitems scan_mip_map'>/openitems scan-mip-map "
 
   registry-loaded:
     - "<reset><#008f9a>Loaded <#08c0c2>{items}<#008f9a> item models"
@@ -133,3 +133,6 @@ messages:
   config-load-start: '<reset><#008f9a>Loading config....'
   config-load-err: '<reset><red>Load error. Check console'
   config-load-success: '<reset><#008f9a>Reloaded!'
+
+  font-image-format: '<reset><#008f9a>{id}: <reset><white>{font-image}'
+  font-image-not-found: '<reset><red>Font image not found: {id}'

@@ -5,10 +5,10 @@ If you have questions, want ask for a feature or report a bug - feel free to ope
 
 Unlike [craftengine](https://modrinth.com/plugin/craftengine), OpenItems not manipulating PaperMCs registry since there is no pre-defined blocks, everything goes in runtime. 
 ## Features
-- Automatic resource pack generation - handheld, generated, cube_all child models, etc
-- Custom blocks with [custom hardness](#understanding-block-hardness) based on note blocks, chorus plants or tripwires
-- Custom armor models
-- Custom font images
+- [Automatic resource pack generation](#automatic-model-generator-and-content-creation)
+- [Custom blocks with](#blocks) [custom hardness](#understanding-block-hardness) based on note blocks, chorus plants or tripwires
+- [Custom armor models](#equipment)
+- [Custom font images](#font-images-and-placeholders)
 - Edit models of items or blocks, configure their behavior in-game
 
 ## Dependencies
@@ -18,59 +18,93 @@ Unlike [craftengine](https://modrinth.com/plugin/craftengine), OpenItems not man
 ## Soft Dependencies
 - [**PlaceholderAPI**](https://www.spigotmc.org/resources/placeholderapi.6245/) - if you need font image placeholders
 
-## Commands
-- `/openitems` - reloading plugin and building resource pack
-- `/oedit` - main command for item editing
-
-## Suggested Setup
-- [**PaperMC**](https://papermc.io/) as server core
-- OpenItems - for custom items and blocks
-- [**CustomRecipes**](https://www.spigotmc.org/resources/%E2%96%BA%E2%96%BA-customrecipes-1-8-x-1-21-x-advanced-recipes-made-easy-%E2%97%84%E2%97%84.36925/) - for custom crafting
-- [**BetterHud**](https://www.spigotmc.org/resources/%E2%AD%90betterhud%E2%AD%90a-beautiful-hud-plugin-you-havent-seen-before%E2%9C%85auto-resource-pack-build%E2%9C%85.115559/) - for custom huds
-- [**BetterModel**](https://www.spigotmc.org/resources/bettermodel-modern-blockbench-model-engine-folia-supported.121561/) - for custom mobs and player animations
 
 
 ## Working with plugin 
 
-### Automatic model generator
+### Commands
+- `/openitems` - reloading plugin and building resource pack
+- `/oedit` - main command for item editing
+
+### Suggested Setup
+- [**PaperMC**](https://papermc.io/) as server core
+- [**OpenItems**](https://github.com/NezuShin/OpenItems) - for custom items and blocks
+- [**CustomRecipes**](https://www.spigotmc.org/resources/%E2%96%BA%E2%96%BA-customrecipes-1-8-x-1-21-x-advanced-recipes-made-easy-%E2%97%84%E2%97%84.36925/) - for custom crafting
+- [**BetterHud**](https://www.spigotmc.org/resources/%E2%AD%90betterhud%E2%AD%90a-beautiful-hud-plugin-you-havent-seen-before%E2%9C%85auto-resource-pack-build%E2%9C%85.115559/) - for custom huds
+- [**BetterModel**](https://www.spigotmc.org/resources/bettermodel-modern-blockbench-model-engine-folia-supported.121561/) - for custom mobs and player animations
+
+### Automatic model generator and content creation
 
 To reduce boilerplate, plugin offers automatic model generation. \
-Generator never modifies contents data. It's only making changes in build directory.
-What generator do:
-- Assigns id to blocks and font images - You can view or manually change ids in font-images-cache.json or block-id-cache.json but usually this is not necessary
-- Performing scan for textures in `OpenItems/contents/<namespace>/textures/item/generated/` directory and automatically adds model with parent `minecraft:generated` 
-to `/build/assets/<namespace>/models/item` directory. Also, its creates link to model in `/build/assets/<namespace>/items/`. 
-- Doing same for `OpenItems/contents/<namespace>/textures/item/handheld/` directory but with parent `minecraft:handheld`.
-- Performing scan for item and block models add adds link in `/build/assets/<namespace>/items/` directory.
-- Searching for `OpenItems/contents/<namespace>/textures/entity/equipment/` directories and prepares models in `/build/assets/<namespace>/equipment/`. \
- `.../equipment/humanoid` and `.../equipment/humanoid_leggings` is most used directories (layers). Just put your armor textures with same `name.png` to these directories. 
-Machine will generate `<namespace>:name` model. You can set model using command `/oedit equipment model <namespace>:name`. \
-Other layers also supported: `wings`, `pig_saddle`, and any others.
-- Scanning for block models and textures:
-- - For note block based textures in directory `OpenItems/contents/<namespace>/textures/block/note_block`.
-As note block is plane minecraft block, and it is not supports "transparency", plugin gives no option to provide custom model with this base-block type. \
-There is three ways to define block: 
-- - - For single texture block - (e.g. `minecraft:diamond_ore`) just put `.png` texture to `.../block/note_block` directory. \
-After building resource pack in registry will appear new block model - `<namespace>:block/note_block/<your_png_file>`
-- - - For block with three textures: up, down and side - put images with postfix `_up`, `_down`, `_side` to directory. For example `my_block_up.png`, `my_block_down.png`,`my_block_up.png`.   
-If done correctly, registry will have model `<namespace>:block/note_block/my_block`
-- - - For block with own texture in every side - same as above, but you need names ends with `_up`, `_down`, `_east`, `_west`, `_south` and `_west`.
-You may put textures to every subdirectory in `.../block/note_block` but png files for one block should be in same directory.
-- - Tripwire and chorus plant based models is located in `OpenItems/contents/<namespace>/models/block/tripwire` and `chorus_plant` directories respectively. 
-As there is no reason to use tripwires and chorus plants as plain blocks, so only custom models supported. \
-Models appears in registry as `<namespace>:block/tripwire/<model>` and `<namespace>:block/chorus_plant/<model>`. Any subdirectory is allowed. Models just being copied to build directory as is.
-- - For every block type generator creates its `/build/assets/<namespace>/items/` link, so you can use command `/oedit item model <your_model_path>` to set block model to item. \
-Also, it generates `minecraft:/blockstates/` for `note_block.json`, `tripwire.json` and `chorus_plant.json`
-- Copies full `OpenItems/contents/<namespace>` directory to `/build/assets/<namespace>`. Generator does it as last action, so if yours files have more priority then auto-generated and replaces it on conflict. 
-Even with `minecraft:/blockstates/` directory, so be careful and keep it in mind. 
+Generator never modifies contents data. It's only making changes in build directory. 
 
-### Font images and Placeholders
+Generator also copies full `OpenItems/contents/<namespace>` directory to `/build/assets/<namespace>`. It as last action, so if yours files have more priority then auto-generated and replaces it on conflict. 
+Even with `minecraft/blockstates/` directory, so be careful and keep it in mind. 
+
+#### Ids for blocks and font images
+
+Ids stored in `OpenItems/font-images-cache.json` and `OpenItems/block-id-cache.json`. 
+Plugin automatically assigns id for new blocks and font images. You may edit these files manually if you want to reassign id of deleted block model or font image.
+You are only do need to edit `noteblockIds`, `tripwireIds`, `chorusIds` and `charIds` fields. Other ones will be replaced by generator.
+
+
+#### Handheld and generated textures
+Plugin can automatically create models with `"partent": "handheld"` and `"parent:"generated"` and links to them.
+
+You just need to put your texture to one of two directories:
+- `OpenItems/contents/<namespace>/textures/item/generated/`
+- `OpenItems/contents/<namespace>/textures/item/handheld/`
+
+When building a resource pack, models appear in the plugin's registry and can be set to item using command `/oedit item model <namespace>:<path>`
+
+#### Equipment
+Directory scan format is `OpenItems/contents/<namespace>/textures/entity/equipment/<layer>/<model_name>`
+
+`<layer>` may be `wolf_body`, `horse_body`, `llama_body`, `humanoid`, `humanoid_leggings`, `wings`, `pig_saddle`,
+`strider_saddle`, `camel_saddle`, `horse_saddle`, `donkey_saddle`, `mule_saddle`, `skeleton_horse_saddle`, `zombie_horse_saddle`,
+`happy_ghast_body`.
+
+To create regular armor model, just put your armor textures with same `name.png` to `.../equipment/humanoid` and `.../equipment/humanoid_leggings`.
+Plugin will generate `<namespace>:name` model. You can set model using command `/oedit equipment model <namespace>:name`. \
+
+#### Font images and Placeholders
 
 Use command `/oitems emoji <emoji>` to view all available font images.
+Use command `/oitems font_image <path>` to view all available paths to font images.
 
-Font image offset and size configuration: WIP
+Font images stored in directory `OpenItems/contents/<namespace>/textures/font`.
 
-PAPI placeholder: WIP
+There is two ways to configure font image size:
+- Using file name. For example, file with name `my_awesome_texture_h20_a8.png` will have height 20 and ascent 8. Texture in registry will have name `<namespace>:font/my_awesome_texture`.
+- Using config files in `OpenItems/contents/<namespace>/configs/random-config-name.yml`. Example with same values as above: 
+```yaml  
+ font-images:
+  random_useless_unique_name:
+    path: '<namespace>:font/my_awesome_texture'
+    height: 20
+    ascent: 8
+```
+
+PAPI placeholder format: `%openitems_emoji_<namespace>:<path>%` \
+Example: `%openitems_emoji_my_awesome_namespace:font/my_awesome_texture%`.
+
+### Blocks
+Scanning for block models and textures:
+- For note block based textures in directory `OpenItems/contents/<namespace>/textures/block/note_block`.
+  As note block is plane minecraft block, and it is not supports "transparency", plugin gives no option to provide custom model with this base-block type. \
+  There is three ways to define block:
+- - For single texture block - (e.g. `minecraft:diamond_ore`) just put `.png` texture to `.../block/note_block` directory. \
+    After building resource pack in registry will appear new block model - `<namespace>:block/note_block/<your_png_file>`
+- - For block with three textures: up, down and side - put images with postfix `_up`, `_down`, `_side` to directory. For example `my_block_up.png`, `my_block_down.png`,`my_block_up.png`.   
+    If done correctly, registry will have model `<namespace>:block/note_block/my_block`
+- - For block with own texture in every side - same as above, but you need names ends with `_up`, `_down`, `_east`, `_west`, `_south` and `_west`.
+    You may put textures to every subdirectory in `.../block/note_block` but png files for one block should be in same directory.
+- Tripwire and chorus plant based models is located in `OpenItems/contents/<namespace>/models/block/tripwire` and `chorus_plant` directories respectively.
+  As there is no reason to use tripwires and chorus plants as plain blocks, so only custom models supported. \
+  Models appears in registry as `<namespace>:block/tripwire/<model>` and `<namespace>:block/chorus_plant/<model>`. Any subdirectory is allowed. Models just being copied to build directory as is.
+- For every block type generator creates its `/build/assets/<namespace>/items/` link, so you can use command `/oedit item model <your_model_path>` to set block model to item. \
+    Also, it generates `minecraft:/blockstates/` for `note_block.json`, `tripwire.json` and `chorus_plant.json`
+
 
 
 ### Understanding block hardness
@@ -131,3 +165,8 @@ dependencies {
 ### Useful API Features
 - Store any arbitrary information in blocks using [`BlockLocationStore.getArbitratyData()`](http://nezushin.su/javadocs/openitems/su/nezushin/openitems/blocks/storage/BlockLocationStore.html#getArbitraryData())
 - To be done
+
+
+## Inspirations 
+- https://github.com/MMonkeyKiller/CustomBlocks
+- https://github.com/Xiao-MoMi/craft-engine
