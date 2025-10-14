@@ -3,8 +3,7 @@ package su.nezushin.openitems.rp;
 import com.google.common.collect.Lists;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import su.nezushin.openitems.rp.font.FontImage;
-import su.nezushin.openitems.utils.Utils;
+import su.nezushin.openitems.rp.font.BitmapFontImage;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -44,8 +43,8 @@ public class NamespacedConfig {
     record FontImageConfig(int height, int ascent, String path) {
 
 
-        public FontImage toFontImage() {
-            return new FontImage(height, ascent, path + ".png");
+        public BitmapFontImage toFontImage() {
+            return new BitmapFontImage(height, ascent, path + ".png");
         }
     }
 
@@ -78,7 +77,7 @@ public class NamespacedConfig {
     }
 
 
-    public FontImage getFontImageData(String path) {
+    public BitmapFontImage getFontImageData(String path) {
         var configFontImage = this.fontImages.stream()
                 .filter(i -> i.path().equalsIgnoreCase(path)).findFirst().orElse(null);
 

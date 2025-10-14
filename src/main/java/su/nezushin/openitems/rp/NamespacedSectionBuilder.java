@@ -5,7 +5,7 @@ import com.google.common.io.Files;
 import com.google.gson.Gson;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.rp.equipment.EquipmentModel;
-import su.nezushin.openitems.rp.font.FontImage;
+import su.nezushin.openitems.rp.font.BitmapFontImage;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
 
@@ -69,13 +69,13 @@ public class NamespacedSectionBuilder {
 
         var equipmentDir = new File(this.sectionDir, "textures/entity/equipment");
 
-        var fontDir = new File(this.sectionDir, "textures/font/emoji");
+        var fontDir = new File(this.sectionDir, "textures/font");
 
         if (this.config.isAllowAutogen()) {
             scanForTextures(generatedDir, "item", pngFilesGenerated);
             scanForTextures(handheldDir, "item", pngFilesHandheld);
             scanForTextures(noteblockDir, "block", pngFilesNoteblock);
-            scanForTextures(fontDir, "font", pngFilesEmoji);
+            scanForTextures(fontDir, "", pngFilesEmoji);
         }
 
         Utils.copyFolder(this.sectionDir, outputDir, this.sectionDir, this.config.getDirectoriesIgnoreList(), this.config.getExtensionsIgnoreList());
@@ -88,11 +88,11 @@ public class NamespacedSectionBuilder {
 
         var fontImageCache = OpenItems.getInstance().getResourcePackBuilder().getFontImagesIdCache();
 
+
         for (var i : pngFilesEmoji) {
             var path = this.namespace + ":" + i.pathAndName();
             var id = fontImageCache.getOrCreateFontImageId(path);
             var data = this.config.getFontImageData(path);
-
             if(data == null){
                 var map = Utils.extractNumbers(i.name());
 
@@ -100,16 +100,15 @@ public class NamespacedSectionBuilder {
                 var ascent = map.getOrDefault("a", 8);
 
 
-                data = new FontImage(height, ascent, path + ".png");
+                data = new BitmapFontImage(height, ascent, path + ".png");
 
 
-                path = Utils.createPath(i.path(), i.name()
+                path = this.namespace + ":" + Utils.createPath(i.path(), i.name()
                         .replace("_h" + height, "")
                         .replace("h" + height, "")
                         .replace("_a" + ascent, "")
                         .replace("a" + ascent, ""));
             }
-
             data.setSymbol(String.valueOf((char) id));
             fontImageCache.getRegisteredCharIds().put(path, data);
         }
@@ -135,6 +134,8 @@ public class NamespacedSectionBuilder {
 
     //find all equipment textures
     public void scanForEquipment(File file, String layer, String path, boolean appendPath, Map<String, List<String>> layerNameMap) {
+        if(!file.exists())
+            return;
         if (!file.isDirectory()) {
             var mapPath = Utils.createPath(path, Utils.getFileName(file));
             var list = layerNameMap.getOrDefault(mapPath, new ArrayList<>());
@@ -155,6 +156,8 @@ public class NamespacedSectionBuilder {
 
     //scan for item models to add it into /items dir
     public void scanForItemModels(File file, String path) throws IOException {
+        if(!file.exists())
+            return;
         if (!file.isDirectory()) {
             createRegularTemplateItem(this.namespace + ":" + path + "/" + Utils.getFileName(file), path.replaceFirst("item", ""), Utils.getFileName(file));
             return;
@@ -166,6 +169,8 @@ public class NamespacedSectionBuilder {
 
     //scan for textures to create model and add to /items dir
     public void scanForTextures(File file, String path, List<ResourcePackScanFile> pngFiles) {
+        if(!file.exists())
+            return;
         if (!file.isDirectory()) {
             if (file.getName().toLowerCase().endsWith(".png")) {
                 pngFiles.add(new ResourcePackScanFile(file, path, Utils.getFileName(file)));

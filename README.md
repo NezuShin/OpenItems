@@ -6,7 +6,7 @@ If you have questions, want ask for a feature or report a bug - feel free to ope
 Unlike [craftengine](https://modrinth.com/plugin/craftengine), OpenItems not manipulating PaperMCs registry since there is no pre-defined blocks, everything goes in runtime. 
 ## Features
 - [Automatic resource pack generation](#automatic-model-generator-and-content-creation)
-- [Custom blocks with](#blocks) [custom hardness](#understanding-block-hardness) based on note blocks, chorus plants or tripwires
+- [Custom blocks](#blocks) with [custom hardness](#understanding-block-hardness) based on note blocks, chorus plants or tripwires
 - [Custom armor models](#equipment)
 - [Custom font images](#font-images-and-placeholders)
 - Edit models of items or blocks, configure their behavior in-game
@@ -17,8 +17,6 @@ Unlike [craftengine](https://modrinth.com/plugin/craftengine), OpenItems not man
 
 ## Soft Dependencies
 - [**PlaceholderAPI**](https://www.spigotmc.org/resources/placeholderapi.6245/) - if you need font image placeholders
-
-
 
 ## Working with plugin 
 
@@ -38,7 +36,7 @@ Unlike [craftengine](https://modrinth.com/plugin/craftengine), OpenItems not man
 To reduce boilerplate, plugin offers automatic model generation. \
 Generator never modifies contents data. It's only making changes in build directory. 
 
-Generator also copies full `OpenItems/contents/<namespace>` directory to `/build/assets/<namespace>`. It as last action, so if yours files have more priority then auto-generated and replaces it on conflict. 
+Generator also copies full `OpenItems/contents/<namespace>/` directory to `/build/assets/<namespace>/`. It as last action, so if yours files have more priority then auto-generated and replaces it on conflict. 
 Even with `minecraft/blockstates/` directory, so be careful and keep it in mind. 
 
 #### Ids for blocks and font images
@@ -70,14 +68,15 @@ Plugin will generate `<namespace>:name` model. You can set model using command `
 
 #### Font images and Placeholders
 
-Use command `/oitems emoji <emoji>` to view all available font images.
-Use command `/oitems font_image <path>` to view all available paths to font images.
+Use command `/oitems font print_image <emoji>` to available font images. \
+Use command `/oitems font print_path <path>` to available paths to font images. \
+Use command `/oitems print_offset_sequence <offset in pixels>` to prepare [text offset](https://minecraft.wiki/w/Font#Space_provider) sequence.
 
-Font images stored in directory `OpenItems/contents/<namespace>/textures/font`.
+Font images stored in directory `OpenItems/contents/<namespace>/textures/font/`.
 
 There is two ways to configure font image size:
 - Using file name. For example, file with name `my_awesome_texture_h20_a8.png` will have height 20 and ascent 8. Texture in registry will have name `<namespace>:font/my_awesome_texture`.
-- Using config files in `OpenItems/contents/<namespace>/configs/random-config-name.yml`. Example with same values as above: 
+- Using yaml config files in `OpenItems/contents/<namespace>/configs/` directory. Example with same values as above: 
 ```yaml  
  font-images:
   random_useless_unique_name:
@@ -85,22 +84,27 @@ There is two ways to configure font image size:
     height: 20
     ascent: 8
 ```
+Unicode symbol assigns automatically, but you can [manually change it](#ids-for-blocks-and-font-images) at any time.
+Plugin uses [Unicode private area](https://en.wikipedia.org/wiki/Private_Use_Areas) range (U+E000-U+F8FF).
 
-PAPI placeholder format: `%openitems_emoji_<namespace>:<path>%` \
-Example: `%openitems_emoji_my_awesome_namespace:font/my_awesome_texture%`.
+PAPI placeholders:
+ - Font image: `%openitems_emoji_<namespace>:<path>%` \
+    Example: `%openitems_emoji_my_awesome_namespace:font/my_awesome_texture%`.
+ - Text offset: `%openitems_offset_<offset_in_pixels>%` \
+   Examples: `%openitems_offset_-10%`, `%openitems_offset_+10%`.
 
-### Blocks
-Scanning for block models and textures:
-- For note block based textures in directory `OpenItems/contents/<namespace>/textures/block/note_block`.
+#### Blocks
+How plugin scanning for block models and textures:
+- For note block based textures in directory `OpenItems/contents/<namespace>/textures/block/note_block/`.
   As note block is plane minecraft block, and it is not supports "transparency", plugin gives no option to provide custom model with this base-block type. \
   There is three ways to define block:
-- - For single texture block - (e.g. `minecraft:diamond_ore`) just put `.png` texture to `.../block/note_block` directory. \
+- - For single texture block - (e.g. `minecraft:diamond_ore`) just put `.png` texture to `.../block/note_block/` directory. \
     After building resource pack in registry will appear new block model - `<namespace>:block/note_block/<your_png_file>`
 - - For block with three textures: up, down and side - put images with postfix `_up`, `_down`, `_side` to directory. For example `my_block_up.png`, `my_block_down.png`,`my_block_up.png`.   
     If done correctly, registry will have model `<namespace>:block/note_block/my_block`
 - - For block with own texture in every side - same as above, but you need names ends with `_up`, `_down`, `_east`, `_west`, `_south` and `_west`.
     You may put textures to every subdirectory in `.../block/note_block` but png files for one block should be in same directory.
-- Tripwire and chorus plant based models is located in `OpenItems/contents/<namespace>/models/block/tripwire` and `chorus_plant` directories respectively.
+- Tripwire and chorus plant based models is located in `OpenItems/contents/<namespace>/models/block/tripwire/` and `.../chorus_plant/` directories respectively.
   As there is no reason to use tripwires and chorus plants as plain blocks, so only custom models supported. \
   Models appears in registry as `<namespace>:block/tripwire/<model>` and `<namespace>:block/chorus_plant/<model>`. Any subdirectory is allowed. Models just being copied to build directory as is.
 - For every block type generator creates its `/build/assets/<namespace>/items/` link, so you can use command `/oedit item model <your_model_path>` to set block model to item. \
@@ -167,7 +171,6 @@ dependencies {
 - Store any arbitrary information in blocks using [`BlockLocationStore.getArbitratyData()`](http://nezushin.su/javadocs/openitems/su/nezushin/openitems/blocks/storage/BlockLocationStore.html#getArbitraryData())
 - To be done
 
-
-## Inspirations 
+## Inspirations
 - https://github.com/MMonkeyKiller/CustomBlocks
 - https://github.com/Xiao-MoMi/craft-engine

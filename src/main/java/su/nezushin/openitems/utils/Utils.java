@@ -1,17 +1,19 @@
 package su.nezushin.openitems.utils;
 
+import com.google.common.collect.Comparators;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TranslatableComponent;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.block.BlockFace;
 import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.cmd.CommandException;
 
 import javax.imageio.ImageIO;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -101,10 +103,18 @@ public class Utils {
         return Integer.parseInt(sequence.substring(2), 16);
     }
 
+    public static String unicodeToEscapeSequence(String unicodeStr){
+        StringBuilder str = new StringBuilder();
+        for(var i : unicodeStr.toCharArray())
+            str.append(charToUnicodeEscapeSequence(i));
+        return str.toString();
+    }
+
 
     /**
      * Check if texture pack has texture that limits mip map level.
      * read <a href="https://gist.github.com/HalbFettKaese/c193caeccc94b793b29981aa38170ea6">...</a>
+     *
      * @return list of "wrong" texture files
      * @throws IOException
      */
@@ -157,6 +167,7 @@ public class Utils {
 
     /**
      * Extract height and ascent data from font image file
+     *
      * @param fileName - file name from what take data
      * @return map with h and a keys
      */
@@ -175,5 +186,50 @@ public class Utils {
         }
 
         return result;
+    }
+
+    public static String getOffset(int offset) {
+        var fontSpaces = OpenItems.getInstance().getModelRegistry().getFontSpaces();
+        if(offset == 0)
+            return "";
+
+        var multiplier = offset > 0 ? 1 : -1;
+        offset = Math.abs(offset);
+        var list = fontSpaces.keySet().stream().filter(i -> i > 0).sorted().toList().reversed();
+        StringBuilder str = new StringBuilder();
+
+        while (offset > 0) {
+            for (var i : list) {
+                if (i <= offset) {
+                    offset = offset - i;
+                    str.append(fontSpaces.get(multiplier * i));
+                    break;
+                }
+            }
+        }
+
+
+        return str.toString();
+    }
+
+    public static String formatMinimessage(Component component) {
+        return component == null ? "null" : (MiniMessage.miniMessage().serialize(component) +
+                (component instanceof TranslatableComponent ? (" " + Message.translatable_component.get()) : ""));
+    }
+
+    public static int parseInt(String str) {
+        try {
+            return Integer.parseInt(str);
+        } catch (NumberFormatException ex) {
+            throw new CommandException(Message.err_nan.replace("{nan}", str));
+        }
+    }
+
+    public static float parseFloat(String str) {
+        try {
+            return Float.parseFloat(str);
+        } catch (NumberFormatException ex) {
+            throw new CommandException(Message.err_nan.replace("{nan}", str));
+        }
     }
 }

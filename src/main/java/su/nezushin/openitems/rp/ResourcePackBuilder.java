@@ -104,7 +104,7 @@ public class ResourcePackBuilder {
                 hasMipMapProblem = !Utils.checkMipMap().isEmpty();
 
             if (hasMipMapProblem) {
-                Message.build_mip_map_warning.send(Bukkit.getConsoleSender());
+                Message.oi_build_mip_map_warning.send(Bukkit.getConsoleSender());
             }
 
             OpenItems.async(() -> Bukkit.getPluginManager().callEvent(new AsyncBuildDoneEvent()));
@@ -119,21 +119,21 @@ public class ResourcePackBuilder {
         try {
             OpenItems.getInstance().getModelRegistry().setLock(false);
             var contents = new File(OpenItems.getInstance().getDataFolder(), "build/assets");
+            if (contents.exists() && contents.isDirectory())
+                for (var namespace : contents.listFiles()) {
+                    if (namespace.isDirectory()) {
+                        var items = new File(namespace, "items");
+                        if (items.exists() && items.isDirectory()) scanForItems(items, namespace.getName(), "",
+                                false,
+                                (str) -> OpenItems.getInstance().getModelRegistry().getItems().add(str));
 
-            for (var namespace : contents.listFiles()) {
-                if (namespace.isDirectory()) {
-                    var items = new File(namespace, "items");
-                    if (items.exists() && items.isDirectory()) scanForItems(items, namespace.getName(), "",
-                            false,
-                            (str) -> OpenItems.getInstance().getModelRegistry().getItems().add(str));
+                        var equipment = new File(namespace, "equipment");
+                        if (equipment.exists() && equipment.isDirectory()) scanForItems(equipment, namespace.getName(), "",
+                                false,
+                                (str) -> OpenItems.getInstance().getModelRegistry().getEquipment().add(str));
 
-                    var equipment = new File(namespace, "equipment");
-                    if (items.exists() && items.isDirectory()) scanForItems(equipment, namespace.getName(), "",
-                            false,
-                            (str) -> OpenItems.getInstance().getModelRegistry().getEquipment().add(str));
-
+                    }
                 }
-            }
 
 
             this.blockIdCache.getRegisteredNoteblockIds().forEach((k, v) -> {
@@ -150,6 +150,10 @@ public class ResourcePackBuilder {
                 OpenItems.getInstance().getModelRegistry().getFontImages().put(k, v.getSymbol());
             });
 
+            this.fontImageIdCache.getFontSpaces().forEach((k, v) -> {
+                OpenItems.getInstance().getModelRegistry().getFontSpaces().put(k, v);
+            });
+
             OpenItems.async(() -> Bukkit.getPluginManager().callEvent(new AsyncRegistryLoadedEvent()));
         } catch (Exception ex) {
             throw ex;
@@ -164,7 +168,6 @@ public class ResourcePackBuilder {
 
     private void scanForItems(File file, String namespace, String path, boolean appendPath, Callback<String> callback) throws IOException {
         if (!file.isDirectory()) {
-
             callback.run(namespace + ":" + Utils.createPath(path, Utils.getFileName(file)));
             return;
         }

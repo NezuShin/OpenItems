@@ -27,6 +27,10 @@ public class ModelRegistry {
     //font images, key is emoji id, value is the symbol
     private Map<String, String> fontImages = new HashMap<>();
 
+
+    //font spaces
+    private SortedMap<Integer, String> fontSpaces = new TreeMap<>();
+
     public Map<String, CustomBlockModel> getBlockTypes() {
         return blockTypes;
     }
@@ -44,6 +48,10 @@ public class ModelRegistry {
         return fontImages;
     }
 
+    public Map<Integer, String> getFontSpaces() {
+        return fontSpaces;
+    }
+
     //synchronized collections for async resource pack scan and build
 
     /**
@@ -56,6 +64,7 @@ public class ModelRegistry {
             equipment = Collections.unmodifiableSet(new HashSet<>(equipment));
             blockTypes = Collections.unmodifiableMap(new HashMap<>(blockTypes));
             fontImages = Collections.unmodifiableMap(new HashMap<>(fontImages));
+            fontSpaces = Collections.unmodifiableSortedMap(new TreeMap<>(fontSpaces));
 
             reportLoaded(Bukkit.getConsoleSender());
             return;
@@ -64,6 +73,7 @@ public class ModelRegistry {
         equipment = Collections.synchronizedSet(new HashSet<>(equipment));
         blockTypes = Collections.synchronizedMap(new HashMap<>(blockTypes));
         fontImages = Collections.synchronizedMap(new HashMap<>(fontImages));
+        fontSpaces = Collections.synchronizedSortedMap(new TreeMap<>(fontSpaces));
     }
 
 
@@ -77,8 +87,7 @@ public class ModelRegistry {
                         .filter(i -> i instanceof CustomNoteblockModel).count()),
                 "{block-types-chorus}", String.valueOf(blockTypes.values().stream()
                         .filter(i -> i instanceof CustomChorusModel).count()),
-                "{font-images}", String.valueOf(blockTypes.values().stream()
-                        .filter(i -> i instanceof CustomChorusModel).count())
+                "{font-images}", String.valueOf(fontImages.size())
         ).send(sender);
     }
 
@@ -86,5 +95,7 @@ public class ModelRegistry {
         items = new HashSet<>();
         equipment = new HashSet<>();
         blockTypes = new HashMap<>();
+        fontSpaces = new TreeMap<>();
+        fontImages = new HashMap<>();
     }
 }

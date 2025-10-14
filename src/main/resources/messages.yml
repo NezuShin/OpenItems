@@ -39,6 +39,14 @@ messages:
 
   translatable-component: '<reset><#008f9a><grey>(<#008f9a>Translatable<grey>)<reset>'
 
+  oi-help-general:
+    - '<reset><gray>----------------<#008f9a>OpenItems general help<reset><gray>---------------'
+    - "<reset><#08c0c2><click:suggest_command:'/oi build'>/oi <#08c0c2>build <#008f9a>build resource pack"
+    - "<reset><#08c0c2><click:suggest_command:'/oi reload'>/oi <#08c0c2>reload <#008f9a>reload plugin"
+    - "<reset><#08c0c2><click:suggest_command:'/oi scan_mip_map'>/oi <#08c0c2>scan_mip_map <#008f9a>scan contents for incorrect textures"
+    - "<reset><#08c0c2><click:suggest_command:'/oi font print_path'>/oi <#08c0c2>font print_path <path> <#008f9a>print font image"
+    - "<reset><#08c0c2><click:suggest_command:'/oi font print_image'>/oi <#08c0c2>font print_image <symbol> <#008f9a>print symbol"
+    - "<reset><#08c0c2><click:suggest_command:'/oi font print_offset_sequence'>/oi <#08c0c2>font print_offset_sequence <offset> <#008f9a>print sequence for offset <#08c0c2><offset><#008f9a> pixels. Offset can be negative"
 
   oedit-help-general:
     - '<reset><gray>------------------<#008f9a>OEdit general help<reset><gray>-----------------'
@@ -108,20 +116,21 @@ messages:
   oedit-break-speed-multiplier-model:
     - "<reset><grey>(model) <#08c0c2>{model} <grey>- <#008f9a>{multiplier}x"
 
-  started-build: "<reset><#08c0c2>Starting resource pack build..."
-  build-end-done: "<reset><green>Build done!"
-  build-end-err: "<reset><red>Build error. Check console"
+  oi-started-build: "<reset><#08c0c2>Starting resource pack build..."
+  oi-build-end-done: "<reset><green>Build done!"
+  oi-build-end-err: "<reset><red>Build error. Check console"
 
-  mip-map-end-err: "<reset><red>MipMap check error. Check console"
-  mip-map-end-done: "<reset><#08c0c2>MipMap Limitations:"
-  mip-map-limitation: "<reset><#08c0c2>{width}x{height} - {file}"
-  mip-map-end-not-found: "<reset><green>No MipMap Limitations found!"
+  oi-mip-map-end-err: "<reset><red>MipMap check error. Check console"
+  oi-mip-map-end-done: "<reset><#08c0c2>MipMap Limitations:"
+  oi-mip-map-limitation: "<reset><#08c0c2>{width}x{height} - {file}"
+  oi-mip-map-end-not-found: "<reset><green>No MipMap Limitations found!"
 
   build-mip-map-warning: "<reset><yellow>There is textures that may limit mip level on client. Consider checking it with command <reset><#08c0c2><click:suggest_command:'/openitems scan_mip_map'>/openitems scan-mip-map "
 
   registry-loaded:
     - "<reset><#008f9a>Loaded <#08c0c2>{items}<#008f9a> item models"
-    - "<reset><#008f9a>Loaded <#08c0c2>{equipment}<#008f9a> equipment entries "
+    - "<reset><#008f9a>Loaded <#08c0c2>{equipment}<#008f9a> equipment entries"
+    - "<reset><#008f9a>Loaded <#08c0c2>{font-images}<#008f9a> font images"
     - "<reset><#008f9a>Loaded <#08c0c2>{block-types-total}<#008f9a> block models (total)"
     - "<reset><#008f9a>Block statistics:"
     - "<reset><#008f9a>Chorus: <#08c0c2>{block-types-chorus} of 63<#008f9a> models"
@@ -130,9 +139,13 @@ messages:
 
 
 
-  config-load-start: '<reset><#008f9a>Loading config....'
-  config-load-err: '<reset><red>Load error. Check console'
-  config-load-success: '<reset><#008f9a>Reloaded!'
+  oi-config-load-start: '<reset><#008f9a>Loading config....'
+  oi-config-load-err: '<reset><red>Load error. Check console'
+  oi-config-load-success: '<reset><#008f9a>Reloaded!'
 
-  font-image-format: '<reset><#008f9a>{id}: <reset><white>{font-image}'
-  font-image-not-found: '<reset><red>Font image not found: {id}'
+  oi-font-image-format: '<reset><#008f9a>{id}: <reset><white>{font-image}'
+  oi-font-image-not-found: '<reset><red>Font image not found: {id}'
+  oi-font-offset-format:
+    - '<reset><#008f9a>Offset <#08c0c2>{offset}'
+    - "<reset><#008f9a>Sequence:<reset> <#08c0c2><click:copy_to_clipboard:'{sequence}'>{sequence}<#008f9a> (click to copy) <reset><#008f9a><click:copy_to_clipboard:'{raw-sequence}'> (copy raw sequence)"
+    - '<reset><#008f9a>Example:         <#08c0c2>1{raw-sequence}<#008f9a>2'

@@ -28,6 +28,7 @@ import su.nezushin.openitems.blocks.ToolItemType;
 import su.nezushin.openitems.utils.Message;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.utils.NBTUtil;
+import su.nezushin.openitems.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,19 +94,19 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                         item.setData(DataComponentTypes.CUSTOM_NAME, MiniMessage.miniMessage().deserialize(
                                 Message.translateCodes(String.join(" ", newName))));
                     } else if (args[1].equalsIgnoreCase("max_damage")) {
-                        item.setData(DataComponentTypes.MAX_DAMAGE, parseInt(args[2]));
+                        item.setData(DataComponentTypes.MAX_DAMAGE, Utils.parseInt(args[2]));
                     } else if (args[1].equalsIgnoreCase("damage")) {
-                        item.setData(DataComponentTypes.DAMAGE, parseInt(args[2]));
+                        item.setData(DataComponentTypes.DAMAGE, Utils.parseInt(args[2]));
                     } else if (args[1].equalsIgnoreCase("max_stack_size")) {
-                        item.setData(DataComponentTypes.MAX_STACK_SIZE, parseInt(args[2]));
+                        item.setData(DataComponentTypes.MAX_STACK_SIZE, Utils.parseInt(args[2]));
                     } else if (args[1].equalsIgnoreCase("repair_cost")) {
-                        item.setData(DataComponentTypes.REPAIR_COST, parseInt(args[2]));
+                        item.setData(DataComponentTypes.REPAIR_COST, Utils.parseInt(args[2]));
                     } else if (args[1].equalsIgnoreCase("hide_tooltip")) {
                         item.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay()
                                 .hideTooltip(args[2].equalsIgnoreCase("true")));
                     } else if (args.length > 3) {
                         if (args[1].equalsIgnoreCase("use_cooldown")) {
-                            item.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(parseFloat(args[2])).cooldownGroup(Key.key(args[3])));
+                            item.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(Utils.parseFloat(args[2])).cooldownGroup(Key.key(args[3])));
                         }
                     }
                 }
@@ -116,8 +117,8 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
 
                 Message.current_item_data.replace(
                                 "{model}", String.valueOf(item.getData(DataComponentTypes.ITEM_MODEL)),
-                                "{name}", formatMinimessage(item.getData(DataComponentTypes.ITEM_NAME)),
-                                "{custom-name}", formatMinimessage(item.getData(DataComponentTypes.CUSTOM_NAME)),
+                                "{name}", Utils.formatMinimessage(item.getData(DataComponentTypes.ITEM_NAME)),
+                                "{custom-name}", Utils.formatMinimessage(item.getData(DataComponentTypes.CUSTOM_NAME)),
                                 "{max-damage}", String.valueOf(item.getData(DataComponentTypes.MAX_DAMAGE)),
                                 "{damage}", String.valueOf(item.getData(DataComponentTypes.DAMAGE)),
                                 "{max-stack-size}", String.valueOf(item.getData(DataComponentTypes.MAX_STACK_SIZE)),
@@ -146,13 +147,13 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                                 } else if (args.length == 5) {
                                     if (args[2].equalsIgnoreCase("material")) {
                                         block.getMaterialSpeedMultipliers().put(Material.valueOf(args[3].toUpperCase()),
-                                                (double) parseFloat(args[4]));
+                                                (double) Utils.parseFloat(args[4]));
                                     } else if (args[2].equalsIgnoreCase("tool")) {
                                         block.getToolSpeedMultipliers().put(ToolItemType.valueOf(args[3].toUpperCase()),
-                                                (double) parseFloat(args[4]));
+                                                (double) Utils.parseFloat(args[4]));
                                     } else if (args[2].equalsIgnoreCase("model")) {
                                         block.getModelSpeedMultipliers().put(args[3],
-                                                (double) parseFloat(args[4]));
+                                                (double) Utils.parseFloat(args[4]));
                                     }
                                 }
                             }
@@ -314,26 +315,7 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    public String formatMinimessage(Component component) {
-        return component == null ? "null" : (MiniMessage.miniMessage().serialize(component) +
-                (component instanceof TranslatableComponent ? (" " + Message.translatable_component.get()) : ""));
-    }
 
-    public int parseInt(String str) {
-        try {
-            return Integer.parseInt(str);
-        } catch (NumberFormatException ex) {
-            throw new CommandException(Message.err_nan.replace("{nan}", str));
-        }
-    }
-
-    public float parseFloat(String str) {
-        try {
-            return Float.parseFloat(str);
-        } catch (NumberFormatException ex) {
-            throw new CommandException(Message.err_nan.replace("{nan}", str));
-        }
-    }
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {

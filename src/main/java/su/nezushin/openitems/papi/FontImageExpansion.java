@@ -6,6 +6,7 @@ import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.utils.Utils;
 
 public class FontImageExpansion extends PlaceholderExpansion {
     @Override
@@ -39,6 +40,13 @@ public class FontImageExpansion extends PlaceholderExpansion {
 
             return OpenItems.getInstance().getModelRegistry().getFontImages().get(str.replace(":", "_")
                     .replace("/", "_"));
+        } else if (StringUtil.startsWithIgnoreCase(params, "offset")) {
+            var str = params.replaceFirst("offset_", "").replace("+", "");
+            try {
+                return Utils.getOffset(Integer.parseInt(str));
+            } catch (NumberFormatException ex) {
+                return "NaN";
+            }
         }
 
         return null;

@@ -48,6 +48,7 @@ public final class OpenItems extends JavaPlugin {
 
         if (OpenItemsConfig.buildOnEnable)
             this.resourcePackBuilder.build();
+
     }
 
     public void load() {

@@ -3,8 +3,10 @@ package su.nezushin.openitems.rp.cache;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.rp.font.BitmapFontImage;
 import su.nezushin.openitems.rp.font.FontImage;
 import su.nezushin.openitems.rp.font.FontImageProviders;
+import su.nezushin.openitems.rp.font.SpaceFontImage;
 import su.nezushin.openitems.utils.Utils;
 
 import java.io.File;
@@ -20,7 +22,8 @@ import java.util.Map;
 public class FontImageIdCache extends JsonCache {
 
     private Map<String, Integer> charIds = new HashMap<>();
-    private Map<String, FontImage> registeredCharIds = new HashMap<>();
+    private Map<String, BitmapFontImage> registeredCharIds = new HashMap<>();
+    private Map<Integer, String> fontSpaces = new HashMap<>();
 
     private int nextCharId = Utils.unicodeEscapeSequenceToInt("\\uE000");
 
@@ -35,12 +38,33 @@ public class FontImageIdCache extends JsonCache {
         return id;
     }
 
+    private void addSpace(int offset, String str, SpaceFontImage image){
+        image.getAdvances().put(str, offset);
+        fontSpaces.put(offset, str);
+    }
+
+    private SpaceFontImage prepareSpaces() {
+        var image = new SpaceFontImage();
+        var charId = Utils.unicodeEscapeSequenceToInt("\\uF8FF");//take last code point in range
+
+        for (var i = 1; i <= 512; i *= 2) {
+            addSpace(i, String.valueOf((char)charId--), image);
+            addSpace(-i, String.valueOf((char)charId--), image);
+        }
+        return image;
+    }
+
     public void build() throws IOException {
         var fontsDir = new File(OpenItems.getInstance().getDataFolder(), "build/assets/minecraft/font");
 
         fontsDir.mkdirs();
 
-        var data = new Gson().toJson(new FontImageProviders(new ArrayList<>(registeredCharIds.values())));
+        var array = new ArrayList<FontImage>(registeredCharIds.values());
+
+
+        array.add(prepareSpaces());
+
+        var data = new Gson().toJson(new FontImageProviders(array));
 
         for (var file : new File[]{
                 new File(fontsDir, "default.json"),
@@ -49,7 +73,11 @@ public class FontImageIdCache extends JsonCache {
             Files.writeString(file.toPath(), data, Charsets.UTF_8);
     }
 
-    public Map<String, FontImage> getRegisteredCharIds() {
+    public Map<Integer, String> getFontSpaces() {
+        return fontSpaces;
+    }
+
+    public Map<String, BitmapFontImage> getRegisteredCharIds() {
         return registeredCharIds;
     }
 
