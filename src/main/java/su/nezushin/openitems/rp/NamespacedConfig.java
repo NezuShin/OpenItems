@@ -3,11 +3,16 @@ package su.nezushin.openitems.rp;
 import com.google.common.collect.Lists;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.rp.font.BitmapFontImage;
+import su.nezushin.openitems.utils.Utils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents config for every namespcace; All yml configs for namcespace should be located in OpenItems/contents/&lt;namespace&gt;/configs/
@@ -15,6 +20,8 @@ import java.util.List;
 public class NamespacedConfig {
 
     private boolean allowAutogen = true;
+
+    private String namespace;
 
     private List<String> autogenIgnoreList = new ArrayList<>();
 
@@ -40,6 +47,9 @@ public class NamespacedConfig {
 
     private List<FontImageConfig> fontImages = new ArrayList<>();
 
+
+    private List<ModelTemplateConfig> modelTemplates = new ArrayList<>();
+
     record FontImageConfig(int height, int ascent, String path) {
 
 
@@ -48,7 +58,12 @@ public class NamespacedConfig {
         }
     }
 
-    public NamespacedConfig(File configsDir) {
+    record ModelTemplateConfig(String prefix, String model) {
+
+    }
+
+    public NamespacedConfig(String namespace, File configsDir, File namespaceDir) throws IOException {
+        this.namespace = namespace;
         if (!configsDir.exists() || !configsDir.isDirectory())
             return;
 
@@ -58,9 +73,30 @@ public class NamespacedConfig {
             if (file.getName().endsWith(".yml")) {
                 var config = YamlConfiguration.loadConfiguration(file);
 
+                loadTemplates(config, namespaceDir);
                 loadFontImages(config);
                 configs.add(config);
             }
+    }
+
+    private void loadTemplates(FileConfiguration config, File namespaceDir) throws IOException {
+        var section = config.getConfigurationSection("model-templates");
+        if (section == null)
+            return;
+        for (var i : section.getKeys(false)) {
+            var path = "model-templates." + i;
+
+            var template = new File(namespaceDir, "model_templates" + "/" + config.getString( path + ".template"));
+
+            if(!template.exists()){
+                throw new RuntimeException("Provided in " + path + " template does not exist.");
+            }
+
+            this.modelTemplates.add(new ModelTemplateConfig(
+                    config.getString( path + ".path"),
+                    FileUtils.fileRead(template)
+            ));
+        }
     }
 
     private void loadFontImages(FileConfiguration config) {
@@ -85,6 +121,11 @@ public class NamespacedConfig {
            return null;
 
         return configFontImage.toFontImage();
+    }
+
+    public String getModel(String path){
+        var model = this.modelTemplates.stream().filter(i -> path.startsWith(i.prefix())).findFirst().orElse(null);
+        return model == null ? null : model.model();
     }
 
 

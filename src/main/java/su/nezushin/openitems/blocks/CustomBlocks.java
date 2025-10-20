@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.block.data.type.Tripwire;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.storage.BlockDataStore;
@@ -16,6 +17,7 @@ import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.CustomBlockLoadEvent;
 import su.nezushin.openitems.events.CustomBlockUnloadEvent;
 import su.nezushin.openitems.gson.ConfigurationSerializableGsonAdapter;
+import su.nezushin.openitems.utils.NBTUtil;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 
 import java.util.*;
@@ -25,7 +27,15 @@ public class CustomBlocks {
     //All loaded blocks in server
     private Map<Block, BlockLocationStore> placedBlocks = new HashMap<>();
 
+    //Blocks need to be destroyed on next chunk load
+    private Map<Block, DestroyOnLoadBlock> destroyOnLoad = new HashMap<>();
+
     private BlockBreakSpeedModifiers blockBreakSpeedModifiers;
+
+
+    private record DestroyOnLoadBlock(boolean dropItem, boolean setAir, Runnable callback) {
+
+    }
 
     public CustomBlocks() {
         Bukkit.getPluginManager().registerEvents(new CustomBlocksListener(), OpenItems.getInstance());
@@ -122,20 +132,30 @@ public class CustomBlocks {
 
             List<BlockLocationStore> list = ConfigurationSerializableGsonAdapter.createGson().fromJson(str, listType);
             OpenItems.sync(() -> {
+                var needSaveChunk = false;//remove invalid blocks and save chunk
                 for (var i : list) {
 
                     if (!i.load()) {
-                        OpenItems.sync(() -> {//remove invalid blocks and save chunk
-                            saveChunk(chunk);
-                        });
+                        needSaveChunk = true;
                         continue;
                     }
 
                     var block = chunk.getWorld().getBlockAt(i.getX(), i.getY(), i.getZ());
 
                     this.placedBlocks.put(block, i);
+                    if (destroyOnLoad.containsKey(block)) {
+                        var destroyRecord = destroyOnLoad.remove(block);
+                        destroyBlock(block, destroyRecord.dropItem(), destroyRecord.setAir());
+                        destroyRecord.callback().run();
+
+                        return;
+                    }
+
+
                     Bukkit.getPluginManager().callEvent(new CustomBlockLoadEvent(block, i));
                 }
+                if (needSaveChunk)
+                    OpenItems.sync(() -> saveChunk(chunk));
                 scanForWrongBlockModels(chunk);
             });
         });
@@ -152,6 +172,60 @@ public class CustomBlocks {
             block.getWorld().dropItem(block.getLocation().add(0.5, 0.1, 0.5), placedBlock.getItemToDrop());
 
         this.saveChunk(block.getChunk());
+    }
+
+    /**
+     * Destroy block if chunk is not loaded. If chunk is loaded - works like destroyBlock method
+     *
+     * @param block    block to break
+     * @param dropItem drop block's item
+     * @param setAir   - set block to air
+     * @param callback - callback to run after block being destroyed
+     */
+    public void destroyBlockOnLoad(Block block, boolean dropItem, boolean setAir, Runnable callback) {
+        if (block.getChunk().isLoaded() && getPlacedBlocks().containsKey(block)) {
+            destroyBlock(block, dropItem, setAir);
+            return;
+        }
+        this.destroyOnLoad.put(block, new DestroyOnLoadBlock(dropItem, setAir, callback));
+        block.getWorld().getChunkAtAsync(block).thenRun(() -> {
+        });//just loading chunk. loadChunk(chunk) code will do the work
+    }
+
+    /**
+     * Destroy block if chunk is not loaded. If chunk is loaded - works like destroyBlock method
+     *
+     * @param block    block to break
+     * @param dropItem drop block's item
+     * @param setAir   - set block to air
+     */
+    public void destroyBlockOnLoad(Block block, boolean dropItem, boolean setAir) {
+        destroyBlockOnLoad(block, dropItem, setAir, () -> {});
+    }
+
+    /**
+     * Place block from item in world
+     *
+     * @param block where to place custom block
+     * @param item  item with custom block data
+     * @return placed custom block's data
+     */
+    public BlockLocationStore placeBlock(Block block, ItemStack item) {
+        var id = NBTUtil.getBlockId(item);
+
+        var blocks = OpenItems.getInstance().getBlocks();
+
+        var blockType = OpenItems.getInstance().getModelRegistry().getBlockTypes().get(id);
+
+        item = item.clone();
+        item.setAmount(1);
+        var placedBlock = new BlockLocationStore(block.getX(), block.getY(), block.getZ(), item);
+        blockType.apply(block);
+
+        blocks.getPlacedBlocks().put(block, placedBlock);
+
+        blocks.saveChunk(block.getChunk());
+        return placedBlock;
     }
 
     public void cleanChunk(Chunk chunk) {

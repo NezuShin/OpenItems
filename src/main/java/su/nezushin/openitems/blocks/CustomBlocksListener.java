@@ -1,5 +1,6 @@
 package su.nezushin.openitems.blocks;
 
+import com.destroystokyo.paper.ClientOption;
 import com.destroystokyo.paper.MaterialSetTag;
 import com.destroystokyo.paper.MaterialTags;
 import io.papermc.paper.datacomponent.DataComponentTypes;
@@ -45,6 +46,8 @@ public class CustomBlocksListener implements Listener {
 
         var placedBlock = blocks.getPlacedBlocks().get(block);
 
+        var player = e.getPlayer();
+
         if (placedBlock == null) return;
 
         //e.setDropItems(false);
@@ -56,8 +59,10 @@ public class CustomBlocksListener implements Listener {
             e.setCancelled(true);
             return;
         }
-        if (e.getPlayer().getGameMode() != GameMode.CREATIVE)
+
+        if (player.getGameMode() != GameMode.CREATIVE) {
             brokenBlocks.put(block, placedBlock);
+        }
         OpenItems.getInstance().getBlocks().destroyBlock(e.getBlock(), false, false);
     }
 
@@ -69,6 +74,7 @@ public class CustomBlocksListener implements Listener {
 
         if (placedBlock == null)
             return;
+
 
         e.getItems().clear();
 
@@ -198,8 +204,17 @@ public class CustomBlocksListener implements Listener {
             return;
 
         if (placedBlock.canBeDestroyedByLiquid()) {
-            blocks.destroyBlock(block, placedBlock.dropOnDestroyByLiquid(), true);
+
+            var event = new CustomBlockDestroyedByLiquidEvent(e.getBlock(), placedBlock, e);
+
+            Bukkit.getPluginManager().callEvent(event);
+
             e.setCancelled(true);
+            if(event.isCancelled())
+                return;
+
+
+            blocks.destroyBlock(block, placedBlock.dropOnDestroyByLiquid(), true);
             block.getState().update(true, true);
             return;
         }

@@ -79,7 +79,7 @@ There is two ways to configure font image size:
 - Using yaml config files in `OpenItems/contents/<namespace>/configs/` directory. Example with same values as above: 
 ```yaml  
  font-images:
-  random_useless_unique_name:
+  random-useless-unique-name:
     path: '<namespace>:font/my_awesome_texture'
     height: 20
     ascent: 8
@@ -93,6 +93,36 @@ PAPI placeholders:
  - Text offset: `%openitems_offset_<offset_in_pixels>%` \
    Examples: `%openitems_offset_-10%`, `%openitems_offset_+10%`.
 
+#### Custom model templates
+
+You can drop your model to directory `OpenItems/contents/<namespace>/model_templates/` and specify in config 
+(in the `OpenItems/contents/<namespace>/configs/` directory) where to use it as template. Model should have `{path}` 
+placeholder where the texture path should be placed.
+
+\
+Example config:
+```yaml
+model-templates:
+  random-useless-unique-name: 
+    path: 'item/my_textures_with_custom_template_model/'
+    # This string is a prefix ^^^
+    # item/my_textures_with_custom_template_model/my_pic.png will pass the filter
+    # item/my_textures_with_custom_template_model/another_dir/my_pic.png will also pass the filter
+    # item/my_textures_with_another_template_model/my_pic.png will not pass the filter
+    template: 'model_in_model_templates_dir'
+```
+
+Example model:
+```yaml
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "{path}"
+  }
+}
+```
+
+
 #### Blocks
 How plugin scanning for block models and textures:
 - For note block based textures in directory `OpenItems/contents/<namespace>/textures/block/note_block/`.
@@ -102,7 +132,7 @@ How plugin scanning for block models and textures:
     After building resource pack in registry will appear new block model - `<namespace>:block/note_block/<your_png_file>`
 - - For block with three textures: up, down and side - put images with postfix `_up`, `_down`, `_side` to directory. For example `my_block_up.png`, `my_block_down.png`,`my_block_up.png`.   
     If done correctly, registry will have model `<namespace>:block/note_block/my_block`
-- - For block with own texture in every side - same as above, but you need names ends with `_up`, `_down`, `_east`, `_west`, `_south` and `_west`.
+- - For block with own texture in every side - same as above, but you need names ends with `_up`, `_down`, `_east`, `_west`, `_south` and `_north`.
     You may put textures to every subdirectory in `.../block/note_block` but png files for one block should be in same directory.
 - Tripwire and chorus plant based models is located in `OpenItems/contents/<namespace>/models/block/tripwire/` and `.../chorus_plant/` directories respectively.
   As there is no reason to use tripwires and chorus plants as plain blocks, so only custom models supported. \
@@ -112,7 +142,7 @@ How plugin scanning for block models and textures:
 
 
 
-### Understanding block hardness
+#### Understanding block hardness
 
 Plugin cannot manipulate real block hardness but lets you configure player break speed multiplier. \
 For example, you want block to be mined by pickaxes - you should perform next commands:

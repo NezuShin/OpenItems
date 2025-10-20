@@ -338,7 +338,7 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
 
             if (args[0].equalsIgnoreCase("equipment"))
                 return Lists.newArrayList("swappable", "can_be_sheared", "damage_on_hurt", "dispensable",
-                                "equip_on_interact", "equip_sound", "shear_sound", "camera_overlay", "slot")
+                                "equip_on_interact", "equip_sound", "shear_sound", "camera_overlay", "slot", "model")
                         .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
 
             if (args[0].equalsIgnoreCase("help"))

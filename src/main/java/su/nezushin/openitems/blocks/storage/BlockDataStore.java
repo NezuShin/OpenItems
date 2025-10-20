@@ -28,6 +28,8 @@ public class BlockDataStore {
 
     protected Set<ToolItemType> toolSpeedHasGradeMultiplier = new HashSet<>();
 
+    protected Set<ToolItemType> dropWhenMinedByTools = new HashSet<>();
+
     protected ItemStack itemToDrop;
 
     public BlockDataStore(ItemStack itemToDrop) {
@@ -56,6 +58,9 @@ public class BlockDataStore {
         dropOnBreak = compound.getBoolean("drop_on_break");
         dropOnExplosion = compound.getBoolean("drop_on_explosion");
         dropOnDestroyByLiquid = compound.getBoolean("drop_on_destroy_by_liquid");
+
+        dropWhenMinedByTools = new HashSet<>(compound.getStringList("drop_when_mined_by_tools")
+                .stream().map(i -> ToolItemType.valueOf(i.toUpperCase())).toList());
 
 
         var speedMultiplier = compound.getCompound("speed_multiplier");
@@ -232,5 +237,9 @@ public class BlockDataStore {
 
     public Set<ToolItemType> getToolSpeedHasGradeMultiplier() {
         return toolSpeedHasGradeMultiplier;
+    }
+
+    public Set<ToolItemType> dropWhenMinedByTools() {
+        return dropWhenMinedByTools;
     }
 }

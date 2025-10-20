@@ -64,13 +64,11 @@ public class OItemsCommand implements CommandExecutor, TabCompleter {
                 });
             }
             if (args[0].equalsIgnoreCase("font")) {
-                System.out.println(args.length);
                 if (args.length > 2) {
                     if (args[1].equalsIgnoreCase("print_image")) {
                         sender.sendMessage(args[2]);
                     } else if (args[1].equalsIgnoreCase("print_path")) {
                         var id = args[2];
-                        System.out.println(id);
                         var fontImage = OpenItems.getInstance().getModelRegistry().getFontImages().get(id);
 
                         if (fontImage == null || fontImage.isEmpty()) {

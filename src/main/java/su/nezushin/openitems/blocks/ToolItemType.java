@@ -37,6 +37,8 @@ public enum ToolItemType {
         return set.contains(material);
     }
 
+
+
     /**
      * @param material tool's material
      * @return ToolItemType based on Material value

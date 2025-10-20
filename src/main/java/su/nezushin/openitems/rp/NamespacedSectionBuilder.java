@@ -27,10 +27,10 @@ public class NamespacedSectionBuilder {
     private File outputDir;
 
 
-    public NamespacedSectionBuilder(String namespace, File sectionDir) {
+    public NamespacedSectionBuilder(String namespace, File sectionDir) throws IOException {
         this.namespace = namespace;
 
-        this.config = new NamespacedConfig(new File(sectionDir, "configs"));
+        this.config = new NamespacedConfig(namespace, new File(sectionDir, "configs"), sectionDir);
 
         this.sectionDir = sectionDir;
         this.outputDir = new File(OpenItems.getInstance().getDataFolder(), "build/assets/" + this.namespace);
@@ -39,7 +39,7 @@ public class NamespacedSectionBuilder {
     public List<File> getAllTextures() {
         List<ResourcePackScanFile> scanFiles = new ArrayList<>();
 
-        scanForTextures(new File(this.sectionDir, "textures"), "", scanFiles);
+        scanForTextures(new File(this.sectionDir, "textures"), "", true, scanFiles);
 
         return scanFiles.stream().map(ResourcePackScanFile::file).toList();
     }
@@ -57,6 +57,10 @@ public class NamespacedSectionBuilder {
         //for blocks with parent minecraft:cube_all
         List<ResourcePackScanFile> pngFilesNoteblock = new ArrayList<>();
 
+
+        //for any arbitrary textures with custom model templates
+        List<ResourcePackScanFile> pngFilesCustomModelTemplates = new ArrayList<>();
+
         //for font images
         List<ResourcePackScanFile> pngFilesEmoji = new ArrayList<>();
 
@@ -67,15 +71,20 @@ public class NamespacedSectionBuilder {
         var tripwireDir = new File(this.sectionDir, "models/block/tripwire");
         var chorusDir = new File(this.sectionDir, "models/block/chorus_plant");
 
+
+        var customModelTemplatesDir = new File(this.sectionDir, "textures/");
+
         var equipmentDir = new File(this.sectionDir, "textures/entity/equipment");
 
         var fontDir = new File(this.sectionDir, "textures/font");
 
         if (this.config.isAllowAutogen()) {
-            scanForTextures(generatedDir, "item", pngFilesGenerated);
-            scanForTextures(handheldDir, "item", pngFilesHandheld);
-            scanForTextures(noteblockDir, "block", pngFilesNoteblock);
-            scanForTextures(fontDir, "", pngFilesEmoji);
+            scanForTextures(generatedDir, "item", true, pngFilesGenerated);
+            scanForTextures(handheldDir, "item", true, pngFilesHandheld);
+            scanForTextures(noteblockDir, "block", true, pngFilesNoteblock);
+            scanForTextures(fontDir, "", true, pngFilesEmoji);
+
+            scanForTextures(customModelTemplatesDir, "", false, pngFilesCustomModelTemplates);
         }
 
         Utils.copyFolder(this.sectionDir, outputDir, this.sectionDir, this.config.getDirectoriesIgnoreList(), this.config.getExtensionsIgnoreList());
@@ -86,6 +95,13 @@ public class NamespacedSectionBuilder {
         for (var i : pngFilesHandheld)
             createItemModel(i, this.config.getHandheldModelTemplate());
 
+        for (var i : pngFilesCustomModelTemplates) {
+            var model = this.config.getModel(i.pathAndName());
+            if (model != null) {
+                createItemModel(i, model);
+            }
+        }
+
         var fontImageCache = OpenItems.getInstance().getResourcePackBuilder().getFontImagesIdCache();
 
 
@@ -93,7 +109,7 @@ public class NamespacedSectionBuilder {
             var path = this.namespace + ":" + i.pathAndName();
             var id = fontImageCache.getOrCreateFontImageId(path);
             var data = this.config.getFontImageData(path);
-            if(data == null){
+            if (data == null) {
                 var map = Utils.extractNumbers(i.name());
 
                 var height = map.getOrDefault("h", 9);
@@ -134,7 +150,7 @@ public class NamespacedSectionBuilder {
 
     //find all equipment textures
     public void scanForEquipment(File file, String layer, String path, boolean appendPath, Map<String, List<String>> layerNameMap) {
-        if(!file.exists())
+        if (!file.exists())
             return;
         if (!file.isDirectory()) {
             var mapPath = Utils.createPath(path, Utils.getFileName(file));
@@ -156,7 +172,7 @@ public class NamespacedSectionBuilder {
 
     //scan for item models to add it into /items dir
     public void scanForItemModels(File file, String path) throws IOException {
-        if(!file.exists())
+        if (!file.exists())
             return;
         if (!file.isDirectory()) {
             createRegularTemplateItem(this.namespace + ":" + path + "/" + Utils.getFileName(file), path.replaceFirst("item", ""), Utils.getFileName(file));
@@ -168,8 +184,8 @@ public class NamespacedSectionBuilder {
     }
 
     //scan for textures to create model and add to /items dir
-    public void scanForTextures(File file, String path, List<ResourcePackScanFile> pngFiles) {
-        if(!file.exists())
+    public void scanForTextures(File file, String path, boolean applyPath, List<ResourcePackScanFile> pngFiles) {
+        if (!file.exists())
             return;
         if (!file.isDirectory()) {
             if (file.getName().toLowerCase().endsWith(".png")) {
@@ -177,10 +193,10 @@ public class NamespacedSectionBuilder {
             }
             return;
         }
-
-        path = Utils.createPath(path, file);
+        if (applyPath)
+            path = Utils.createPath(path, file);
         for (File i : file.listFiles())
-            scanForTextures(i, path, pngFiles);
+            scanForTextures(i, path, true, pngFiles);
 
     }
 

@@ -25,7 +25,6 @@ public class BlockLocationStore extends BlockDataStore {
     public BlockLocationStore() {
     }
 
-
     public int getX() {
         return x;
     }

@@ -55,7 +55,7 @@ public class ResourcePackBuilder {
         this.fontImageIdCache.load();
     }
 
-    public List<File> getAllTextures() {
+    public List<File> getAllTextures() throws IOException {
         var list = new ArrayList<File>();
 
         for (var i : getContentNamespaces())
