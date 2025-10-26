@@ -6,7 +6,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import su.nezushin.openitems.blocks.CustomBlocks;
 import su.nezushin.openitems.cmd.OEditCommand;
 import su.nezushin.openitems.cmd.OItemsCommand;
-import su.nezushin.openitems.papi.FontImageExpansion;
+import su.nezushin.openitems.hooks.FontImageExpansion;
+import su.nezushin.openitems.hooks.ResourcePackManagerHook;
+import su.nezushin.openitems.hooks.RoseResourcepackHook;
 import su.nezushin.openitems.rp.ResourcePackBuilder;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
@@ -18,8 +20,12 @@ public final class OpenItems extends JavaPlugin {
     private ModelRegistry modelRegistry;
     private ResourcePackBuilder resourcePackBuilder;
 
+    private FontImageExpansion papiHook;
+    private ResourcePackManagerHook resourcePackManagerHook;
+    private RoseResourcepackHook roseResourcepackHookHook;
+
     public static NamespacedKey CUSTOM_BLOCKS_CHUNK_KEY;
-    
+
     public static NamespacedKey CUSTOM_BLOCKS_CHECKED_CHUNK_KEY;
 
     @Override
@@ -52,10 +58,20 @@ public final class OpenItems extends JavaPlugin {
     }
 
     public void load() {
+        if (papiHook != null)
+            papiHook.unregister();
         OpenItemsConfig.init();
         this.resourcePackBuilder.loadRegistry();
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            new FontImageExpansion().register();
+            papiHook = new FontImageExpansion();
+            papiHook.register();
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("ResourcePackManager")) {
+            resourcePackManagerHook = new ResourcePackManagerHook();
+            resourcePackManagerHook.register();
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("RoseResourcepack")) {
+            roseResourcepackHookHook = new RoseResourcepackHook();
         }
     }
 
@@ -87,5 +103,17 @@ public final class OpenItems extends JavaPlugin {
 
     public static void async(Runnable run) {
         Bukkit.getScheduler().runTaskAsynchronously(getInstance(), run);
+    }
+
+    public FontImageExpansion getPapiHook() {
+        return papiHook;
+    }
+
+    public void callHooksBuildRP() {
+
+        if(resourcePackManagerHook != null)
+            resourcePackManagerHook.build();
+        if(roseResourcepackHookHook != null)
+            roseResourcepackHookHook.build();
     }
 }

@@ -1,4 +1,4 @@
-package su.nezushin.openitems.papi;
+package su.nezushin.openitems.hooks;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;

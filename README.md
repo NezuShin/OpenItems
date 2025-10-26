@@ -16,7 +16,9 @@ Unlike [craftengine](https://modrinth.com/plugin/craftengine), OpenItems not man
 - [**PaperMC**](https://papermc.io/) - based server (Are someone still using spigot? why?)
 
 ## Soft Dependencies
-- [**PlaceholderAPI**](https://www.spigotmc.org/resources/placeholderapi.6245/) - if you need font image placeholders
+- [**PlaceholderAPI**](https://www.spigotmc.org/resources/placeholderapi.6245/) - font image placeholders and text offsets 
+- [**RoseResourcepack**](https://modrinth.com/plugin/roseresourcepack) - resource pack management. Need to be configured manually to work with OpenItems; OpenItems only reloads RoseResourcepack after build 
+- [**ResourcePackManager**](https://www.spigotmc.org/resources/resource-pack-manager.118574/) - resource pack management. Auto adding built resource pack to merge, reloading ResourcePackManager after build
 
 ## Working with plugin 
 

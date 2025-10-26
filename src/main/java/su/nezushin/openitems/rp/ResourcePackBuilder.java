@@ -107,6 +107,9 @@ public class ResourcePackBuilder {
                 Message.oi_build_mip_map_warning.send(Bukkit.getConsoleSender());
             }
 
+
+            OpenItems.getInstance().callHooksBuildRP();
+
             OpenItems.async(() -> Bukkit.getPluginManager().callEvent(new AsyncBuildDoneEvent()));
             return true;
         } catch (Exception ex) {
