@@ -239,6 +239,10 @@ public class BlockDataStore {
         return toolSpeedHasGradeMultiplier;
     }
 
+    public void setToolSpeedHasGradeMultiplier(Set<ToolItemType> toolSpeedHasGradeMultiplier) {
+        this.toolSpeedHasGradeMultiplier = toolSpeedHasGradeMultiplier;
+    }
+
     public Set<ToolItemType> dropWhenMinedByTools() {
         return dropWhenMinedByTools;
     }

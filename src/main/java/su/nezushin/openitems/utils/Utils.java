@@ -6,6 +6,7 @@ import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.block.BlockFace;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.cmd.CommandException;
@@ -133,7 +134,6 @@ public class Utils {
         }
         return returnList;
     }
-
 
     /**
      * convert File (like OpenItems/contents/namespace/textures/item/test.png) to string namespace:textures/item/test.png

@@ -354,6 +354,9 @@ public class NamespacedSectionBuilder {
 
         Files.write(modelStr.getBytes(StandardCharsets.UTF_8), new File(modelDir, scanFile.name() + ".json"));
 
+
+
+
         createRegularTemplateItem(modelPath, scanFile.path(), scanFile.name());
     }
 
@@ -362,6 +365,11 @@ public class NamespacedSectionBuilder {
         var itemDir = new File(this.outputDir, "items/" + itemPath);
 
         itemDir.mkdirs();
-        Files.write(this.config.getRegularItemTemplate().replace("{path}", modelPath).getBytes(StandardCharsets.UTF_8), new File(itemDir, itemName + ".json"));
+        var template = this.config.getItemModel(modelPath);
+
+        if(template == null || template.isEmpty())
+            template = this.config.getRegularItemTemplate();
+
+        Files.write(template.replace("{path}", modelPath).getBytes(StandardCharsets.UTF_8), new File(itemDir, itemName + ".json"));
     }
 }

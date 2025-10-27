@@ -5,14 +5,11 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.rp.font.BitmapFontImage;
-import su.nezushin.openitems.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Represents config for every namespcace; All yml configs for namcespace should be located in OpenItems/contents/&lt;namespace&gt;/configs/
@@ -50,12 +47,19 @@ public class NamespacedConfig {
 
     private List<ModelTemplateConfig> modelTemplates = new ArrayList<>();
 
+
+    private List<ItemTemplateConfig> itemTemplates = new ArrayList<>();
+
     record FontImageConfig(int height, int ascent, String path) {
 
 
         public BitmapFontImage toFontImage() {
             return new BitmapFontImage(height, ascent, path + ".png");
         }
+    }
+
+    record ItemTemplateConfig(String prefix, String model) {
+
     }
 
     record ModelTemplateConfig(String prefix, String model) {
@@ -73,27 +77,52 @@ public class NamespacedConfig {
             if (file.getName().endsWith(".yml")) {
                 var config = YamlConfiguration.loadConfiguration(file);
 
-                loadTemplates(config, namespaceDir);
+                loadModelTemplates(config, namespaceDir);
+                loadItemTemplates(config, namespaceDir);
                 loadFontImages(config);
                 configs.add(config);
             }
     }
 
-    private void loadTemplates(FileConfiguration config, File namespaceDir) throws IOException {
+    private void loadModelTemplates(FileConfiguration config, File namespaceDir) throws IOException {
         var section = config.getConfigurationSection("model-templates");
         if (section == null)
             return;
         for (var i : section.getKeys(false)) {
             var path = "model-templates." + i;
 
-            var template = new File(namespaceDir, "model_templates" + "/" + config.getString( path + ".template"));
+            var templatePath = "model_templates" + "/" + config.getString(path + ".template");
 
-            if(!template.exists()){
-                throw new RuntimeException("Provided in " + path + " template does not exist.");
+            var template = new File(namespaceDir, templatePath);
+
+            if (!template.exists()) {
+                throw new RuntimeException("Provided in " + path + ".template ('" + templatePath + "') template does not exist.");
             }
 
             this.modelTemplates.add(new ModelTemplateConfig(
-                    config.getString( path + ".path"),
+                    config.getString(path + ".path"),
+                    FileUtils.fileRead(template)
+            ));
+        }
+    }
+
+    private void loadItemTemplates(FileConfiguration config, File namespaceDir) throws IOException {
+        var section = config.getConfigurationSection("item-templates");
+        if (section == null)
+            return;
+        for (var i : section.getKeys(false)) {
+            var path = "item-templates." + i;
+
+            var templatePath = "item_templates" + "/" + config.getString(path + ".template");
+
+            var template = new File(namespaceDir, templatePath);
+
+            if (!template.exists()) {
+                throw new RuntimeException("Provided in " + path + ".template ('" + templatePath + "') template does not exist.");
+            }
+
+            this.itemTemplates.add(new ItemTemplateConfig(
+                    config.getString(path + ".path"),
                     FileUtils.fileRead(template)
             ));
         }
@@ -117,14 +146,21 @@ public class NamespacedConfig {
         var configFontImage = this.fontImages.stream()
                 .filter(i -> i.path().equalsIgnoreCase(path)).findFirst().orElse(null);
 
-       if(configFontImage == null)
-           return null;
+        if (configFontImage == null)
+            return null;
 
         return configFontImage.toFontImage();
     }
 
-    public String getModel(String path){
+    public String getModel(String path) {
         var model = this.modelTemplates.stream().filter(i -> path.startsWith(i.prefix())).findFirst().orElse(null);
+        return model == null ? null : model.model();
+    }
+
+    public String getItemModel(String path) {
+        path = path.substring(path.indexOf(":")+ 1);
+        String finalPath = path;
+        var model = this.itemTemplates.stream().filter(i -> finalPath.startsWith(i.prefix())).findFirst().orElse(null);
         return model == null ? null : model.model();
     }
 

@@ -58,8 +58,6 @@ public final class OpenItems extends JavaPlugin {
     }
 
     public void load() {
-        if (papiHook != null)
-            papiHook.unregister();
         OpenItemsConfig.init();
         this.resourcePackBuilder.loadRegistry();
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
@@ -110,10 +108,11 @@ public final class OpenItems extends JavaPlugin {
     }
 
     public void callHooksBuildRP() {
-
-        if(resourcePackManagerHook != null)
-            resourcePackManagerHook.build();
-        if(roseResourcepackHookHook != null)
-            roseResourcepackHookHook.build();
+        sync(() -> {
+            if(resourcePackManagerHook != null)
+                resourcePackManagerHook.build();
+            if(roseResourcepackHookHook != null)
+                roseResourcepackHookHook.build();
+        });
     }
 }

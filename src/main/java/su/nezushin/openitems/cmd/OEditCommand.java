@@ -137,13 +137,15 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                         block = NBTUtil.getBlockData(item);
                     } else if (block != null) {
                         if (args[1].equalsIgnoreCase("break_speed_multiplier")) {
-                            if (args.length >= 4) {
+                            if (args.length >= 3) {
                                 if (args[2].equalsIgnoreCase("apply_tool_grade_multiplier")) {
                                     var set = block.getToolSpeedHasGradeMultiplier();
                                     set.clear();
-                                    for (var i = 3; i < args.length; i++) {
-                                        set.add(ToolItemType.valueOf(args[i].toUpperCase()));
-                                    }
+                                    if (args.length >= 4)
+                                        for (var i = 3; i < args.length; i++) {
+                                            set.add(ToolItemType.valueOf(args[i].toUpperCase()));
+                                        }
+                                    block.setToolSpeedHasGradeMultiplier(set);
                                 } else if (args.length == 5) {
                                     if (args[2].equalsIgnoreCase("material")) {
                                         block.getMaterialSpeedMultipliers().put(Material.valueOf(args[3].toUpperCase()),
@@ -202,6 +204,8 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                                 block.setCanBeReplaced(args[2].equalsIgnoreCase("true"));
                             } else if (args[1].equalsIgnoreCase("can_be_destroyed_by_liquid")) {
                                 block.setCanBeDestroyedByLiquid(args[2].equalsIgnoreCase("true"));
+                            } else if (args[1].equalsIgnoreCase("can_be_blown")) {
+                                block.setCanBeBlown(args[2].equalsIgnoreCase("true"));
                             }
                         }
                         item = block.applyData();
@@ -314,7 +318,6 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
 
         return true;
     }
-
 
 
     @Override
