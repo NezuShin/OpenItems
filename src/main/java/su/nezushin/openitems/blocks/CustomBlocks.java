@@ -200,7 +200,8 @@ public class CustomBlocks {
      * @param setAir   - set block to air
      */
     public void destroyBlockOnLoad(Block block, boolean dropItem, boolean setAir) {
-        destroyBlockOnLoad(block, dropItem, setAir, () -> {});
+        destroyBlockOnLoad(block, dropItem, setAir, () -> {
+        });
     }
 
     /**
@@ -215,12 +216,11 @@ public class CustomBlocks {
 
         var blocks = OpenItems.getInstance().getBlocks();
 
-        var blockType = OpenItems.getInstance().getModelRegistry().getBlockTypes().get(id);
-
         item = item.clone();
         item.setAmount(1);
         var placedBlock = new BlockLocationStore(block.getX(), block.getY(), block.getZ(), item);
-        blockType.apply(block);
+
+        setBlockModel(block, id);
 
         blocks.getPlacedBlocks().put(block, placedBlock);
 
@@ -228,6 +228,32 @@ public class CustomBlocks {
         return placedBlock;
     }
 
+
+    private void setBlockModel(Block block, String model) {
+        var blockType = OpenItems.getInstance().getModelRegistry().getBlockTypes().get(model);
+        blockType.apply(block);
+    }
+
+    /**
+     * Set model for already placed block. This method will also will save custom chunk data.
+     *
+     * @param block block to apply model
+     * @param model path to the block model
+     */
+    public void changeBlockModel(Block block, String model) {
+        var placedBlock = this.placedBlocks.get(block);
+        placedBlock.setId(model);
+        block.getState().update(true, false);
+        setBlockModel(block, model);
+        this.saveChunk(block.getChunk());
+    }
+
+
+    /**
+     * Remove from plugin registry all blocks from this chunk
+     *
+     * @param chunk chunk
+     */
     public void cleanChunk(Chunk chunk) {
         for (var i : this.placedBlocks.entrySet()
                 .stream().filter(i -> i.getKey().getChunk().equals(chunk)).toList()) {

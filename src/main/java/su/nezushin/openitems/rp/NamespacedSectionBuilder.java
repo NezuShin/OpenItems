@@ -1,11 +1,14 @@
 package su.nezushin.openitems.rp;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.rp.equipment.EquipmentModel;
 import su.nezushin.openitems.rp.font.BitmapFontImage;
+import su.nezushin.openitems.rp.sound.Sound;
+import su.nezushin.openitems.rp.sound.SoundEvent;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
 
@@ -61,6 +64,10 @@ public class NamespacedSectionBuilder {
         //for any arbitrary textures with custom model templates
         List<ResourcePackScanFile> pngFilesCustomModelTemplates = new ArrayList<>();
 
+
+        //for sounds
+        List<ResourcePackScanFile> oggFiles = new ArrayList<>();
+
         //for font images
         List<ResourcePackScanFile> pngFilesEmoji = new ArrayList<>();
 
@@ -78,6 +85,9 @@ public class NamespacedSectionBuilder {
 
         var fontDir = new File(this.sectionDir, "textures/font");
 
+
+        var sounds = new File(this.sectionDir, "sounds");
+
         if (this.config.isAllowAutogen()) {
             scanForTextures(generatedDir, "item", true, pngFilesGenerated);
             scanForTextures(handheldDir, "item", true, pngFilesHandheld);
@@ -85,6 +95,8 @@ public class NamespacedSectionBuilder {
             scanForTextures(fontDir, "", true, pngFilesEmoji);
 
             scanForTextures(customModelTemplatesDir, "", false, pngFilesCustomModelTemplates);
+
+            scanForSounds(sounds, "", false, oggFiles);
         }
 
         Utils.copyFolder(this.sectionDir, outputDir, this.sectionDir, this.config.getDirectoriesIgnoreList(), this.config.getExtensionsIgnoreList());
@@ -101,6 +113,21 @@ public class NamespacedSectionBuilder {
                 createItemModel(i, model);
             }
         }
+
+
+        Map<String, SoundEvent> soundsMap = new HashMap<>();
+        for (var i : oggFiles) {
+            var sound = this.config.getSound(i.pathAndName());
+
+            if (sound == null)
+                sound = new SoundEvent(false, null, Lists.newArrayList(
+                        new Sound(i.pathAndName(), 1.0, 1.0, 1.0,
+                                false, 16, false, "file")
+                ));
+            soundsMap.put(i.pathAndName().replace("/", "."), sound);
+        }
+        Files.write(new Gson().toJson(soundsMap).getBytes(StandardCharsets.UTF_8), new File(this.outputDir, "sounds.json"));
+
 
         var fontImageCache = OpenItems.getInstance().getResourcePackBuilder().getFontImagesIdCache();
 
@@ -143,13 +170,14 @@ public class NamespacedSectionBuilder {
     private record ResourcePackScanFile(File file, String path, String name) {
 
         public String pathAndName() {
-            return path + "/" + name;
+            return Utils.createPath(path, name);
         }
 
     }
 
     //find all equipment textures
-    public void scanForEquipment(File file, String layer, String path, boolean appendPath, Map<String, List<String>> layerNameMap) {
+    public void scanForEquipment(File file, String layer, String path, boolean applyPath,
+                                 Map<String, List<String>> layerNameMap) {
         if (!file.exists())
             return;
         if (!file.isDirectory()) {
@@ -163,11 +191,29 @@ public class NamespacedSectionBuilder {
             return;
         }
 
-        if (appendPath)
+        if (applyPath)
+
             path = Utils.createPath(path, file);
         for (File i : file.listFiles()) {
             scanForEquipment(i, layer, path, true, layerNameMap);
         }
+    }
+
+
+    //scan for sounds
+    public void scanForSounds(File file, String path, boolean applyPath, List<ResourcePackScanFile> soundFiles) throws IOException {
+        if (!file.exists())
+            return;
+        if (!file.isDirectory()) {
+            if (file.getName().toLowerCase().endsWith(".ogg")) {
+                soundFiles.add(new ResourcePackScanFile(file, path, Utils.getFileName(file)));
+            }
+            return;
+        }
+        if (applyPath)
+            path = Utils.createPath(path, file);
+        for (File i : file.listFiles())
+            scanForSounds(i, path, true, soundFiles);
     }
 
     //scan for item models to add it into /items dir
@@ -355,8 +401,6 @@ public class NamespacedSectionBuilder {
         Files.write(modelStr.getBytes(StandardCharsets.UTF_8), new File(modelDir, scanFile.name() + ".json"));
 
 
-
-
         createRegularTemplateItem(modelPath, scanFile.path(), scanFile.name());
     }
 
@@ -367,7 +411,7 @@ public class NamespacedSectionBuilder {
         itemDir.mkdirs();
         var template = this.config.getItemModel(modelPath);
 
-        if(template == null || template.isEmpty())
+        if (template == null || template.isEmpty())
             template = this.config.getRegularItemTemplate();
 
         Files.write(template.replace("{path}", modelPath).getBytes(StandardCharsets.UTF_8), new File(itemDir, itemName + ".json"));

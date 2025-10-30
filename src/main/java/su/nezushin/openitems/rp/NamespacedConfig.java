@@ -5,6 +5,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.rp.font.BitmapFontImage;
+import su.nezushin.openitems.rp.sound.Sound;
+import su.nezushin.openitems.rp.sound.SoundEvent;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,11 +52,27 @@ public class NamespacedConfig {
 
     private List<ItemTemplateConfig> itemTemplates = new ArrayList<>();
 
+
+    private List<SoundConfig> sounds = new ArrayList<>();
+
     record FontImageConfig(int height, int ascent, String path) {
 
 
         public BitmapFontImage toFontImage() {
             return new BitmapFontImage(height, ascent, path + ".png");
+        }
+    }
+
+    record SoundConfig(String subtitle, double volume, double pith, double weight,
+                       boolean stream, double attenuationDistance, boolean preload, String type, List<String> paths) {
+
+        public SoundEvent toSoundEvent(String path) {
+            return new SoundEvent(false, subtitle, Lists.newArrayList(
+                    new Sound(path.replace("/", "."), volume, pith, weight, stream, attenuationDistance, preload, type)));
+        }
+
+        public boolean contains(String path){
+            return this.paths.stream().anyMatch(i -> i.replace(".", "/").equalsIgnoreCase(path));
         }
     }
 
@@ -80,6 +98,7 @@ public class NamespacedConfig {
                 loadModelTemplates(config, namespaceDir);
                 loadItemTemplates(config, namespaceDir);
                 loadFontImages(config);
+                loadSounds(config);
                 configs.add(config);
             }
     }
@@ -141,6 +160,26 @@ public class NamespacedConfig {
         }
     }
 
+    private void loadSounds(FileConfiguration config) throws IOException {
+        var section = config.getConfigurationSection("sounds");
+        if (section == null)
+            return;
+        for (var i : section.getKeys(false)) {
+            var path = "sounds." + i;
+            this.sounds.add(new SoundConfig(
+                    config.getString(path + ".subtitle"),
+                    config.getDouble(path + ".volume", 1.0),
+                    config.getDouble(path + ".pith", 1.0),
+                    config.getDouble(path + ".weight", 1.0),
+                    config.getBoolean(path + ".stream"),
+                    config.getDouble(path + ".attenuation-distance"),
+                    config.getBoolean(path + ".preload"),
+                    config.getString(path + ".type", "file"),
+                    config.contains(path + ".paths") ? config.getStringList(path + ".paths") :
+                            Lists.newArrayList(config.getString(path + ".path"))
+            ));
+        }
+    }
 
     public BitmapFontImage getFontImageData(String path) {
         var configFontImage = this.fontImages.stream()
@@ -153,17 +192,21 @@ public class NamespacedConfig {
     }
 
     public String getModel(String path) {
-        var model = this.modelTemplates.stream().filter(i -> path.startsWith(i.prefix())).findFirst().orElse(null);
-        return model == null ? null : model.model();
+        return this.modelTemplates.stream().filter(i -> path.startsWith(i.prefix())).findFirst()
+                .map(ModelTemplateConfig::model).orElse(null);
     }
 
     public String getItemModel(String path) {
-        path = path.substring(path.indexOf(":")+ 1);
+        path = path.substring(path.indexOf(":") + 1);
         String finalPath = path;
-        var model = this.itemTemplates.stream().filter(i -> finalPath.startsWith(i.prefix())).findFirst().orElse(null);
-        return model == null ? null : model.model();
+        return this.itemTemplates.stream().filter(i -> finalPath.startsWith(i.prefix())).findFirst()
+                .map(ItemTemplateConfig::model).orElse(null);
     }
 
+    public SoundEvent getSound(String path){
+        return this.sounds.stream().filter(i -> i.contains(path)).findFirst().map(i -> i.toSoundEvent(path))
+                .orElse(null);
+    }
 
     public boolean isAllowAutogen() {
         return allowAutogen;

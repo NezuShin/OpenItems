@@ -274,12 +274,13 @@ public class CustomBlocksListener implements Listener {
     public void blockPhysics(BlockPhysicsEvent e) {
         var block = e.getBlock();
 
-
         var blocks = OpenItems.getInstance().getBlocks();
 
-        if (blocks.getPlacedBlocks().containsKey(block)) {
-            e.setCancelled(true);
-            var blockType = blocks.getPlacedBlocks().get(block).getModel();
+
+        var placedBlock = blocks.getPlacedBlocks().get(block);
+        if (placedBlock != null) {
+
+            var blockType = placedBlock.getModel();
 
             if (blockType != null && blockType.applyOnPhysics()) {
                 var blockData = block.getBlockData();//e.getChangedBlockData();

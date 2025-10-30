@@ -210,6 +210,16 @@ public class BlockDataStore {
     }
 
     /**
+     * Set block model id and save it. Note that already placed and registered blocks need
+     * to be changed via OpenItems.getInstance().getBlocks().changeBlockModel(block, modelId);
+     * @param id block model id
+     */
+    public void setId(String id) {
+        this.id = id;
+        this.applyData();
+    }
+
+    /**
      * @return custom block model
      */
     public CustomBlockModel getModel() {

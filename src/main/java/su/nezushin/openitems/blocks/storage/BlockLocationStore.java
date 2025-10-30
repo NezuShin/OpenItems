@@ -1,5 +1,6 @@
 package su.nezushin.openitems.blocks.storage;
 
+import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
 import su.nezushin.openitems.OpenItems;
 
@@ -36,7 +37,6 @@ public class BlockLocationStore extends BlockDataStore {
     public int getZ() {
         return z;
     }
-
 
     /**
      * Any arbitrary data of custom block can be stored here.

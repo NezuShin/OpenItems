@@ -15,7 +15,8 @@ public class OpenItemsConfig {
 
     public static List<String> resourcePackCopyDestinations;
 
-    public static boolean replaceTripwiresOnChunkLoad = true, replaceChorusPlantsOnChunkLoad = true, enableTripwires = true, enableChorus = true, buildOnEnable, disableMipMapWarning;
+    public static boolean replaceTripwiresOnChunkLoad = true, replaceChorusPlantsOnChunkLoad = true,
+            enableTripwires = true, enableChorus = true, buildOnEnable, disableMipMapWarning;
 
     public static void init() {
         var plugin = OpenItems.getInstance();

@@ -4,7 +4,7 @@ resourcepack:
 #   - 'Resourceloader/packs/OpenItems'
 #   - 'C:\Users\nezushin\my-resource-packs\etc'
 
-  build-on-enable: true
+  build-on-enable: false
   disable-mip-map-warning: false
 
 blocks:
