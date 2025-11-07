@@ -62,7 +62,9 @@ public final class OpenItems extends JavaPlugin {
         this.resourcePackBuilder.loadRegistry();
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             papiHook = new FontImageExpansion();
-            papiHook.register();
+            sync(() -> {
+                papiHook.register();
+            });
         }
         if (Bukkit.getPluginManager().isPluginEnabled("ResourcePackManager")) {
             resourcePackManagerHook = new ResourcePackManagerHook();

@@ -221,7 +221,7 @@ public class NamespacedSectionBuilder {
         if (!file.exists())
             return;
         if (!file.isDirectory()) {
-            createRegularTemplateItem(this.namespace + ":" + path + "/" + Utils.getFileName(file), path.replaceFirst("item", ""), Utils.getFileName(file));
+            createRegularTemplateItem(this.namespace + ":" + path + "/" + Utils.getFileName(file), path, Utils.getFileName(file));
             return;
         }
         path = Utils.createPath(path, file);

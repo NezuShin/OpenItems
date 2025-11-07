@@ -148,7 +148,6 @@ public class ResourcePackBuilder {
             this.blockIdCache.getRegisteredChorusIds().forEach((k, v) -> {
                 OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomChorusModel(v));
             });
-
             this.fontImageIdCache.getRegisteredCharIds().forEach((k, v) -> {
                 OpenItems.getInstance().getModelRegistry().getFontImages().put(k, v.getSymbol());
             });

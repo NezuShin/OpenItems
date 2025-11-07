@@ -2,6 +2,8 @@ package su.nezushin.openitems.rp.cache;
 
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.InstanceCreator;
 import su.nezushin.openitems.OpenItems;
 
 import java.io.File;
@@ -25,6 +27,9 @@ public abstract class JsonCache {
         if (!cacheFile.exists())
             return;
 
-        new Gson().fromJson(Files.readString(cacheFile.toPath(), Charsets.UTF_8), FontImageIdCache.class);
+        new GsonBuilder()
+                .registerTypeAdapter(getClass(), (InstanceCreator<?>) type ->  this)
+                .create()
+                .fromJson(Files.readString(cacheFile.toPath(), Charsets.UTF_8), getClass());
     }
 }

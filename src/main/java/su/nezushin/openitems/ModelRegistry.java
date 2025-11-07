@@ -87,7 +87,8 @@ public class ModelRegistry {
                         .filter(i -> i instanceof CustomNoteblockModel).count()),
                 "{block-types-chorus}", String.valueOf(blockTypes.values().stream()
                         .filter(i -> i instanceof CustomChorusModel).count()),
-                "{font-images}", String.valueOf(fontImages.size())
+                "{font-images}", String.valueOf(fontImages.size()),
+                "{font-spaces}", String.valueOf(fontSpaces.size())
         ).send(sender);
     }
 
