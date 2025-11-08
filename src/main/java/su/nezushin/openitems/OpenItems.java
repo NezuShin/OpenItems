@@ -68,7 +68,10 @@ public final class OpenItems extends JavaPlugin {
         }
         if (Bukkit.getPluginManager().isPluginEnabled("ResourcePackManager")) {
             resourcePackManagerHook = new ResourcePackManagerHook();
-            resourcePackManagerHook.register();
+            sync(() -> {
+                resourcePackManagerHook.register();
+            });
+
         }
         if (Bukkit.getPluginManager().isPluginEnabled("RoseResourcepack")) {
             roseResourcepackHookHook = new RoseResourcepackHook();

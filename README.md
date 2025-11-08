@@ -18,7 +18,7 @@ Unlike [craftengine](https://modrinth.com/plugin/craftengine), OpenItems not man
 ## Soft Dependencies
 - [**PlaceholderAPI**](https://www.spigotmc.org/resources/placeholderapi.6245/) - font image placeholders and text offsets 
 - [**RoseResourcepack**](https://modrinth.com/plugin/roseresourcepack) - resource pack management. Need to be configured manually to work with OpenItems; OpenItems only reloads RoseResourcepack after build 
-- [**ResourcePackManager**](https://www.spigotmc.org/resources/resource-pack-manager.118574/) - resource pack management. Auto adding built resource pack to merge, reloading ResourcePackManager after build
+- [**ResourcePackManager**](https://www.spigotmc.org/resources/resource-pack-manager.118574/) - resource pack management. Need to be configured manually to work with OpenItems; OpenItems only reloads ResourcePackManager after build
 
 ## Working with plugin 
 

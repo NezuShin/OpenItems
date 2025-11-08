@@ -8,12 +8,14 @@ import java.io.File;
 public class ResourcePackManagerHook {
 
     public void register() {
+        /*if(ResourcePackManagerAPI.thirdPartyResourcePackHashMap.containsKey("OpenItems"))
+            return;
         ResourcePackManagerAPI.registerLocalResourcePack("OpenItems", "OpenItems/build",
                 false,
                 false,
                 false,
                 "oi build"
-        );
+        );*/
     }
 
     public void build(){
