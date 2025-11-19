@@ -1,5 +1,6 @@
 package su.nezushin.openitems;
 
+import com.google.gson.Gson;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -19,6 +20,8 @@ public final class OpenItems extends JavaPlugin {
     private CustomBlocks blocks;
     private ModelRegistry modelRegistry;
     private ResourcePackBuilder resourcePackBuilder;
+
+    private Gson gson = new Gson();
 
     private FontImageExpansion papiHook;
     private ResourcePackManagerHook resourcePackManagerHook;
@@ -119,5 +122,9 @@ public final class OpenItems extends JavaPlugin {
             if(roseResourcepackHookHook != null)
                 roseResourcepackHookHook.build();
         });
+    }
+
+    public Gson getGson() {
+        return gson;
     }
 }

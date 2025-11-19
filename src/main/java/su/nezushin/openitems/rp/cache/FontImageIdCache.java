@@ -64,7 +64,7 @@ public class FontImageIdCache extends JsonCache {
 
         array.add(prepareSpaces());
 
-        var data = new Gson().toJson(new FontImageProviders(array));
+        var data = OpenItems.getInstance().getGson().toJson(new FontImageProviders(array));
 
         for (var file : new File[]{
                 new File(fontsDir, "default.json"),

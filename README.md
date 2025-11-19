@@ -115,7 +115,7 @@ model-templates:
 ```
 
 Example model:
-```yaml
+```json
 {
   "parent": "minecraft:item/generated",
   "textures": {
@@ -124,6 +124,37 @@ Example model:
 }
 ```
 
+#### Custom item templates
+
+You can drop your [item model link](https://minecraft.wiki/w/Items_model_definition)
+to directory `OpenItems/contents/<namespace>/item_templates/` and specify in config
+(in the `OpenItems/contents/<namespace>/configs/` directory) where to use it as template. Model should have `{path}`
+placeholder where the model path should be placed.
+
+\
+Example config:
+```yaml
+item-templates:
+  oversized_in_gui:
+    path: 'item/menus'
+    # This string is a prefix ^^^. Works as described above
+    template: 'oversized_in_gui.json'
+  another_item_model:
+    path: 'item/generated/textures_with_custom_link'
+    template: 'oversized_in_gui.json'
+```
+
+Example model:
+```json
+{
+  "model": {
+    "type": "model",
+    "model": "{path}"
+  },
+  "oversized_in_gui": true
+}
+
+```
 
 #### Blocks
 How plugin scanning for block models and textures:

@@ -74,9 +74,11 @@ public class BlockIdCache extends JsonCache {
         var tripwireIdCache = new File(blockstatesDir, "tripwire.json");
         var chorusIdCache = new File(blockstatesDir, "chorus_plant.json");
 
-        Files.writeString(noteblockIdCache.toPath(), new Gson().toJson(new NoteblockBlockstate(this.noteblockIds)), Charsets.UTF_8);
-        Files.writeString(tripwireIdCache.toPath(), new Gson().toJson(new TripwireBlockstate(this.tripwireIds)), Charsets.UTF_8);
-        Files.writeString(chorusIdCache.toPath(), new Gson().toJson(new ChorusBlockstate(this.chorusIds)), Charsets.UTF_8);
+        var gson = OpenItems.getInstance().getGson();
+
+        Files.writeString(noteblockIdCache.toPath(), gson.toJson(new NoteblockBlockstate(this.noteblockIds)), Charsets.UTF_8);
+        Files.writeString(tripwireIdCache.toPath(), gson.toJson(new TripwireBlockstate(this.tripwireIds)), Charsets.UTF_8);
+        Files.writeString(chorusIdCache.toPath(), gson.toJson(new ChorusBlockstate(this.chorusIds)), Charsets.UTF_8);
     }
 
     public void cleanRegistered() {

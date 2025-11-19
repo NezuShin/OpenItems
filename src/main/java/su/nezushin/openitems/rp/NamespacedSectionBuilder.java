@@ -126,7 +126,8 @@ public class NamespacedSectionBuilder {
                 ));
             soundsMap.put(i.pathAndName().replace("/", "."), sound);
         }
-        Files.write(new Gson().toJson(soundsMap).getBytes(StandardCharsets.UTF_8), new File(this.outputDir, "sounds.json"));
+        Files.write(OpenItems.getInstance().getGson().toJson(soundsMap).getBytes(StandardCharsets.UTF_8),
+                new File(this.outputDir, "sounds.json"));
 
 
         var fontImageCache = OpenItems.getInstance().getResourcePackBuilder().getFontImagesIdCache();
@@ -303,7 +304,9 @@ public class NamespacedSectionBuilder {
         for (var i : layerNameMap.entrySet()) {
             var equipmentModelFile = new File(this.outputDir, "equipment/" + i.getKey() + ".json");
             equipmentModelFile.getParentFile().mkdirs();
-            Files.write(new Gson().toJson(new EquipmentModel(this.namespace + ":" + i.getKey(), i.getValue())).getBytes(StandardCharsets.UTF_8),
+            Files.write(OpenItems.getInstance().getGson().toJson(
+                    new EquipmentModel(this.namespace + ":" + i.getKey(), i.getValue()))
+                            .getBytes(StandardCharsets.UTF_8),
                     equipmentModelFile);
         }
     }
