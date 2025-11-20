@@ -185,6 +185,7 @@ public class CustomBlocks {
     public void destroyBlockOnLoad(Block block, boolean dropItem, boolean setAir, Runnable callback) {
         if (block.getChunk().isLoaded() && getPlacedBlocks().containsKey(block)) {
             destroyBlock(block, dropItem, setAir);
+            callback.run();
             return;
         }
         this.destroyOnLoad.put(block, new DestroyOnLoadBlock(dropItem, setAir, callback));
