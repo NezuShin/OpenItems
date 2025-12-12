@@ -51,14 +51,14 @@ public class CustomBlocks {
         return placedBlocks;
     }
 
+
+
     public void saveChunk(Chunk chunk) {
         List<BlockDataStore> list = new ArrayList<>();
 
         for (var i : this.placedBlocks.entrySet()
                 .stream().filter(i -> i.getKey().getChunk().equals(chunk)).toList()) {
 
-
-            Bukkit.getPluginManager().callEvent(new CustomBlockUnloadEvent(i.getKey(), i.getValue()));
             list.add(i.getValue());
         }
         OpenItems.async(() -> {
@@ -258,6 +258,7 @@ public class CustomBlocks {
     public void cleanChunk(Chunk chunk) {
         for (var i : this.placedBlocks.entrySet()
                 .stream().filter(i -> i.getKey().getChunk().equals(chunk)).toList()) {
+            Bukkit.getPluginManager().callEvent(new CustomBlockUnloadEvent(i.getKey(), i.getValue()));
             this.placedBlocks.remove(i.getKey());
         }
     }
