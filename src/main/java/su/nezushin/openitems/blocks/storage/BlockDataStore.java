@@ -256,4 +256,25 @@ public class BlockDataStore {
     public Set<ToolItemType> dropWhenMinedByTools() {
         return dropWhenMinedByTools;
     }
+
+    @Override
+    public String toString() {
+        return "BlockDataStore{" +
+                "canBurn=" + canBurn +
+                ", canBeBlown=" + canBeBlown +
+                ", canBeReplaced=" + canBeReplaced +
+                ", dropOnBreak=" + dropOnBreak +
+                ", dropOnExplosion=" + dropOnExplosion +
+                ", dropOnDestroyByLiquid=" + dropOnDestroyByLiquid +
+                ", canBeDestroyedByLiquid=" + canBeDestroyedByLiquid +
+                ", dropOnBurn=" + dropOnBurn +
+                ", id='" + id + '\'' +
+                ", toolSpeedMultipliers=" + toolSpeedMultipliers +
+                ", materialSpeedMultipliers=" + materialSpeedMultipliers +
+                ", modelSpeedMultipliers=" + modelSpeedMultipliers +
+                ", toolSpeedHasGradeMultiplier=" + toolSpeedHasGradeMultiplier +
+                ", dropWhenMinedByTools=" + dropWhenMinedByTools +
+                ", itemToDrop=" + itemToDrop +
+                '}';
+    }
 }

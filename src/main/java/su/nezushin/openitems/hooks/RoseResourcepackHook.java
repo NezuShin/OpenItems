@@ -6,7 +6,6 @@ public class RoseResourcepackHook {
     }
 
 
-
     public void build() {
         //Ugly way to reload RoseRP. Needed to prevent adding dependency as file to build.gradle
         //TODO: Ask its developer to host maven repo

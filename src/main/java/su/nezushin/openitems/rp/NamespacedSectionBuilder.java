@@ -99,7 +99,7 @@ public class NamespacedSectionBuilder {
             scanForSounds(sounds, "", false, oggFiles);
         }
 
-        Utils.copyFolder(this.sectionDir, outputDir, this.sectionDir, this.config.getDirectoriesIgnoreList(), this.config.getExtensionsIgnoreList());
+
 
         for (var i : pngFilesGenerated)
             createItemModel(i, this.config.getGeneratedModelTemplate());
@@ -166,6 +166,9 @@ public class NamespacedSectionBuilder {
         scanForItemModels(new File(this.sectionDir, "models/item"), "");
 
 
+
+
+        Utils.copyFolder(this.sectionDir, outputDir, this.sectionDir, this.config.getDirectoriesIgnoreList(), this.config.getExtensionsIgnoreList());
     }
 
     private record ResourcePackScanFile(File file, String path, String name) {

@@ -10,7 +10,6 @@ import org.bukkit.block.data.type.Tripwire;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import su.nezushin.openitems.OpenItems;
-import su.nezushin.openitems.blocks.storage.BlockDataStore;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
@@ -29,6 +28,8 @@ public class CustomBlocks {
 
     //Blocks need to be destroyed on next chunk load
     private Map<Block, DestroyOnLoadBlock> destroyOnLoad = new HashMap<>();
+
+    private Map<Chunk, Integer> saveChunkDebounce = new HashMap<>();
 
     private BlockBreakSpeedModifiers blockBreakSpeedModifiers;
 
@@ -52,21 +53,24 @@ public class CustomBlocks {
     }
 
 
-
     public void saveChunk(Chunk chunk) {
-        List<BlockDataStore> list = new ArrayList<>();
-
-        for (var i : this.placedBlocks.entrySet()
-                .stream().filter(i -> i.getKey().getChunk().equals(chunk)).toList()) {
-
-            list.add(i.getValue());
+        if (this.saveChunkDebounce.containsKey(chunk)) {
+            Bukkit.getScheduler().cancelTask(this.saveChunkDebounce.get(chunk));
         }
-        OpenItems.async(() -> {
-            var str = ConfigurationSerializableGsonAdapter.createGson().toJson(list);
-            OpenItems.sync(() -> {
-                chunk.getPersistentDataContainer().set(OpenItems.CUSTOM_BLOCKS_CHUNK_KEY, PersistentDataType.STRING, str);
+        Runnable saveRunnable = () -> {
+            this.saveChunkDebounce.remove(chunk);
+            List<BlockLocationStore> list = new ArrayList<>(this.placedBlocks.entrySet()
+                    .stream().filter(i -> i.getKey().getChunk().equals(chunk)).map(Map.Entry::getValue).toList());
+
+            OpenItems.async(() -> {
+                var str = ConfigurationSerializableGsonAdapter.createGson().toJson(list);
+                OpenItems.sync(() -> {
+                    chunk.getPersistentDataContainer().set(OpenItems.CUSTOM_BLOCKS_CHUNK_KEY, PersistentDataType.STRING, str);
+                });
             });
-        });
+        };
+
+        this.saveChunkDebounce.put(chunk, Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(), saveRunnable, 10));
     }
 
     public void scanForWrongBlockModels(Chunk chunk) {
@@ -131,6 +135,7 @@ public class CustomBlocks {
             }.getType();
 
             List<BlockLocationStore> list = ConfigurationSerializableGsonAdapter.createGson().fromJson(str, listType);
+
             OpenItems.sync(() -> {
                 var needSaveChunk = false;//remove invalid blocks and save chunk
                 for (var i : list) {
