@@ -92,6 +92,10 @@ public class CustomNoteblockModel implements CustomBlockModel {
         nb.setPowered(powered == 1);
     }
 
+    public static void setDefaultId(NoteBlock nb){
+        setId(nb, 0);
+    }
+
     public static int getId(NoteBlock nb) {
         return getId(nb.getInstrument(), nb.getNote().getId(), nb.isPowered());
     }

@@ -10,6 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.MultipleFacing;
+import org.bukkit.block.data.type.NoteBlock;
 import org.bukkit.block.data.type.Tripwire;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -26,6 +27,7 @@ import org.bukkit.event.world.ChunkUnloadEvent;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
+import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
 import su.nezushin.openitems.events.*;
 import su.nezushin.openitems.utils.NBTUtil;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
@@ -39,7 +41,7 @@ public class CustomBlocksListener implements Listener {
 
     private Map<Block, BlockLocationStore> brokenBlocks = new HashMap<>();
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void breakBlock(BlockBreakEvent e) {
         var block = e.getBlock();
         var blocks = OpenItems.getInstance().getBlocks();
@@ -210,7 +212,7 @@ public class CustomBlocksListener implements Listener {
             Bukkit.getPluginManager().callEvent(event);
 
             e.setCancelled(true);
-            if(event.isCancelled())
+            if (event.isCancelled())
                 return;
 
 
@@ -270,43 +272,121 @@ public class CustomBlocksListener implements Listener {
     }
 
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    public void checkTripwire(Block b) {
+        if (b.getType() != Material.TRIPWIRE)
+            return;
+        var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(b);
+
+        var data = b.getBlockData();
+        if (placedBlock == null) {
+            CustomTripwireModel.setDefaultId((Tripwire) data);
+            b.setBlockData(data, false);
+            return;
+        }
+        var blockType = placedBlock.getModel();
+        if (blockType == null || !blockType.applyOnPhysics() || !(blockType instanceof CustomTripwireModel))
+            return;
+
+        blockType.apply(data);
+        b.setBlockData(data, false);
+    }
+
+    public void checkChorus(Block b) {
+        if (b.getType() != Material.CHORUS_PLANT)
+            return;
+        var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(b);
+
+        var data = b.getBlockData();
+        if (placedBlock == null) {
+            CustomChorusModel.setDefaultId((MultipleFacing) data);
+            b.setBlockData(data, false);
+            return;
+        }
+        var blockType = placedBlock.getModel();
+        if (blockType == null || !blockType.applyOnPhysics() || !(blockType instanceof CustomChorusModel))
+            return;
+
+        blockType.apply(data);
+        b.setBlockData(data, false);
+        return;
+    }
+
+    public void checkNote(Block b) {
+        if (b.getType() != Material.NOTE_BLOCK)
+            return;
+        var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(b);
+
+        var data = b.getBlockData();
+        if (placedBlock == null) {
+            CustomNoteblockModel.setDefaultId((NoteBlock) data);
+            b.setBlockData(data, false);
+            return;
+        }
+        var blockType = placedBlock.getModel();
+        if (blockType == null || !blockType.applyOnPhysics() || !(blockType instanceof CustomNoteblockModel))
+            return;
+
+        blockType.apply(data);
+        b.setBlockData(data, false);
+        return;
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void blockPhysics(BlockPhysicsEvent e) {
         var block = e.getBlock();
+        var sblock = e.getBlock();
 
         var blocks = OpenItems.getInstance().getBlocks();
+        if ((block.getType() == Material.TRIPWIRE || sblock.getType() == Material.TRIPWIRE) && OpenItemsConfig.enableTripwires) {
+            e.setCancelled(true);
+            checkTripwire(block);
+            checkTripwire(sblock);
+            return;
+        }
+
+        if ((block.getType() == Material.CHORUS_PLANT || sblock.getType() == Material.CHORUS_PLANT) && OpenItemsConfig.enableChorus) {
+            e.setCancelled(true);
+            checkChorus(block);
+            checkChorus(sblock);
+            return;
+        }
 
 
+        if (block.getType() == Material.NOTE_BLOCK || sblock.getType() == Material.NOTE_BLOCK) {
+            e.setCancelled(true);
+            checkNote(block);
+            checkNote(sblock);
+            return;
+        }
+
+        //chorus check.
+        // TODO: Need better algorithm to prevent water stuck
+        if (OpenItemsConfig.enableChorus)
+            for (var face : Utils.getMainBlockFaces()) {
+                var relative = block.getRelative(face);
+                if (relative.getType() == Material.CHORUS_PLANT) {
+                    if (blocks.getPlacedBlocks().containsKey(relative)) {
+                        checkChorus(relative);
+                        e.setCancelled(true);
+                        return;
+                    }
+                }
+            }
         var placedBlock = blocks.getPlacedBlocks().get(block);
         if (placedBlock != null) {
-
             var blockType = placedBlock.getModel();
 
             if (blockType != null && blockType.applyOnPhysics()) {
-                var blockData = block.getBlockData();//e.getChangedBlockData();
+                var blockData = block.getBlockData();
                 blockType.apply(blockData);
                 block.setBlockData(blockData, false);
-            }
-        } else if (block.getType().equals(Material.TRIPWIRE) && OpenItemsConfig.enableTripwires
-                && e.getChangedBlockData() instanceof Tripwire blockData) {
-            CustomTripwireModel.setDefaultId(blockData);
-            block.setBlockData(blockData, false);
-        } else if (block.getType().equals(Material.CHORUS_PLANT) && OpenItemsConfig.enableChorus
-                && e.getChangedBlockData() instanceof MultipleFacing blockData) {
-            CustomChorusModel.setDefaultId(blockData);
-            block.setBlockData(blockData, false);
-        }
-        for (var face : Utils.getMainBlockFaces()) {
-            var relative = block.getRelative(face);
-            if (blocks.getPlacedBlocks().containsKey(relative)) {
-                e.setCancelled(true);
-                return;
             }
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void placeBlock(BlockPlaceEvent e) {
+
         var item = e.getItemInHand();
         var block = e.getBlock();
         if (item == null || item.getType().isAir()) return;
@@ -343,7 +423,7 @@ public class CustomBlocksListener implements Listener {
         blocks.saveChunk(block.getChunk());
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void interact(PlayerInteractEvent e) {
         if (e.getAction() != Action.LEFT_CLICK_BLOCK)
             return;
