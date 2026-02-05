@@ -11,8 +11,9 @@ public interface CustomBlockModel {
      * Place custom block
      *
      * @param b block to place
+     * @papam update false to cancel physics from the changed block
      */
-    public void apply(Block b);
+    public void apply(Block b, boolean update);
 
     /**
      * Set right block data to block (used with applyOnPhysics=true; Needed for tripwire proper work)

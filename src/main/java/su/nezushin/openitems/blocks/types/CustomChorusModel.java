@@ -14,11 +14,11 @@ public class CustomChorusModel implements CustomBlockModel {
     }
 
     @Override
-    public void apply(Block b) {
-        b.setType(Material.CHORUS_PLANT);
+    public void apply(Block b, boolean update) {
+        b.setType(Material.CHORUS_PLANT, update);
         if (b.getBlockData() instanceof MultipleFacing t) {
             setId(t, this.id);
-            b.setBlockData(t);
+            b.setBlockData(t, update);
             //b.getState().update(true, true);
         }
     }

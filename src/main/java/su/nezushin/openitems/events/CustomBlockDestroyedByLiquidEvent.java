@@ -13,18 +13,18 @@ import su.nezushin.openitems.blocks.storage.BlockLocationStore;
  * Called when a block is destroyed by liquid.
  * This event called only if can_be_destroyed_by_liquid property set to true
  * <p>
- * You can get original BlockFromToEvent using getSource() method.
+ * You can get original BlockFromToEvent or BlockPhysicsEvent using getSource() method.
  */
 public class CustomBlockDestroyedByLiquidEvent extends BlockEvent implements Cancellable {
     private static final HandlerList handlerList = new HandlerList();
 
     private BlockLocationStore brokenBlock;
 
-    private BlockFromToEvent source;
+    private BlockEvent source;
 
     private boolean cancelled = false;
 
-    public CustomBlockDestroyedByLiquidEvent(@NotNull Block block, BlockLocationStore brokenBlock, BlockFromToEvent source) {
+    public CustomBlockDestroyedByLiquidEvent(@NotNull Block block, BlockLocationStore brokenBlock, BlockEvent source) {
         super(block);
         this.brokenBlock = brokenBlock;
         this.source = source;
@@ -34,8 +34,12 @@ public class CustomBlockDestroyedByLiquidEvent extends BlockEvent implements Can
         return brokenBlock;
     }
 
-    public BlockFromToEvent getSource() {
+    public BlockEvent getSource() {
         return source;
+    }
+
+    public SourceEventType getSourceType() {
+        return this.source instanceof BlockFromToEvent ? SourceEventType.BLOCK_FROM_TO_EVENT : SourceEventType.BLOCK_PHYSICS_EVENT;
     }
 
     @Override
@@ -55,5 +59,11 @@ public class CustomBlockDestroyedByLiquidEvent extends BlockEvent implements Can
     @Override
     public void setCancelled(boolean cancel) {
         this.cancelled = cancel;
+    }
+
+
+    public enum SourceEventType {
+        BLOCK_FROM_TO_EVENT,
+        BLOCK_PHYSICS_EVENT
     }
 }

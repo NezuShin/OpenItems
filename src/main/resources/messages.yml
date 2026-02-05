@@ -12,7 +12,7 @@ messages:
     - '<reset><#08c0c2>Drop when destroyed by explosion<grey>:<#008f9a> {drop-on-explosion}'
     - '<reset><#08c0c2>Drop when destroyed by fire (noteblock only)<grey>:<#008f9a> {drop-on-burn}'
     - '<reset><#08c0c2>Can be blown<grey>:<#008f9a> {can-be-blown}'
-    - '<reset><#08c0c2>Can be destroyed by liquid (tripwire only)<grey>:<#008f9a> {can-be-destroyed-by-liquid}'
+    - '<reset><#08c0c2>Can be destroyed by liquid (tripwire and chorus only)<grey>:<#008f9a> {can-be-destroyed-by-liquid}'
     - '<reset><#08c0c2>Can burn (noteblock only)<grey>:<#008f9a> {can-burn}'
   current-equipment-data:
     - '<reset><gray>------------------<#008f9a>Equipment data<reset><gray>-----------------'

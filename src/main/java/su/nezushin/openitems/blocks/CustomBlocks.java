@@ -237,7 +237,7 @@ public class CustomBlocks {
 
     private void setBlockModel(Block block, String model) {
         var blockType = OpenItems.getInstance().getModelRegistry().getBlockTypes().get(model);
-        blockType.apply(block);
+        blockType.apply(block, true);
     }
 
     /**

@@ -49,13 +49,13 @@ public class CustomNoteblockModel implements CustomBlockModel {
     }
 
     @Override
-    public void apply(Block b) {
+    public void apply(Block b, boolean update) {
 
-        b.setType(Material.NOTE_BLOCK);
+        b.setType(Material.NOTE_BLOCK, update);
 
         if (b.getBlockData() instanceof NoteBlock nb) {
             setId(nb, id);
-            b.setBlockData(nb);
+            b.setBlockData(nb, update);
             //b.getState().update(true, true);
         }
     }
@@ -92,7 +92,7 @@ public class CustomNoteblockModel implements CustomBlockModel {
         nb.setPowered(powered == 1);
     }
 
-    public static void setDefaultId(NoteBlock nb){
+    public static void setDefaultId(NoteBlock nb) {
         setId(nb, 0);
     }
 

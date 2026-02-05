@@ -14,8 +14,8 @@ public class CustomTripwireModel implements CustomBlockModel {
     }
 
     @Override
-    public void apply(Block b) {
-        b.setType(Material.TRIPWIRE);
+    public void apply(Block b, boolean update) {
+        b.setType(Material.TRIPWIRE, update);
         if (b.getBlockData() instanceof Tripwire t) {
             setId(t, this.id);
             b.setBlockData(t);

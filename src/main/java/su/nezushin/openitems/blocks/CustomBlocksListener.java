@@ -1,13 +1,9 @@
 package su.nezushin.openitems.blocks;
 
-import com.destroystokyo.paper.ClientOption;
-import com.destroystokyo.paper.MaterialSetTag;
-import com.destroystokyo.paper.MaterialTags;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.block.data.type.NoteBlock;
@@ -20,7 +16,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.player.PlayerAnimationEvent;
+import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
@@ -34,12 +30,13 @@ import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class CustomBlocksListener implements Listener {
 
     private Map<Block, BlockLocationStore> brokenBlocks = new HashMap<>();
+
+    private Set<Block> brokenChorusBlocks = new HashSet<>();
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void breakBlock(BlockBreakEvent e) {
@@ -308,7 +305,6 @@ public class CustomBlocksListener implements Listener {
 
         blockType.apply(data);
         b.setBlockData(data, false);
-        return;
     }
 
     public void checkNote(Block b) {
@@ -328,13 +324,13 @@ public class CustomBlocksListener implements Listener {
 
         blockType.apply(data);
         b.setBlockData(data, false);
-        return;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void blockPhysics(BlockPhysicsEvent e) {
         var block = e.getBlock();
         var sblock = e.getBlock();
+
 
         var blocks = OpenItems.getInstance().getBlocks();
         if ((block.getType() == Material.TRIPWIRE || sblock.getType() == Material.TRIPWIRE) && OpenItemsConfig.enableTripwires) {
@@ -360,28 +356,75 @@ public class CustomBlocksListener implements Listener {
         }
 
         //chorus check.
-        // TODO: Need better algorithm to prevent water stuck
-        if (OpenItemsConfig.enableChorus)
+        if (OpenItemsConfig.enableChorus) {
+            boolean canCancel =
+                    !OpenItemsConfig.allowedChorusUpdateBlocks.contains(block.getType()) &&
+                            !OpenItemsConfig.allowedChorusUpdateBlocks.contains(sblock.getType());
+
             for (var face : Utils.getMainBlockFaces()) {
                 var relative = block.getRelative(face);
                 if (relative.getType() == Material.CHORUS_PLANT) {
                     if (blocks.getPlacedBlocks().containsKey(relative)) {
-                        checkChorus(relative);
-                        e.setCancelled(true);
-                        return;
+                        var placedBlock = blocks.getPlacedBlocks().get(relative);
+
+                        if (placedBlock != null) {
+                            if (placedBlock.canBeDestroyedByLiquid() && block.getType() == Material.WATER) {
+                                var event = new CustomBlockDestroyedByLiquidEvent(relative, placedBlock, e);
+
+                                Bukkit.getPluginManager().callEvent(event);
+
+                                if (!event.isCancelled()) {
+                                    brokenChorusBlocks.add(relative);
+                                    blocks.destroyBlock(relative, placedBlock.dropOnDestroyByLiquid(), true);
+                                    Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(), () -> {
+                                        brokenChorusBlocks.remove(relative);//TODO: replace this ugly solution somehow
+                                    }, 3);
+                                }
+                            } else {
+                                if (OpenItemsConfig.allowChorusPhysicsCancel && canCancel) {
+                                    checkChorus(relative);
+                                    e.setCancelled(true);
+                                    return;
+                                }
+                                Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(), () -> {
+                                    placedBlock.getModel().apply(relative, false);
+                                }, 2);
+                            }
+                        }
                     }
+
                 }
             }
-        var placedBlock = blocks.getPlacedBlocks().get(block);
-        if (placedBlock != null) {
-            var blockType = placedBlock.getModel();
 
-            if (blockType != null && blockType.applyOnPhysics()) {
-                var blockData = block.getBlockData();
-                blockType.apply(blockData);
-                block.setBlockData(blockData, false);
+
+            //fallback check
+            var placedBlock = blocks.getPlacedBlocks().get(block);
+            if (placedBlock != null) {
+                var blockType = placedBlock.getModel();
+
+                if (blockType != null && blockType.applyOnPhysics()) {
+                    var blockData = block.getBlockData();
+                    blockType.apply(blockData);
+                    block.setBlockData(blockData, false);
+                }
             }
         }
+    }
+
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void dropChorus(ItemSpawnEvent e) {
+        var item = e.getEntity();
+
+        if (item.getItemStack().getType() != Material.CHORUS_FRUIT)
+            return;
+        System.out.println(brokenChorusBlocks);
+        var block = e.getLocation().getBlock();
+
+        if (!brokenChorusBlocks.remove(block) || OpenItems.getInstance().getBlocks().getPlacedBlocks().containsKey(block))
+            return;
+
+        e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -414,7 +457,7 @@ public class CustomBlocksListener implements Listener {
             return;
         }
 
-        blockType.apply(block);
+        blockType.apply(block, true);
 
 
         blocks.getPlacedBlocks().put(block, placedBlock);

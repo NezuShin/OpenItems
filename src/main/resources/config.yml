@@ -12,7 +12,16 @@ blocks:
   replace-tripwires-on-chunk-load: true
   replace-chorus-plants-on-chunk-load: true
 
+  #Allow BlockPhysicsEvent to be canceled if some cases
+  #Disabling this will cause visual block breaking on neighbor blocks updates.
+  #Some visual artefacts anyway would appear when neighbor block is redstone thing or liquid.
+  #This feature enabled also may THEORETICALLY cause problems with another blocks being updated around chorus-based block.
+  #If you are accounting such issues - please contact me and report the problem
+  allow-chorus-physics-cancel: true
 
 
   #Enable tripwire-based custom blocks? Default vanilla tripwire mechanic will be broken if enabled
   enable-tripwires: true
+
+  #Enable tripwire-based custom blocks? All vanilla chorus plant blocks will look little different
+  enable-chorus: true
