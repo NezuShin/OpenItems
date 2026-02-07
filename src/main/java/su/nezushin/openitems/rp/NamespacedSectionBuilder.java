@@ -121,11 +121,12 @@ public class NamespacedSectionBuilder {
 
             if (sound == null)
                 sound = new SoundEvent(false, null, Lists.newArrayList(
-                        new Sound(i.pathAndName(), 1.0, 1.0, 1.0,
+                        new Sound(this.namespace + ":" + i.pathAndName(), 1.0, 1.0, 1.0,
                                 false, 16, false, "file")
                 ));
             soundsMap.put(i.pathAndName().replace("/", "."), sound);
         }
+
         Files.write(OpenItems.getInstance().getGson().toJson(soundsMap).getBytes(StandardCharsets.UTF_8),
                 new File(this.outputDir, "sounds.json"));
 
