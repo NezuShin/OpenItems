@@ -1,6 +1,5 @@
 package su.nezushin.openitems.blocks;
 
-import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -481,23 +480,7 @@ public class CustomBlocksListener implements Listener {
         if (placedBlock == null)
             return;
 
-        double modifier = 1;
-
-        if (item == null || item.getType().isAir()) {
-            modifier = placedBlock.getToolSpeedMultipliers().getOrDefault(ToolItemType.HAND, 1.0);
-        } else if (placedBlock.getMaterialSpeedMultipliers().containsKey(item.getType())) {
-            modifier = placedBlock.getMaterialSpeedMultipliers().get(item.getType());
-        } else {
-            var model = item.getDataOrDefault(DataComponentTypes.ITEM_MODEL, null);
-            if (model != null && placedBlock.getModelSpeedMultipliers().containsKey(model.asString())) {
-                modifier = placedBlock.getModelSpeedMultipliers().get(model.asString());
-            } else {
-                var toolType = ToolItemType.valueOf(item.getType());
-                modifier = placedBlock.getToolSpeedMultipliers().getOrDefault(toolType, 1.0);
-                if (placedBlock.getToolSpeedHasGradeMultiplier().contains(toolType))
-                    modifier *= ToolItemType.getTypeModifier(item.getType());
-            }
-        }
+        double modifier = BlockHardnessUtil.resolveBreakSpeedModifier(block, item, placedBlock);
 
         CustomBlockSpeedModifierSetEvent event = new CustomBlockSpeedModifierSetEvent(block, placedBlock, player,
                 item, modifier);

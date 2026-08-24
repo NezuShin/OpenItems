@@ -76,6 +76,8 @@ public class BlockLocationStore extends BlockDataStore {
                 ", canBeDestroyedByLiquid=" + canBeDestroyedByLiquid +
                 ", dropOnBurn=" + dropOnBurn +
                 ", id='" + id + '\'' +
+                ", hardness=" + hardness +
+                ", preferredTools=" + preferredTools +
                 ", toolSpeedMultipliers=" + toolSpeedMultipliers +
                 ", materialSpeedMultipliers=" + materialSpeedMultipliers +
                 ", modelSpeedMultipliers=" + modelSpeedMultipliers +

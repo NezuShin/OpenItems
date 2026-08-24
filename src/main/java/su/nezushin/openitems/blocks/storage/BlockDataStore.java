@@ -22,6 +22,13 @@ public class BlockDataStore {
 
     protected String id;
 
+    /**
+     * Custom felt hardness. {@code null} means unset — use legacy tool speed maps.
+     */
+    protected Double hardness = null;
+
+    protected Set<ToolItemType> preferredTools = new HashSet<>();
+
     protected Map<ToolItemType, Double> toolSpeedMultipliers = new HashMap<>();
     protected Map<Material, Double> materialSpeedMultipliers = new HashMap<>();
     protected Map<String, Double> modelSpeedMultipliers = new HashMap<>();
@@ -62,6 +69,13 @@ public class BlockDataStore {
         dropWhenMinedByTools = new HashSet<>(compound.getStringList("drop_when_mined_by_tools")
                 .stream().map(i -> ToolItemType.valueOf(i.toUpperCase())).toList());
 
+        if (compound.hasTag("hardness"))
+            hardness = compound.getDouble("hardness");
+        else
+            hardness = null;
+
+        preferredTools = new HashSet<>(compound.getStringList("preferred_tools")
+                .stream().map(i -> ToolItemType.valueOf(i.toUpperCase())).toList());
 
         var speedMultiplier = compound.getCompound("speed_multiplier");
 
@@ -105,6 +119,15 @@ public class BlockDataStore {
         compound.setBoolean("drop_on_explosion", this.dropOnExplosion);
         compound.setBoolean("drop_on_destroy_by_liquid", this.dropOnDestroyByLiquid);
 
+        if (this.hardness != null)
+            compound.setDouble("hardness", this.hardness);
+        else
+            compound.removeKey("hardness");
+
+        var preferredList = compound.getStringList("preferred_tools");
+        preferredList.clear();
+        preferredList.addAll(preferredTools.stream().map(Enum::name).toList());
+
         var speedMultiplier = compound.getOrCreateCompound("speed_multiplier");
 
         var tools = speedMultiplier.getOrCreateCompound("tools");
@@ -129,6 +152,7 @@ public class BlockDataStore {
             else models.removeKey(k);
         });
         var list = speedMultiplier.getStringList("tools_has_grade_multiplier");
+        list.clear();
         list.addAll(toolSpeedHasGradeMultiplier.stream().map(Enum::name).toList());
 
         return this.itemToDrop = nbtItem.getItem();
@@ -233,6 +257,34 @@ public class BlockDataStore {
         return itemToDrop;
     }
 
+    public boolean hasHardness() {
+        return hardness != null;
+    }
+
+    public Double getHardness() {
+        return hardness;
+    }
+
+    /**
+     * Set custom hardness. Passing {@code null} clears it (legacy speed maps apply again).
+     * Setting a value clears legacy per-tool maps so both styles do not pile up.
+     */
+    public void setHardness(Double hardness) {
+        this.hardness = hardness;
+        if (hardness != null) {
+            this.toolSpeedMultipliers.clear();
+            this.toolSpeedHasGradeMultiplier.clear();
+        }
+    }
+
+    public Set<ToolItemType> getPreferredTools() {
+        return preferredTools;
+    }
+
+    public void setPreferredTools(Set<ToolItemType> preferredTools) {
+        this.preferredTools = preferredTools;
+    }
+
     public Map<ToolItemType, Double> getToolSpeedMultipliers() {
         return toolSpeedMultipliers;
     }
@@ -269,6 +321,8 @@ public class BlockDataStore {
                 ", canBeDestroyedByLiquid=" + canBeDestroyedByLiquid +
                 ", dropOnBurn=" + dropOnBurn +
                 ", id='" + id + '\'' +
+                ", hardness=" + hardness +
+                ", preferredTools=" + preferredTools +
                 ", toolSpeedMultipliers=" + toolSpeedMultipliers +
                 ", materialSpeedMultipliers=" + materialSpeedMultipliers +
                 ", modelSpeedMultipliers=" + modelSpeedMultipliers +

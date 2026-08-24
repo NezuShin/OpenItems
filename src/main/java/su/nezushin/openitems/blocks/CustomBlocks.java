@@ -152,8 +152,7 @@ public class CustomBlocks {
                         var destroyRecord = destroyOnLoad.remove(block);
                         destroyBlock(block, destroyRecord.dropItem(), destroyRecord.setAir());
                         destroyRecord.callback().run();
-
-                        contine;
+                        continue;
                     }
 
 

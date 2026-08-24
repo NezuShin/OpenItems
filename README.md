@@ -200,32 +200,31 @@ How plugin scanning for block models and textures:
 
 #### Understanding block hardness
 
-Plugin cannot manipulate real block hardness but lets you configure player break speed multiplier. \
-For example, you want block to be mined by pickaxes - you should perform next commands:
- - `/oedit block break_speed_multiplier tool pickaxe 0.6` - set multiplier 0.6 for pickaxes. Value more than 1 - faster than in vanilla tool speed,  
- - `/oedit block break_speed_multiplier apply_tool_grade_multiplier pickaxe` - set list of tools to apply [tool grade multiplier](https://minecraft.wiki/w/Breaking#Mining_efficiency), separated by space. Example with two tools: `pickaxe shovel`.
- - `/oedit block break_speed_multiplier tool axe 0.005` - note that in vanilla axe is preferred tool to break note blocks, so you need to set smaller multiplier to decrease breaking speed. 
- - `/oedit block break_speed_multiplier tool shovel 0.05` - set same multipliers for other tools and hand
- - `/oedit block break_speed_multiplier tool hand 0.05` 
- - `/oedit block break_speed_multiplier tool shears 0.05`
-  
+Plugin cannot change real block hardness (custom blocks are still note blocks / chorus plants). It sets a player `block_break_speed` attribute so mining *feels* like a chosen hardness.
 
-And now, according to [digging speed table](https://minecraft.wiki/w/Breaking#Mining_efficiency), breaking multipliers for tools are:
+Typical setup (stone-like ore mined with pickaxes):
 
-|                          | Wood  | Stone | Diamond | Netherite |
-|--------------------------|-------|-------|---------|-----------|
-| base tool grade modifier | 2     | 4     | 8       | 9         |
-| calculations             | 0.6*2 | 0.6*4 | 0.6*8   | 0.6*9     |
-| breaking multiplier      | 1.2   | 2.4   | 4.8     | 5.4       |
+```text
+/oedit block hardness 1.5
+/oedit block preferred_tool pickaxe
+```
 
-You also can set breaking speed using item model or [Bukkit's material](https://jd.papermc.io/paper/1.21.10/org/bukkit/Material.html):
- - `/oedit block break_speed_multiplier material stone 10`
- - `/oedit block break_speed_multiplier model ns:item/handheld/drill 100`
+Preferred tools get vanilla tool grade and Efficiency (wood/stone/iron/… as on a matching vanilla block). Other tools mine at hand speed for that hardness. Same hardness feels the same on note-block and chorus hosts — the host’s own axe preference is cancelled in the attribute math.
 
-In these cases, tool grade modifiers cannot be applied. \
-Also note that custom break speed can be set only for note blocks and chorus plant based blocks as vanilla tripwire breaks immediately.
+- `/oedit block hardness <value>` — felt hardness (e.g. `1.5` like stone, `50` like obsidian). `clear` / `none` removes it.
+- `/oedit block preferred_tool [type] [type…]` — tools that get grade (e.g. `pickaxe`, or `pickaxe shovel`). No args clears the list.
+- Setting hardness clears legacy per-tool multipliers on that item.
 
+Overrides (flat, no grade) still work and win over hardness when the held item matches:
 
+```text
+/oedit block break_speed_multiplier material stone 10
+/oedit block break_speed_multiplier model ns:item/handheld/drill 100
+```
+
+If hardness is **unset**, mining uses vanilla host speed unless a material/model override matches. 
+
+Custom break speed only works for note-block and chorus-based blocks; vanilla tripwire breaks instantly.
 
 ## Plugin API
 

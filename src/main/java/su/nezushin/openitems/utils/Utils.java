@@ -7,13 +7,17 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.cmd.CommandException;
 
 import javax.imageio.ImageIO;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,13 +56,70 @@ public class Utils {
                 copyFolder(srcFile, destFile, parent, ignoreDirs, ignoreExtensions);
             }
         } else {
-            src.getParentFile().mkdirs();
+            dest.getParentFile().mkdirs();
             var ext = src.getName();//get extension of file
             ext = ext.substring(ext.indexOf("."));
             if (ignoreExtensions.contains(ext))
                 return;
 
-            FileUtils.copyFile(src, dest);
+            Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    public static void deleteDirectory(File directory) throws IOException {
+        if (directory == null || !directory.exists())
+            return;
+
+        var root = directory.toPath();
+        List<Path> paths;
+        try (var walk = Files.walk(root)) {
+            paths = walk.sorted(Comparator.reverseOrder()).toList();
+        }
+
+        IOException last = null;
+        for (var path : paths) {
+            try {
+                deleteWithRetry(path);
+            } catch (IOException ex) {
+                last = ex;
+            }
+        }
+
+        if (Files.exists(root, LinkOption.NOFOLLOW_LINKS))
+            throw last != null ? last : new IOException("Unable to delete directory: " + directory);
+    }
+
+    private static void deleteWithRetry(Path path) throws IOException {
+        IOException last = null;
+        for (int attempt = 0; attempt < 8; attempt++) {
+            try {
+                if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS))
+                    return;
+                clearReadOnly(path);
+                Files.delete(path);
+                return;
+            } catch (NoSuchFileException ignored) {
+                return;
+            } catch (IOException ex) {
+                last = ex;
+                if (attempt == 3)
+                    System.gc();
+                try {
+                    Thread.sleep(25L * (attempt + 1));
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw ex;
+                }
+            }
+        }
+        throw last;
+    }
+
+    private static void clearReadOnly(Path path) {
+        try {
+            Files.setAttribute(path, "dos:readonly", false);
+        } catch (Exception ignored) {
+            path.toFile().setWritable(true);
         }
     }
 

@@ -1,7 +1,6 @@
 package su.nezushin.openitems.rp;
 
 import org.bukkit.Bukkit;
-import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
@@ -95,7 +94,7 @@ public class ResourcePackBuilder {
 
 
             for (var out : OpenItemsConfig.getResourcePackCopyDestinationFiles()) {
-                FileUtils.deleteDirectory(out);
+                Utils.deleteDirectory(out);
                 var build = new File(OpenItems.getInstance().getDataFolder(), "build");
                 Utils.copyFolder(build, out, build, new ArrayList<>(), new ArrayList<>());
             }
@@ -188,11 +187,11 @@ public class ResourcePackBuilder {
         OpenItems.getInstance().getModelRegistry().clear();
         var dir = new File(OpenItems.getInstance().getDataFolder(), "build/assets");
 
-        if (dir.exists()) FileUtils.deleteDirectory(dir);
+        if (dir.exists()) Utils.deleteDirectory(dir);
 
 
         for (var i : OpenItemsConfig.getResourcePackCopyDestinationFiles())
-            FileUtils.deleteDirectory(i);
+            Utils.deleteDirectory(i);
     }
 
     public FontImageIdCache getFontImagesIdCache() {

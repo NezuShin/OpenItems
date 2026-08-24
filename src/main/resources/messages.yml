@@ -7,6 +7,8 @@ messages:
   current-block-data:
     - '<reset><gray>------------------<#008f9a>Block data<reset><gray>-----------------'
     - '<reset><#08c0c2>Model<grey>:<#008f9a> {model}'
+    - '<reset><#08c0c2>Hardness<grey>:<#008f9a> {hardness}'
+    - '<reset><#08c0c2>Preferred tools<grey>:<#008f9a> {preferred-tools}'
     - '<reset><#08c0c2>Drop when broken by player<grey>:<#008f9a> {drop-on-break}'
     - '<reset><#08c0c2>Drop when destroyed by liquid (tripwire and chorus only)<grey>:<#008f9a> {drop-on-destroy-by-liquid}'
     - '<reset><#08c0c2>Drop when destroyed by explosion<grey>:<#008f9a> {drop-on-explosion}'
@@ -71,8 +73,10 @@ messages:
   oedit-help-block:
     - '<reset><gray>------------------<#008f9a>OEdit block help<reset><gray>-----------------'
     - "<reset><#08c0c2><click:suggest_command:'/oedit block'>/oedit <#08c0c2>block<grey> - <#008f9a>show info about block"
-    - "<reset><#08c0c2><click:suggest_command:'/oedit block break_speed_multiplier'>/oedit <#08c0c2>block break_speed_multiplier<grey> - <#008f9a>show info about block break speed modifiers"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block model'>/oedit <#08c0c2>block model <model path><grey> - <#008f9a>set block model for item (when placed); make possible to place this item as block"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block hardness'>/oedit <#08c0c2>block hardness <value|clear><grey> - <#008f9a>set custom felt hardness (e.g. 1.5 like stone). Clears legacy tool multipliers"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block preferred_tool'>/oedit <#08c0c2>block preferred_tool [type] [type...]<grey> - <#008f9a>tools that get grade/Efficiency (e.g. pickaxe). Empty list clears"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block break_speed_multiplier'>/oedit <#08c0c2>block break_speed_multiplier<grey> - <#008f9a>show / set material or model speed overrides"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_break'>/oedit <#08c0c2>block drop_on_break <true/false><grey> - <#008f9a>make block drop item when mined by player"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_destroy_by_liquid'>/oedit <#08c0c2>block drop_on_destroy_by_liquid <true/false><grey> - <#008f9a>make block drop item when destroyed by liquids"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_explosion'>/oedit <#08c0c2>block drop_on_explosion <true/false><grey> - <#008f9a>make block drop item when exploded"
@@ -80,8 +84,7 @@ messages:
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_be_blown'>/oedit <#08c0c2>block can_be_blown <true/false><grey> - <#008f9a>set block vulnerable for explosions"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_burn'>/oedit <#08c0c2>block can_burn <true/false><grey> - <#008f9a>set block burnable (noteblock-based blocks only)"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block can_be_destroyed_by_liquid'>/oedit <#08c0c2>block can_be_destroyed_by_liquid <true/false><grey> - <#008f9a>set block can be destroyed by liquid (tipwire and chorus-based blocks only)"
-    - "<reset><#08c0c2><click:suggest_command:'/oedit block break_speed_multiplier'>/oedit <#08c0c2>block break_speed_multiplier <tool/model/material> <multiplier><grey> - <#008f9a>set block break speed multiplier for tool (e.g. pickaxe), model (e.g. <namespace>:<path>) or material (e.g. diamond)"
-    - "<reset><#08c0c2><click:suggest_command:'/oedit block break_speed_multiplier apply_tool_grade_multiplier'>/oedit <#08c0c2>block break_speed_multiplier apply_tool_grade_multiplier [type] [type] [type...]<grey> - <#008f9a> allow setting tool grade multiplier for selected tool types"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block break_speed_multiplier'>/oedit <#08c0c2>block break_speed_multiplier <material/model> <id> <multiplier><grey> - <#008f9a>flat speed override for a material or item model (wins over hardness)"
 
 
   oedit-help-equipment:
@@ -101,7 +104,8 @@ messages:
 
   oedit-break-speed-multiplier-none:
   - '<reset><#008f9a>There is no speed multipliers for this block'
-  - '<reset><#008f9a>Consider adding preferred tool via <#08c0c2>/oedit block break_speed_multiplier tool <tool> <multiplier>'
+  - '<reset><#008f9a>Prefer <#08c0c2>/oedit block hardness <value><#008f9a> and <#08c0c2>/oedit block preferred_tool <tool>'
+  - '<reset><#008f9a>Or override: <#08c0c2>/oedit block break_speed_multiplier material|model <id> <multiplier>'
 
   oedit-break-speed-grade-list:    '<reset><#08c0c2>Applied tool grades to: <#008f9a>{values}'
   oedit-break-speed-grade-delimiter: '<#08c0c2>, <#008f9a>'
