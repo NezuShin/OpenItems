@@ -72,9 +72,30 @@ Plugin will generate `<namespace>:name` model. You can set model using command `
 
 Use command `/oitems font print_image <emoji>` to available font images. \
 Use command `/oitems font print_path <path>` to available paths to font images. \
-Use command `/oitems print_offset_sequence <offset in pixels>` to prepare [text offset](https://minecraft.wiki/w/Font#Space_provider) sequence.
+Use command `/oitems font print_offset_sequence <offset in pixels>` to prepare [text offset](https://minecraft.wiki/w/Font#Space_provider) sequence.
 
 Font images stored in directory `OpenItems/contents/<namespace>/textures/font/`.
+
+**Named fonts (default):** first-level folders under `textures/font/` become font names (written to `assets/<namespace>/font/<name>.json`). Loose PNGs directly under `textures/font/` belong to the `default` font.
+
+**Legacy mode:** set `legacy-mode: true` to merge every PNG under `textures/font/` into `minecraft:default` and `minecraft:uniform` (previous behavior).
+
+```yaml
+fonts:
+  # Default is false. Set true to keep the old “everything in vanilla default/uniform” behavior
+  legacy-mode: false
+  settings:
+    default:
+      # Also inject providers into these fonts (chat uses minecraft:default / minecraft:uniform)
+      merge-into: [minecraft:default, minecraft:uniform]
+      append-negative-spaces: true
+    hud:
+      merge-into: []
+      append-negative-spaces: true
+```
+
+Missing `settings` for a font: `default` merges into both vanilla fonts with spaces; any other name merges nowhere and still gets spaces.
+Custom fonts (e.g. `hud`) need the text component `font` set to `<namespace>:hud` (or use the font placeholder below). Merging into `minecraft:default` / `minecraft:uniform` is what makes glyphs work in normal chat without setting a custom font.
 
 There is two ways to configure font image size:
 - Using file name. For example, file with name `my_awesome_texture_h20_a8.png` will have height 20 and ascent 8. Texture in registry will have name `<namespace>:font/my_awesome_texture`.
@@ -92,6 +113,8 @@ Plugin uses [Unicode private area](https://en.wikipedia.org/wiki/Private_Use_Are
 PAPI placeholders:
  - Font image: `%openitems_emoji_<namespace>:<path>%` \
     Example: `%openitems_emoji_my_awesome_namespace:font/my_awesome_texture%`.
+ - Font id for a glyph: `%openitems_font_<namespace>:<path>%` \
+    Example: `%openitems_font_my_awesome_namespace:font/hud/icon%` → `my_awesome_namespace:hud`.
  - Text offset: `%openitems_offset_<offset_in_pixels>%` \
    Examples: `%openitems_offset_-10%`, `%openitems_offset_+10%`.
 

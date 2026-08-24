@@ -40,6 +40,13 @@ public class FontImageExpansion extends PlaceholderExpansion {
 
             return OpenItems.getInstance().getModelRegistry().getFontImages().get(str.replace(":", "_")
                     .replace("/", "_"));
+        } else if (StringUtil.startsWithIgnoreCase(params, "font_")) {
+            var str = params.replaceFirst("font_", "");
+            var registry = OpenItems.getInstance().getModelRegistry();
+            var font = registry.getFontImageFonts().get(str);
+            if (font != null && !font.isEmpty())
+                return font;
+            return registry.getFontImageFonts().get(str.replace(":", "_").replace("/", "_"));
         } else if (StringUtil.startsWithIgnoreCase(params, "offset")) {
             var str = params.replaceFirst("offset_", "").replace("+", "");
             try {

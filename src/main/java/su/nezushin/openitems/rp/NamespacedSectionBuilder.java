@@ -68,8 +68,8 @@ public class NamespacedSectionBuilder {
         //for sounds
         List<ResourcePackScanFile> oggFiles = new ArrayList<>();
 
-        //for font images
-        List<ResourcePackScanFile> pngFilesEmoji = new ArrayList<>();
+        //for font images (fontName null = legacy mode)
+        List<FontTextureScan> pngFilesEmoji = new ArrayList<>();
 
         var generatedDir = new File(this.sectionDir, "textures/item/generated");
         var handheldDir = new File(this.sectionDir, "textures/item/handheld");
@@ -92,7 +92,7 @@ public class NamespacedSectionBuilder {
             scanForTextures(generatedDir, "item", true, pngFilesGenerated);
             scanForTextures(handheldDir, "item", true, pngFilesHandheld);
             scanForTextures(noteblockDir, "block", true, pngFilesNoteblock);
-            scanForTextures(fontDir, "", true, pngFilesEmoji);
+            scanFontTextures(fontDir, pngFilesEmoji);
 
             scanForTextures(customModelTemplatesDir, "", false, pngFilesCustomModelTemplates);
 
@@ -158,7 +158,15 @@ public class NamespacedSectionBuilder {
                         .replace("a" + ascent, ""));
             }
             data.setSymbol(String.valueOf((char) id));
-            fontImageCache.getRegisteredCharIds().put(path, data);
+
+            if (this.config.isFontsLegacyMode() || i.fontName() == null) {
+                fontImageCache.register(path, data, null,
+                        List.of("minecraft:default", "minecraft:uniform"), true);
+            } else {
+                var settings = this.config.getFontSettings(i.fontName());
+                fontImageCache.register(path, data, this.namespace + ":" + i.fontName(),
+                        settings.mergeInto(), settings.appendNegativeSpaces());
+            }
         }
 
         generateEquipmentModels(equipmentDir);
@@ -179,6 +187,52 @@ public class NamespacedSectionBuilder {
             return Utils.createPath(path, name);
         }
 
+    }
+
+    /**
+     * @param fontName font folder name when not in legacy mode; {@code null} means legacy (minecraft default/uniform only)
+     */
+    private record FontTextureScan(File file, String path, String name, String fontName) {
+
+        public String pathAndName() {
+            return Utils.createPath(path, name);
+        }
+    }
+
+    /**
+     * Legacy mode: every PNG under {@code textures/font/} goes to minecraft default/uniform.
+     * Named mode: first-level folders are font names; loose PNGs under {@code font/} belong to {@code default}.
+     */
+    private void scanFontTextures(File fontDir, List<FontTextureScan> out) {
+        if (!fontDir.exists())
+            return;
+
+        if (this.config.isFontsLegacyMode()) {
+            List<ResourcePackScanFile> scanned = new ArrayList<>();
+            scanForTextures(fontDir, "", true, scanned);
+            for (var i : scanned)
+                out.add(new FontTextureScan(i.file(), i.path(), i.name(), null));
+            return;
+        }
+
+        var children = fontDir.listFiles();
+        if (children == null)
+            return;
+
+        for (var child : children) {
+            if (child.isFile() && child.getName().toLowerCase().endsWith(".png")) {
+                out.add(new FontTextureScan(child, "font", Utils.getFileName(child), "default"));
+                continue;
+            }
+            if (!child.isDirectory())
+                continue;
+
+            var fontName = child.getName();
+            List<ResourcePackScanFile> scanned = new ArrayList<>();
+            scanForTextures(child, "font", true, scanned);
+            for (var i : scanned)
+                out.add(new FontTextureScan(i.file(), i.path(), i.name(), fontName));
+        }
     }
 
     //find all equipment textures

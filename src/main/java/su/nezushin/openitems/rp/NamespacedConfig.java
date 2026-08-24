@@ -11,7 +11,9 @@ import su.nezushin.openitems.rp.sound.SoundEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents config for every namespcace; All yml configs for namcespace should be located in OpenItems/contents/&lt;namespace&gt;/configs/
@@ -46,6 +48,13 @@ public class NamespacedConfig {
 
     private List<FontImageConfig> fontImages = new ArrayList<>();
 
+    /**
+     * When true, all font textures are merged into {@code minecraft:default} and {@code minecraft:uniform}.
+     * When false (default), first-level folders under {@code textures/font/} are font names.
+     */
+    private boolean fontsLegacyMode = false;
+
+    private Map<String, FontSettings> fontSettings = new HashMap<>();
 
     private List<ModelTemplateConfig> modelTemplates = new ArrayList<>();
 
@@ -61,6 +70,20 @@ public class NamespacedConfig {
         public BitmapFontImage toFontImage() {
             return new BitmapFontImage(height, ascent, path + ".png");
         }
+    }
+
+    /**
+     * Per-font build options under {@code fonts.settings.<name>}.
+     *
+     * @param mergeInto              additional font ids to inject providers into (e.g. {@code minecraft:default})
+     * @param appendNegativeSpaces   whether to include the space provider in this font
+     */
+    public record FontSettings(List<String> mergeInto, boolean appendNegativeSpaces) {
+
+        public static final FontSettings DEFAULT_FONT = new FontSettings(
+                List.of("minecraft:default", "minecraft:uniform"), true);
+
+        public static final FontSettings CUSTOM_FONT = new FontSettings(List.of(), true);
     }
 
     record SoundConfig(String subtitle, double volume, double pith, double weight,
@@ -98,6 +121,7 @@ public class NamespacedConfig {
                 loadModelTemplates(config, namespaceDir);
                 loadItemTemplates(config, namespaceDir);
                 loadFontImages(config);
+                loadFonts(config);
                 loadSounds(config);
                 configs.add(config);
             }
@@ -158,6 +182,44 @@ public class NamespacedConfig {
                     config.getInt(path + ".ascent", 8),
                     config.getString(path + ".path")));
         }
+    }
+
+    private void loadFonts(FileConfiguration config) {
+        var section = config.getConfigurationSection("fonts");
+        if (section == null)
+            return;
+
+        this.fontsLegacyMode = section.getBoolean("legacy-mode", false);
+
+        var settings = section.getConfigurationSection("settings");
+        if (settings == null)
+            return;
+
+        for (var fontName : settings.getKeys(false)) {
+            var path = "fonts.settings." + fontName;
+            List<String> mergeInto;
+            if (config.contains(path + ".merge-into")) {
+                mergeInto = List.copyOf(config.getStringList(path + ".merge-into"));
+            } else if (fontName.equals("default")) {
+                mergeInto = FontSettings.DEFAULT_FONT.mergeInto();
+            } else {
+                mergeInto = FontSettings.CUSTOM_FONT.mergeInto();
+            }
+            this.fontSettings.put(fontName, new FontSettings(
+                    mergeInto,
+                    config.getBoolean(path + ".append-negative-spaces", true)));
+        }
+    }
+
+    public boolean isFontsLegacyMode() {
+        return fontsLegacyMode;
+    }
+
+    public FontSettings getFontSettings(String fontName) {
+        var configured = this.fontSettings.get(fontName);
+        if (configured != null)
+            return configured;
+        return fontName.equals("default") ? FontSettings.DEFAULT_FONT : FontSettings.CUSTOM_FONT;
     }
 
     private void loadSounds(FileConfiguration config) throws IOException {

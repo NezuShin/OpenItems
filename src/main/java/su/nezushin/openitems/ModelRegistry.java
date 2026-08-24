@@ -27,6 +27,8 @@ public class ModelRegistry {
     //font images, key is emoji id, value is the symbol
     private Map<String, String> fontImages = new HashMap<>();
 
+    //font images, key is emoji id, value is font id (e.g. namespace:hud or minecraft:default)
+    private Map<String, String> fontImageFonts = new HashMap<>();
 
     //font spaces
     private SortedMap<Integer, String> fontSpaces = new TreeMap<>();
@@ -48,6 +50,10 @@ public class ModelRegistry {
         return fontImages;
     }
 
+    public Map<String, String> getFontImageFonts() {
+        return fontImageFonts;
+    }
+
     public Map<Integer, String> getFontSpaces() {
         return fontSpaces;
     }
@@ -64,6 +70,7 @@ public class ModelRegistry {
             equipment = Collections.unmodifiableSet(new HashSet<>(equipment));
             blockTypes = Collections.unmodifiableMap(new HashMap<>(blockTypes));
             fontImages = Collections.unmodifiableMap(new HashMap<>(fontImages));
+            fontImageFonts = Collections.unmodifiableMap(new HashMap<>(fontImageFonts));
             fontSpaces = Collections.unmodifiableSortedMap(new TreeMap<>(fontSpaces));
 
             reportLoaded(Bukkit.getConsoleSender());
@@ -73,6 +80,7 @@ public class ModelRegistry {
         equipment = Collections.synchronizedSet(new HashSet<>(equipment));
         blockTypes = Collections.synchronizedMap(new HashMap<>(blockTypes));
         fontImages = Collections.synchronizedMap(new HashMap<>(fontImages));
+        fontImageFonts = Collections.synchronizedMap(new HashMap<>(fontImageFonts));
         fontSpaces = Collections.synchronizedSortedMap(new TreeMap<>(fontSpaces));
     }
 
@@ -98,5 +106,6 @@ public class ModelRegistry {
         blockTypes = new HashMap<>();
         fontSpaces = new TreeMap<>();
         fontImages = new HashMap<>();
+        fontImageFonts = new HashMap<>();
     }
 }

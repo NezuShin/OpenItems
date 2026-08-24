@@ -152,6 +152,10 @@ public class ResourcePackBuilder {
                 OpenItems.getInstance().getModelRegistry().getFontImages().put(k, v.getSymbol());
             });
 
+            this.fontImageIdCache.getImageFonts().forEach((k, v) -> {
+                OpenItems.getInstance().getModelRegistry().getFontImageFonts().put(k, v);
+            });
+
             this.fontImageIdCache.getFontSpaces().forEach((k, v) -> {
                 OpenItems.getInstance().getModelRegistry().getFontSpaces().put(k, v);
             });
