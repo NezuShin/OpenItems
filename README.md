@@ -253,8 +253,92 @@ dependencies {
 - CustomBlockSpeedModifierSetEvent - Called after calculations of custom block break speed multiplier
 
 ### Useful API Features
-- Store any arbitrary information in blocks using [`BlockLocationStore.getArbitratyData()`](http://nezushin.su/javadocs/openitems/su/nezushin/openitems/blocks/storage/BlockLocationStore.html#getArbitraryData())
-- To be done
+
+Access the API via `OpenItems.getInstance()`. Wait for `AsyncRegistryLoadedEvent` before reading the model registry (font images, block models).
+
+#### 1. Place a custom block
+
+```java
+ItemStack item = /* item with openitems_custom_block NBT */;
+Block block = player.getTargetBlockExact(5);
+
+BlockLocationStore placed = OpenItems.getInstance().getBlocks().placeBlock(block, item);
+// placed is also available later via getBlocks().getPlacedBlocks().get(block)
+```
+
+#### 2. Remove a custom block
+
+```java
+CustomBlocks blocks = OpenItems.getInstance().getBlocks();
+
+// Loaded chunk: dropItem / setAir control drop and whether the world block becomes air
+blocks.destroyBlock(block, true, true);
+
+// Unloaded chunk (or unknown): destroys when the chunk loads
+blocks.destroyBlockOnLoad(block, false, true, () -> {
+    // runs after destroy
+});
+```
+
+#### 3. Store arbitrary data on a placed block
+
+Plain values go in `getArbitraryData()`. Types that implement Bukkit’s `ConfigurationSerializable` (e.g. `ItemStack`, `Location`) go in `getArbitraryBukkitData()`. After changing either map, save the chunk.
+
+```java
+BlockLocationStore store = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(block);
+if (store == null) return;
+
+// Simple serializable values (strings, numbers, maps, lists, …)
+store.getArbitraryData().put("owner", player.getUniqueId().toString());
+store.getArbitraryData().put("energy", 42);
+
+// ConfigurationSerializable (ItemStack, Location, your own class, …)
+store.getArbitraryBukkitData().put("reward", new ItemStack(Material.DIAMOND, 3));
+store.getArbitraryBukkitData().put("home", player.getLocation());
+
+OpenItems.getInstance().getBlocks().saveChunk(block.getChunk());
+
+// Read back
+String owner = (String) store.getArbitraryData().get("owner");
+ItemStack reward = (ItemStack) store.getArbitraryBukkitData().get("reward");
+```
+
+#### 4. Change block model (including host type)
+
+`changeBlockModel` updates the stored id, applies the new blockstate, and saves the chunk. The new path can be a different host type (chorus → note block, tripwire → chorus, etc.) as long as that model exists in the registry.
+
+```java
+CustomBlocks blocks = OpenItems.getInstance().getBlocks();
+
+// Same host type
+blocks.changeBlockModel(block, "myns:block/chorus_plant/ore_stage_2");
+ 
+// Switch host type, e.g. chorus plant → note block
+blocks.changeBlockModel(block, "myns:block/note_block/deep_slate_variant");
+```
+
+Check available models with `OpenItems.getInstance().getModelRegistry().getBlockTypes()`.
+
+#### 5. Font images and text offsets
+
+```java
+ModelRegistry registry = OpenItems.getInstance().getModelRegistry();
+
+// Glyph character for a font image id (same keys as %openitems_emoji_<id>%)
+String glyph = registry.getFontImages().get("myns:font/my_awesome_texture");
+
+// Font id for that glyph (e.g. myns:hud or minecraft:default)
+String fontId = registry.getFontImageFonts().get("myns:font/hud/icon");
+
+// Build a space/offset sequence (positive = right, negative = left), same as %openitems_offset_<n>%
+String moveRight = Utils.getOffset(10);
+String moveLeft = Utils.getOffset(-10);
+
+// Or compose manually from registry spaces (keys are pixel sizes, values are the space glyphs)
+Map<Integer, String> spaces = registry.getFontSpaces();
+String plus8 = spaces.get(8);   // +8px
+String minus4 = spaces.get(-4); // -4px
+```
 
 ## Inspirations
 - https://github.com/MMonkeyKiller/CustomBlocks

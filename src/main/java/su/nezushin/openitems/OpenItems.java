@@ -8,6 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import su.nezushin.openitems.blocks.CustomBlocks;
 import su.nezushin.openitems.cmd.OEditCommand;
 import su.nezushin.openitems.cmd.OItemsCommand;
+import su.nezushin.openitems.hooks.CommandHooks;
 import su.nezushin.openitems.hooks.FontImageExpansion;
 import su.nezushin.openitems.hooks.ResourcePackManagerHook;
 import su.nezushin.openitems.hooks.RoseResourcepackHook;
@@ -27,6 +28,7 @@ public final class OpenItems extends JavaPlugin {
     private FontImageExpansion papiHook;
     private ResourcePackManagerHook resourcePackManagerHook;
     private RoseResourcepackHook roseResourcepackHookHook;
+    private CommandHooks commandHooks;
 
     public static NamespacedKey CUSTOM_BLOCKS_CHUNK_KEY;
 
@@ -55,9 +57,10 @@ public final class OpenItems extends JavaPlugin {
 
         Utils.resyncCommands();
 
+        this.commandHooks = new CommandHooks();
 
         if (OpenItemsConfig.buildOnEnable)
-            this.resourcePackBuilder.build();
+            this.commandHooks.startBuild(Bukkit.getConsoleSender(), false);
 
     }
 
@@ -101,6 +104,10 @@ public final class OpenItems extends JavaPlugin {
 
     public ResourcePackBuilder getResourcePackBuilder() {
         return resourcePackBuilder;
+    }
+
+    public CommandHooks getCommandHooks() {
+        return commandHooks;
     }
 
     public static void sync(Runnable run) {

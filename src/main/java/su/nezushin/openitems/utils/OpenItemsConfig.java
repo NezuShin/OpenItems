@@ -20,6 +20,10 @@ public class OpenItemsConfig {
 
     public static List<String> resourcePackCopyDestinations;
 
+    public static List<String> beforeBuildCommands, afterBuildCommands;
+
+    public static long beforeBuildMessageTimeout = 3000;
+
     public static boolean replaceTripwiresOnChunkLoad = true, replaceChorusPlantsOnChunkLoad = true,
             enableTripwires = true, enableChorus = true, buildOnEnable, disableMipMapWarning, allowChorusPhysicsCancel = false;
 
@@ -30,19 +34,18 @@ public class OpenItemsConfig {
             Material.REDSTONE,
             Material.SPAWNER,
             Material.TRIAL_SPAWNER
-            );
+    );
 
     public static void init() {
-
-
         var plugin = OpenItems.getInstance();
-        if (!new File(plugin.getDataFolder() + File.separator + "config.yml").exists()) {
+        var configFile = new File(plugin.getDataFolder() + File.separator + "config.yml");
+
+        if (!configFile.exists()) {
             plugin.getConfig().options().copyDefaults(true);
             plugin.saveDefaultConfig();
         }
 
-
-        config = plugin.getConfig();
+        config = YamlConfiguration.loadConfiguration(configFile);
 
         replaceTripwiresOnChunkLoad = config.getBoolean("blocks.replace-tripwires-on-chunk-load", true);
         replaceChorusPlantsOnChunkLoad = config.getBoolean("blocks.replace-chorus-plants-on-chunk-load", true);
@@ -56,6 +59,10 @@ public class OpenItemsConfig {
 
 
         resourcePackCopyDestinations = config.getStringList("resourcepack.copy-destinations");
+
+        beforeBuildCommands = config.getStringList("command-hooks.before-build");
+        afterBuildCommands = config.getStringList("command-hooks.after-build");
+        beforeBuildMessageTimeout = Math.max(0, config.getLong("command-hooks.before-build-message-timeout", 3000));
 
         var messages = new File(plugin.getDataFolder() + File.separator + "messages.yml");
         if (!messages.exists()) {

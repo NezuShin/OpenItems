@@ -7,6 +7,34 @@ resourcepack:
   build-on-enable: false
   disable-mip-map-warning: false
 
+command-hooks:
+  # Console commands to run before the resource pack build starts (one per list item).
+  before-build:
+#    - "say before build"
+#    - "say plus 3 sec"
+
+  # Quiet time to wait after each before-build command, in milliseconds (1000 = 1 second).
+  #
+  # Commands run one at a time. After each command, OpenItems waits until output
+  # has been silent for this long before running the next command or starting the build.
+  #
+  # What happens:
+  #   1. First before-build command is dispatched as console
+  #   2. A timer of this length starts; each message from the command resets it
+  #   3. When the timer completes with no new messages, the next command runs
+  #   4. After the last command goes quiet for this long, the resource pack build starts
+  #
+  # Example with two commands and 3000 (3 seconds):
+  #   "cmd a" runs -> messages -> 3s quiet -> "cmd b" runs -> messages -> 3s quiet -> build starts
+  #
+  # Increase this if a command prints slowly (long gaps between lines).
+  # Set 0 to run all before-build commands back-to-back with no wait between them.
+  before-build-message-timeout: 3000
+
+  # Console commands to run after the pack is built and copy-destinations are done.
+  after-build:
+#    - "say this will be printed after 'build done' message"
+
 blocks:
   #ensure all vanilla tripwires and chorus plants in loaded chunk is with vanilla texture
   replace-tripwires-on-chunk-load: true

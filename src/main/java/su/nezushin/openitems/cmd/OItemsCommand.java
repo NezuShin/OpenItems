@@ -1,7 +1,6 @@
 package su.nezushin.openitems.cmd;
 
 import com.google.common.collect.Lists;
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -32,24 +31,7 @@ public class OItemsCommand implements CommandExecutor, TabCompleter {
             }
 
             if (args[0].equalsIgnoreCase("build")) {
-                Message.oi_started_build.send(sender);
-                OpenItems.async(() -> {
-                    if (OpenItems.getInstance().getResourcePackBuilder().build()) {
-
-
-                        Message.oi_build_end_done.send(sender);
-                        OpenItems.sync(() -> {
-                            if (!sender.equals(Bukkit.getConsoleSender())) {
-                                OpenItems.getInstance().getModelRegistry().reportLoaded(sender);
-                                if (OpenItems.getInstance().getResourcePackBuilder().isHasMipMapProblem())
-                                    Message.oi_build_mip_map_warning.send(Bukkit.getConsoleSender());
-                            }
-                        });
-                        return;
-                    }
-                    Message.oi_build_end_err.send(sender);
-                });
-
+                OpenItems.getInstance().getCommandHooks().startBuild(sender, true);
                 return true;
             } else if (args[0].equalsIgnoreCase("reload")) {
                 OpenItems.async(() -> {
@@ -62,6 +44,7 @@ public class OItemsCommand implements CommandExecutor, TabCompleter {
                         Message.oi_config_load_err.send(sender);
                     }
                 });
+                return true;
             }
             if (args[0].equalsIgnoreCase("font")) {
                 if (args.length > 2) {
