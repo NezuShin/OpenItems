@@ -153,7 +153,7 @@ public class CustomBlocks {
                         destroyBlock(block, destroyRecord.dropItem(), destroyRecord.setAir());
                         destroyRecord.callback().run();
 
-                        return;
+                        contine;
                     }
 
 

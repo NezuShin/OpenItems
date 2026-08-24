@@ -122,8 +122,7 @@ public class CustomBlocksListener implements Listener {
                         && Math.random() < e.getYield(), true);
 
                 i.setType(Material.AIR);
-                e.blockList().remove(i);
-                return false;
+                return true;
             }
             return true;
         });
@@ -148,8 +147,7 @@ public class CustomBlocksListener implements Listener {
                         && Math.random() < e.getYield(), true);
 
                 i.setType(Material.AIR);
-                e.blockList().remove(i);
-                return false;
+                return true;
             }
             return true;
         });

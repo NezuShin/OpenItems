@@ -98,9 +98,6 @@ public class NamespacedSectionBuilder {
 
             scanForSounds(sounds, "", false, oggFiles);
         }
-
-
-
         for (var i : pngFilesGenerated)
             createItemModel(i, this.config.getGeneratedModelTemplate());
 
@@ -117,14 +114,20 @@ public class NamespacedSectionBuilder {
 
         Map<String, SoundEvent> soundsMap = new HashMap<>();
         for (var i : oggFiles) {
-            var sound = this.config.getSound(i.pathAndName());
+            var path = i.pathAndName().contains("/") ? i.path() : i.name();
 
-            if (sound == null)
+            var sound = soundsMap.containsKey(path) ? soundsMap.get(path) : this.config.getSound(path);
+
+            if (sound == null) {
                 sound = new SoundEvent(false, null, Lists.newArrayList(
                         new Sound(this.namespace + ":" + i.pathAndName(), 1.0, 1.0, 1.0,
-                                false, 16, false, "file")
-                ));
-            soundsMap.put(i.pathAndName().replace("/", "."), sound);
+                                false, 16, false, "file")));
+            } else {
+                sound.getSounds().add(new Sound(this.namespace + ":" + i.pathAndName(), 1.0, 1.0, 1.0,
+                        false, 16, false, "file"));
+            }
+
+            soundsMap.put(path, sound);
         }
 
         Files.write(OpenItems.getInstance().getGson().toJson(soundsMap).getBytes(StandardCharsets.UTF_8),
@@ -165,8 +168,6 @@ public class NamespacedSectionBuilder {
         scanForChorusModels(chorusDir, "block");
 
         scanForItemModels(new File(this.sectionDir, "models/item"), "");
-
-
 
 
         Utils.copyFolder(this.sectionDir, outputDir, this.sectionDir, this.config.getDirectoriesIgnoreList(), this.config.getExtensionsIgnoreList());
@@ -309,7 +310,7 @@ public class NamespacedSectionBuilder {
             var equipmentModelFile = new File(this.outputDir, "equipment/" + i.getKey() + ".json");
             equipmentModelFile.getParentFile().mkdirs();
             Files.write(OpenItems.getInstance().getGson().toJson(
-                    new EquipmentModel(this.namespace + ":" + i.getKey(), i.getValue()))
+                                    new EquipmentModel(this.namespace + ":" + i.getKey(), i.getValue()))
                             .getBytes(StandardCharsets.UTF_8),
                     equipmentModelFile);
         }
