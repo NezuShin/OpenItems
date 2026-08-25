@@ -1,12 +1,11 @@
 # OpenItems
 
 OpenItems is a plugin for PaperMC that allows you to add new items, blocks, and font images with the ability to edit them directly in-game with minimal config file editing.
-If you have questions, want ask for a feature or report a bug - feel free to open issue, mail me at nezushin@ya.ru or dm in discord @nezushin or matrix @nezushin:matrix.nezushin.ru.
 
 Unlike [craftengine](https://modrinth.com/plugin/craftengine), OpenItems not manipulating PaperMCs registry since there is no pre-defined blocks, everything goes in runtime. 
 ## Features
 - [Automatic resource pack generation](#automatic-model-generator-and-content-creation)
-- [Custom blocks](#blocks) with [custom hardness](#understanding-block-hardness) based on note blocks, chorus plants or tripwires
+- [Custom blocks](#blocks) with [custom hardness](#understanding-block-hardness) — note blocks, chorus plants, tripwires, and [stairs](#stairs-itemdisplay)
 - [Custom armor models](#equipment)
 - [Custom font images](#font-images-and-placeholders)
 - Edit models of items or blocks, configure their behavior in-game
@@ -180,27 +179,56 @@ Example model:
 ```
 
 #### Blocks
-How plugin scanning for block models and textures:
-- For note block based textures in directory `OpenItems/contents/<namespace>/textures/block/note_block/`.
-  As note block is plane minecraft block, and it is not supports "transparency", plugin gives no option to provide custom model with this base-block type. \
-  There is three ways to define block:
-- - For single texture block - (e.g. `minecraft:diamond_ore`) just put `.png` texture to `.../block/note_block/` directory. \
-    After building resource pack in registry will appear new block model - `<namespace>:block/note_block/<your_png_file>`
-- - For block with three textures: up, down and side - put images with postfix `_up`, `_down`, `_side` to directory. For example `my_block_up.png`, `my_block_down.png`,`my_block_up.png`.   
-    If done correctly, registry will have model `<namespace>:block/note_block/my_block`
-- - For block with own texture in every side - same as above, but you need names ends with `_up`, `_down`, `_east`, `_west`, `_south` and `_north`.
-    You may put textures to every subdirectory in `.../block/note_block` but png files for one block should be in same directory.
-- Tripwire and chorus plant based models is located in `OpenItems/contents/<namespace>/models/block/tripwire/` and `.../chorus_plant/` directories respectively.
-  As there is no reason to use tripwires and chorus plants as plain blocks, so only custom models supported. \
-  Models appears in registry as `<namespace>:block/tripwire/<model>` and `<namespace>:block/chorus_plant/<model>`. Any subdirectory is allowed. Models just being copied to build directory as is.
-- For every block type generator creates its `/build/assets/<namespace>/items/` link, so you can use command `/oedit item model <your_model_path>` to set block model to item. \
-    Also, it generates `minecraft:/blockstates/` for `note_block.json`, `tripwire.json` and `chorus_plant.json`
 
+The plugin scans content directories and registers block models automatically. Set the item look with `/oedit item model <your_model_path>`, then apply block behaviour with `/oedit block model <your_model_path>` so the item places as a custom block.
 
+For note-block, tripwire, and chorus hosts the generator also writes `minecraft/blockstates/` (`note_block.json`, `tripwire.json`, `chorus_plant.json`). Stairs use a different approach (see below).
+
+##### Note blocks
+
+Textures: `OpenItems/contents/<namespace>/textures/block/note_block/`
+
+Note blocks are opaque cubes — custom JSON models are not supported for this host. Define a block with textures only:
+
+| Layout | Files | Registry id |
+|--------|-------|-------------|
+| Single texture | `my_block.png` | `<namespace>:block/note_block/my_block` |
+| Top / bottom / side | `my_block_up.png`, `my_block_down.png`, `my_block_side.png` | `<namespace>:block/note_block/my_block` |
+| Per face | `my_block_up.png`, `_down`, `_east`, `_west`, `_south`, `_north` | `<namespace>:block/note_block/my_block` |
+
+Subdirectories under `note_block/` are allowed; all faces of one block must sit in the same folder.
+
+##### Tripwire and chorus plant
+
+Models: `OpenItems/contents/<namespace>/models/block/tripwire/` and `.../models/block/chorus_plant/`
+
+Only custom models are supported (copied as-is into the build). Registry ids:
+
+- `<namespace>:block/tripwire/<model>`
+- `<namespace>:block/chorus_plant/<model>`
+
+Subdirectories are allowed.
+
+##### Stairs (ItemDisplay)
+
+Textures: `OpenItems/contents/<namespace>/textures/block/item_display/stairs/`
+
+Stairs are **not** multiplexed through note-block / tripwire / chorus blockstates. The host is a real vanilla stairs block (collision, facing, half, and corner shape stay vanilla). The custom look is an `ItemDisplay` entity synced to that host.
+
+| Layout | Files | Registry id |
+|--------|-------|-------------|
+| Single texture | `my_stairs.png` | `<namespace>:block/item_display/stairs/my_stairs` |
+| Bottom / side / top | `my_stairs_bottom.png`, `my_stairs_side.png`, `my_stairs_top.png` | `<namespace>:block/item_display/stairs/my_stairs` |
+
+The generator builds three shape models (`straight`, `inner`, `outer`) plus an inventory item model. Facing and half are applied as `ItemDisplay` rotation at runtime — you do not author every BlockData variant by hand.
+
+**Placement:** use a vanilla stairs item as the base (e.g. `birch_stairs`, `stone_stairs`), then set `/oedit item model` and `/oedit block model` to `<namespace>:block/item_display/stairs/my_stairs`. The item’s material becomes the host block type; OpenItems only overlays the display and stores metadata.
+
+Stairs do not consume note-block / tripwire / chorus blockstate IDs.
 
 #### Understanding block hardness
 
-Plugin cannot change real block hardness (custom blocks are still note blocks / chorus plants). It sets a player `block_break_speed` attribute so mining *feels* like a chosen hardness.
+Plugin cannot change real block hardness (note-block / chorus hosts stay those materials; stairs stay vanilla stairs). It sets a player `block_break_speed` attribute so mining *feels* like a chosen hardness.
 
 Typical setup (stone-like ore mined with pickaxes):
 
