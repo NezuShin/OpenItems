@@ -18,17 +18,8 @@ public class CustomTripwireModel implements CustomBlockModel {
         b.setType(Material.TRIPWIRE, update);
         if (b.getBlockData() instanceof Tripwire t) {
             setId(t, this.id);
-            b.setBlockData(t);
-            //b.getState().update(false, false);
+            b.setBlockData(t, update);
         }
-    }
-
-    @Override
-    public void apply(BlockData b) {
-        if (!(b instanceof Tripwire t))
-            return;
-
-        setId(t, this.id);
     }
 
     @Override

@@ -39,6 +39,12 @@ public class BlockLocationStore extends BlockDataStore {
         return z;
     }
 
+    public void setLocation(int x, int y, int z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
     /**
      * Any arbitrary data of custom block can be stored here. If you need to save ConfigurationSerializable use {@code getArbitraryBukkitData()} instead.
      * Note that after setting arbitrary data you need to save chunk manually using {@code OpenItems.getInstance().getBlocks().saveChunk(chunk);}

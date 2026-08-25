@@ -5,6 +5,7 @@ import org.bukkit.command.CommandSender;
 import su.nezushin.openitems.blocks.types.CustomBlockModel;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
 import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
+import su.nezushin.openitems.blocks.types.CustomStairsBlockModel;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.utils.Message;
 
@@ -95,6 +96,8 @@ public class ModelRegistry {
                         .filter(i -> i instanceof CustomNoteblockModel).count()),
                 "{block-types-chorus}", String.valueOf(blockTypes.values().stream()
                         .filter(i -> i instanceof CustomChorusModel).count()),
+                "{block-types-stairs}", String.valueOf(blockTypes.values().stream()
+                        .filter(i -> i instanceof CustomStairsBlockModel).count()),
                 "{font-images}", String.valueOf(fontImages.size()),
                 "{font-spaces}", String.valueOf(fontSpaces.size())
         ).send(sender);

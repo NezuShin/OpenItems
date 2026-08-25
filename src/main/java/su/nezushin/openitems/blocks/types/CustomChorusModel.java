@@ -19,16 +19,7 @@ public class CustomChorusModel implements CustomBlockModel {
         if (b.getBlockData() instanceof MultipleFacing t) {
             setId(t, this.id);
             b.setBlockData(t, update);
-            //b.getState().update(true, true);
         }
-    }
-
-    @Override
-    public void apply(BlockData b) {
-        if (!(b instanceof MultipleFacing t))
-            return;
-
-        setId(t, this.id);
     }
 
     @Override

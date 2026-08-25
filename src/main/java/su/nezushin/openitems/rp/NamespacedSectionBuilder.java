@@ -3,7 +3,6 @@ package su.nezushin.openitems.rp;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
-import com.google.gson.Gson;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.rp.equipment.EquipmentModel;
 import su.nezushin.openitems.rp.font.BitmapFontImage;
@@ -60,6 +59,9 @@ public class NamespacedSectionBuilder {
         //for blocks with parent minecraft:cube_all
         List<ResourcePackScanFile> pngFilesNoteblock = new ArrayList<>();
 
+        //for display stairs (one texture → all BlockData variants)
+        List<ResourcePackScanFile> pngFilesStairs = new ArrayList<>();
+
 
         //for any arbitrary textures with custom model templates
         List<ResourcePackScanFile> pngFilesCustomModelTemplates = new ArrayList<>();
@@ -75,6 +77,7 @@ public class NamespacedSectionBuilder {
         var handheldDir = new File(this.sectionDir, "textures/item/handheld");
 
         var noteblockDir = new File(this.sectionDir, "textures/block/note_block");
+        var stairsDir = new File(this.sectionDir, "textures/block/item_display/stairs");
         var tripwireDir = new File(this.sectionDir, "models/block/tripwire");
         var chorusDir = new File(this.sectionDir, "models/block/chorus_plant");
 
@@ -92,6 +95,7 @@ public class NamespacedSectionBuilder {
             scanForTextures(generatedDir, "item", true, pngFilesGenerated);
             scanForTextures(handheldDir, "item", true, pngFilesHandheld);
             scanForTextures(noteblockDir, "block", true, pngFilesNoteblock);
+            scanForTextures(stairsDir, "block/item_display", true, pngFilesStairs);
             scanFontTextures(fontDir, pngFilesEmoji);
 
             scanForTextures(customModelTemplatesDir, "", false, pngFilesCustomModelTemplates);
@@ -172,6 +176,7 @@ public class NamespacedSectionBuilder {
         generateEquipmentModels(equipmentDir);
 
         generateNoteblockModels(pngFilesNoteblock);
+        generateStairsModels(pngFilesStairs);
         scanForTripwireModels(tripwireDir, "block");
         scanForChorusModels(chorusDir, "block");
 
@@ -394,6 +399,85 @@ public class NamespacedSectionBuilder {
         scanForBlockModels(scanFiles, this.config.getCubeSideModelTemplate(), Sets.newHashSet("up", "down", "side"));
         for (var i : new ArrayList<>(scanFiles))
             createBlockModel(scanFiles, i.pathAndName(), this.config.getCubeAllModelTemplate(), Sets.newHashSet(""));
+    }
+
+    // textures under textures/block/item_display/stairs → 3 shape models; facing/half via ItemDisplay rotation
+    // case 1 (bottom/side/top): block_id_bottom.png, block_id_side.png, block_id_top.png
+    // case 2 (all): block_id.png
+    private static final List<String> STAIRS_SHAPE_MODELS = List.of(
+            "straight",
+            "inner",
+            "outer"
+    );
+
+    private void generateStairsModels(List<ResourcePackScanFile> scanFiles) throws IOException {
+        scanForStairsModels(scanFiles, Sets.newHashSet("bottom", "side", "top"));
+        for (var i : new ArrayList<>(scanFiles))
+            createStairsModels(scanFiles, i.pathAndName(), Sets.newHashSet(""));
+    }
+
+    private void scanForStairsModels(List<ResourcePackScanFile> scanFiles, Set<String> faces) throws IOException {
+        var blocks = new HashSet<>(scanFiles.stream().filter(i -> {
+                    if (!i.name().contains("_")) return false;
+                    var face = i.name().substring(i.name().lastIndexOf("_") + 1);
+                    return faces.contains(face);
+                })
+                .map(i -> i.pathAndName().substring(0, i.pathAndName().lastIndexOf("_")))
+                .filter(i -> {
+                    for (var side : faces)
+                        if (scanFiles.stream().noneMatch(j -> j.pathAndName().equalsIgnoreCase(i + "_" + side)))
+                            return false;
+                    return true;
+                }).toList());
+
+        for (var i : blocks)
+            createStairsModels(scanFiles, i, faces);
+    }
+
+    private void createStairsModels(List<ResourcePackScanFile> scanFiles, String pathAndName, Set<String> faces) throws IOException {
+        var templateReplacements = new HashMap<String, String>();
+        if (faces.size() == 1 && faces.contains("")) {
+            var scanFile = getBlockFaceTexture(scanFiles, pathAndName);
+            scanFiles.remove(scanFile);
+            var texturePath = this.namespace + ":" + scanFile.pathAndName();
+            templateReplacements.put("{path_bottom}", texturePath);
+            templateReplacements.put("{path_side}", texturePath);
+            templateReplacements.put("{path_top}", texturePath);
+        } else {
+            for (var face : faces) {
+                var scanFile = getBlockFaceTexture(scanFiles, pathAndName + "_" + face);
+                scanFiles.remove(scanFile);
+                templateReplacements.put("{path_" + face + "}", this.namespace + ":" + scanFile.pathAndName());
+            }
+        }
+
+        var modelDir = new File(this.outputDir, "models/" + pathAndName);
+        modelDir.mkdirs();
+
+        var modelId = this.namespace + ":" + pathAndName;
+        var blockIdCache = OpenItems.getInstance().getResourcePackBuilder().getBlockIdCache();
+        blockIdCache.registerStairs(modelId);
+
+        // inventory / hand item model at models/<path>.json (same as noteblock blocks)
+        var itemTemplate = this.config.getStairsItemModelTemplate();
+        for (var e : templateReplacements.entrySet())
+            itemTemplate = itemTemplate.replace(e.getKey(), e.getValue());
+        Files.write(itemTemplate.getBytes(StandardCharsets.UTF_8),
+                new File(this.outputDir, "models/" + pathAndName + ".json"));
+        createRegularTemplateItem(modelId,
+                pathAndName.substring(0, pathAndName.lastIndexOf("/")),
+                pathAndName.substring(pathAndName.lastIndexOf("/") + 1));
+
+        for (var shapeName : STAIRS_SHAPE_MODELS) {
+            var modelPath = modelId + "/" + shapeName;
+            var template = this.config.getStairsModelTemplate(shapeName);
+            for (var e : templateReplacements.entrySet())
+                template = template.replace(e.getKey(), e.getValue());
+
+            Files.write(template.getBytes(StandardCharsets.UTF_8), new File(modelDir, shapeName + ".json"));
+
+            createRegularTemplateItem(modelPath, pathAndName, shapeName);
+        }
     }
 
     public void scanForBlockModels(List<ResourcePackScanFile> scanFiles, String template, Set<String> faces) throws IOException {

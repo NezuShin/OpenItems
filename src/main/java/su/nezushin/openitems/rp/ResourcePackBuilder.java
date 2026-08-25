@@ -3,6 +3,8 @@ package su.nezushin.openitems.rp;
 import org.bukkit.Bukkit;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
+import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
+import su.nezushin.openitems.blocks.types.CustomStairsBlockModel;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.AsyncBuildDoneEvent;
 import su.nezushin.openitems.events.AsyncRegistryLoadedEvent;
@@ -11,7 +13,6 @@ import su.nezushin.openitems.rp.cache.FontImageIdCache;
 import su.nezushin.openitems.utils.Message;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
-import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
 
 import java.io.File;
 import java.io.IOException;
@@ -146,6 +147,9 @@ public class ResourcePackBuilder {
             });
             this.blockIdCache.getRegisteredChorusIds().forEach((k, v) -> {
                 OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomChorusModel(v));
+            });
+            this.blockIdCache.getRegisteredStairs().forEach(k -> {
+                OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomStairsBlockModel(k));
             });
             this.fontImageIdCache.getRegisteredCharIds().forEach((k, v) -> {
                 OpenItems.getInstance().getModelRegistry().getFontImages().put(k, v.getSymbol());

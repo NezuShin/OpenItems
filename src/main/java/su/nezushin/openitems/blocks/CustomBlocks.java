@@ -7,11 +7,13 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.block.data.type.Tripwire;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
+import su.nezushin.openitems.blocks.types.CustomStairsBlockModel;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.CustomBlockLoadEvent;
 import su.nezushin.openitems.events.CustomBlockUnloadEvent;
@@ -26,6 +28,9 @@ public class CustomBlocks {
     //All loaded blocks in server
     private Map<Block, BlockLocationStore> placedBlocks = new HashMap<>();
 
+    // ItemDisplay entities for stairs/display blocks (ephemeral)
+    private Map<Block, ItemDisplay> displayEntities = new HashMap<>();
+
     //Blocks need to be destroyed on next chunk load
     private Map<Block, DestroyOnLoadBlock> destroyOnLoad = new HashMap<>();
 
@@ -39,6 +44,7 @@ public class CustomBlocks {
     }
 
     public CustomBlocks() {
+        removeAllDisplayEntities();
         Bukkit.getPluginManager().registerEvents(new CustomBlocksListener(), OpenItems.getInstance());
 
         blockBreakSpeedModifiers = new BlockBreakSpeedModifiers();
@@ -50,6 +56,10 @@ public class CustomBlocks {
 
     public Map<Block, BlockLocationStore> getPlacedBlocks() {
         return placedBlocks;
+    }
+
+    public Map<Block, ItemDisplay> getDisplayEntities() {
+        return displayEntities;
     }
 
 
@@ -155,6 +165,9 @@ public class CustomBlocks {
                         continue;
                     }
 
+                    var model = i.getModel();
+                    if (model instanceof CustomStairsBlockModel)
+                        model.apply(block, false);
 
                     Bukkit.getPluginManager().callEvent(new CustomBlockLoadEvent(block, i));
                 }
@@ -167,15 +180,104 @@ public class CustomBlocks {
 
     public void destroyBlock(Block block, boolean dropItem, boolean setAir) {
         var placedBlock = this.placedBlocks.remove(block);
+
+        if (placedBlock != null) {
+            var model = placedBlock.getModel();
+            if (model != null)
+                model.remove(block);
+        }
+
+        // Always drop any leftover display entity for this block
+        var display = this.displayEntities.remove(block);
+        if (display != null && display.isValid())
+            display.remove();
+
         if (setAir) {
             block.setType(Material.AIR);
             block.getState().update(true, true);
         }
 
-        if (dropItem)
+        if (dropItem && placedBlock != null)
             block.getWorld().dropItem(block.getLocation().add(0.5, 0.1, 0.5), placedBlock.getItemToDrop());
 
         this.saveChunk(block.getChunk());
+    }
+
+    /**
+     * Relocate custom blocks' registry entries and display entities after a piston push/pull.
+     * Handles chains safely (remove-all, then put-all).
+     *
+     * @param fromTo       old location → new location
+     * @param applyModels  if true, teleport displays and re-apply models (call after piston animation)
+     */
+    public void moveBlocks(Map<Block, Block> fromTo, boolean applyModels) {
+        if (fromTo.isEmpty())
+            return;
+
+        record PendingMove(Block from, Block to, BlockLocationStore store, ItemDisplay display) {
+        }
+
+        List<PendingMove> pending = new ArrayList<>();
+        Set<Chunk> chunksToSave = new HashSet<>();
+
+        for (var entry : fromTo.entrySet()) {
+            var from = entry.getKey();
+            var to = entry.getValue();
+            var placedBlock = this.placedBlocks.remove(from);
+            if (placedBlock == null)
+                continue;
+
+            var display = this.displayEntities.remove(from);
+            pending.add(new PendingMove(from, to, placedBlock, display));
+            chunksToSave.add(from.getChunk());
+            chunksToSave.add(to.getChunk());
+        }
+
+        for (var move : pending) {
+            move.store().setLocation(move.to().getX(), move.to().getY(), move.to().getZ());
+            this.placedBlocks.put(move.to(), move.store());
+
+            if (move.display() != null && move.display().isValid())
+                this.displayEntities.put(move.to(), move.display());
+
+            if (applyModels) {
+                var model = move.store().getModel();
+                if (model != null)
+                    model.apply(move.to(), false);
+            }
+        }
+
+        for (var chunk : chunksToSave)
+            this.saveChunk(chunk);
+    }
+
+    /**
+     * Relocate registry immediately, then sync displays/models after piston animation.
+     */
+    public void moveBlocks(Map<Block, Block> fromTo) {
+        moveBlocks(fromTo, true);
+    }
+
+    /**
+     * Relocate a custom block's registry entry and display entity after a piston push/pull.
+     */
+    public void moveBlock(Block from, Block to) {
+        moveBlocks(Map.of(from, to), true);
+    }
+
+    /**
+     * Re-apply models at the given blocks (e.g. after piston animation).
+     */
+    public void syncMovedBlocks(Collection<Block> destinations) {
+        for (var to : destinations) {
+            var placedBlock = this.placedBlocks.get(to);
+            if (placedBlock == null)
+                continue;
+
+            var model = placedBlock.getModel();
+            if (model != null)
+                model.apply(to, false);
+        }
     }
 
     /**
@@ -263,7 +365,30 @@ public class CustomBlocks {
         for (var i : this.placedBlocks.entrySet()
                 .stream().filter(i -> i.getKey().getChunk().equals(chunk)).toList()) {
             Bukkit.getPluginManager().callEvent(new CustomBlockUnloadEvent(i.getKey(), i.getValue()));
+            var model = i.getValue().getModel();
+            if (model != null)
+                model.remove(i.getKey());
             this.placedBlocks.remove(i.getKey());
+        }
+    }
+
+    /**
+     * Remove all stairs/display ItemDisplay entities. Call on plugin disable
+     * so they do not linger after reload/shutdown.
+     */
+    public void removeAllDisplayEntities() {
+        for (var display : this.displayEntities.values()) {
+            if (display != null && display.isValid())
+                display.remove();
+        }
+        this.displayEntities.clear();
+
+        // Orphans not in the map (e.g. after a crash mid-sync)
+        for (var world : Bukkit.getWorlds()) {
+            for (var entity : world.getEntitiesByClass(ItemDisplay.class)) {
+                if (entity.getScoreboardTags().contains(CustomStairsBlockModel.SCOREBOARD_TAG))
+                    entity.remove();
+            }
         }
     }
 

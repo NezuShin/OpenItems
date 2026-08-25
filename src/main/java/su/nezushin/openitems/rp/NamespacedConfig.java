@@ -42,6 +42,17 @@ public class NamespacedConfig {
 
     private String cubeSideModelTemplate = "{\"parent\": \"minecraft:block/cube\",\"textures\": {\"down\": \"{path_down}\",\"east\": \"{path_side}\",\"north\": \"{path_side}\",\"particle\": \"{path_up}\",\"south\": \"{path_side}\",\"up\": \"{path_up}\",\"west\": \"{path_side}\"}}";
 
+    // display stairs shapes (full models, no parent)
+    // {path_bottom}/{path_side}/{path_top}; particle uses side. single-texture fills all three with same id
+    private String stairsStraightModelTemplate = "{\"textures\":{\"particle\":\"{path_side}\",\"bottom\":\"{path_bottom}\",\"side\":\"{path_side}\",\"top\":\"{path_top}\"},\"elements\":[{\"from\":[-0.02,-0.02,-0.02],\"to\":[16.02,8.02,16.02],\"faces\":{\"down\":{\"uv\":[0,0,16,16],\"texture\":\"#bottom\",\"cullface\":\"down\"},\"up\":{\"uv\":[0,0,16,16],\"texture\":\"#top\"},\"north\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"north\"},\"south\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"west\"},\"east\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"east\"}}},{\"from\":[7.98,8.02,-0.02],\"to\":[16.02,16.02,16.02],\"faces\":{\"up\":{\"uv\":[8,0,16,16],\"texture\":\"#top\",\"cullface\":\"up\"},\"north\":{\"uv\":[0,0,8,8],\"texture\":\"#side\",\"cullface\":\"north\"},\"south\":{\"uv\":[8,0,16,8],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,0,16,8],\"texture\":\"#side\"},\"east\":{\"uv\":[0,0,16,8],\"texture\":\"#side\",\"cullface\":\"east\"}}}],\"display\":{\"head\":{\"rotation\":[0,0,0],\"translation\":[0,-6.4,0],\"scale\":[1,1,1]}}}";
+
+    private String stairsInnerModelTemplate = "{\"textures\":{\"particle\":\"{path_side}\",\"bottom\":\"{path_bottom}\",\"side\":\"{path_side}\",\"top\":\"{path_top}\"},\"elements\":[{\"from\":[-0.02,-0.02,-0.02],\"to\":[16.02,8.02,16.02],\"faces\":{\"north\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"north\"},\"east\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"east\"},\"south\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"west\"},\"up\":{\"uv\":[0,0,16,16],\"texture\":\"#top\"},\"down\":{\"uv\":[0,0,16,16],\"texture\":\"#bottom\",\"cullface\":\"down\"}}},{\"from\":[7.98,8.02,-0.02],\"to\":[16.02,16.02,16.02],\"faces\":{\"north\":{\"uv\":[0,0,8,8],\"texture\":\"#side\",\"cullface\":\"north\"},\"east\":{\"uv\":[0,0,16,8],\"texture\":\"#side\",\"cullface\":\"east\"},\"south\":{\"uv\":[8,0,16,8],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,0,16,8],\"texture\":\"#side\"},\"up\":{\"uv\":[8,0,16,16],\"texture\":\"#top\",\"cullface\":\"up\"}}},{\"from\":[-0.02,8.02,7.98],\"to\":[8.02,16.02,16.02],\"faces\":{\"north\":{\"uv\":[8,0,16,8],\"texture\":\"#side\"},\"south\":{\"uv\":[0,0,8,8],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[8,0,16,8],\"texture\":\"#side\",\"cullface\":\"west\"},\"up\":{\"uv\":[0,8,8,16],\"texture\":\"#top\",\"cullface\":\"up\"}}}],\"display\":{\"head\":{\"translation\":[0,-6.4,0]}}}";
+
+    private String stairsOuterModelTemplate = "{\"textures\":{\"particle\":\"{path_side}\",\"bottom\":\"{path_bottom}\",\"side\":\"{path_side}\",\"top\":\"{path_top}\"},\"elements\":[{\"from\":[-0.02,-0.02,-0.02],\"to\":[16.02,8.02,16.02],\"faces\":{\"down\":{\"uv\":[0,0,16,16],\"texture\":\"#bottom\",\"cullface\":\"down\"},\"up\":{\"uv\":[0,0,16,16],\"texture\":\"#top\"},\"north\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"north\"},\"south\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"west\"},\"east\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"east\"}}},{\"from\":[7.98,8.02,7.98],\"to\":[16.02,16.02,16.02],\"faces\":{\"up\":{\"uv\":[8,8,16,16],\"texture\":\"#top\",\"cullface\":\"up\"},\"north\":{\"uv\":[0,0,8,8],\"texture\":\"#side\"},\"south\":{\"uv\":[8,0,16,8],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[8,0,16,8],\"texture\":\"#side\"},\"east\":{\"uv\":[0,0,8,8],\"texture\":\"#side\",\"cullface\":\"east\"}}}],\"display\":{\"head\":{\"rotation\":[0,0,0],\"translation\":[0,-6.4,0],\"scale\":[1,1,1]}}}";
+
+    // inventory / hand item model (straight stairs + vanilla stairs display)
+    private String stairsItemModelTemplate = "{\"parent\": \"block/block\",\"textures\":{\"particle\":\"{path_side}\",\"bottom\":\"{path_bottom}\",\"side\":\"{path_side}\",\"top\":\"{path_top}\"},\"elements\":[{\"from\":[-0.02,-0.02,-0.02],\"to\":[16.02,8.02,16.02],\"faces\":{\"down\":{\"uv\":[0,0,16,16],\"texture\":\"#bottom\",\"cullface\":\"down\"},\"up\":{\"uv\":[0,0,16,16],\"texture\":\"#top\"},\"north\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"north\"},\"south\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"west\"},\"east\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"east\"}}},{\"from\":[7.98,8.02,-0.02],\"to\":[16.02,16.02,16.02],\"faces\":{\"up\":{\"uv\":[8,0,16,16],\"texture\":\"#top\",\"cullface\":\"up\"},\"north\":{\"uv\":[0,0,8,8],\"texture\":\"#side\",\"cullface\":\"north\"},\"south\":{\"uv\":[8,0,16,8],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,0,16,8],\"texture\":\"#side\"},\"east\":{\"uv\":[0,0,16,8],\"texture\":\"#side\",\"cullface\":\"east\"}}}],\"display\":{\"gui\":{\"rotation\":[30,135,0],\"translation\":[0,0,0],\"scale\":[0.625,0.625,0.625]},\"head\":{\"rotation\":[0,-90,0],\"translation\":[0,0,0],\"scale\":[1,1,1]},\"thirdperson_lefthand\":{\"rotation\":[75,-135,0],\"translation\":[0,2.5,0],\"scale\":[0.375,0.375,0.375]}}}";
+
     private String regularItemTemplate = "{\"model\": {\"type\": \"model\", \"model\": \"{path}\"}}\n";
 
     private List<FileConfiguration> configs = new ArrayList<>();
@@ -300,6 +311,31 @@ public class NamespacedConfig {
 
     public String getCubeAllModelTemplate() {
         return cubeAllModelTemplate;
+    }
+
+    public String getStairsStraightModelTemplate() {
+        return stairsStraightModelTemplate;
+    }
+
+    public String getStairsInnerModelTemplate() {
+        return stairsInnerModelTemplate;
+    }
+
+    public String getStairsOuterModelTemplate() {
+        return stairsOuterModelTemplate;
+    }
+
+    public String getStairsItemModelTemplate() {
+        return stairsItemModelTemplate;
+    }
+
+    public String getStairsModelTemplate(String shape) {
+        return switch (shape) {
+            case "straight" -> stairsStraightModelTemplate;
+            case "inner" -> stairsInnerModelTemplate;
+            case "outer" -> stairsOuterModelTemplate;
+            default -> throw new IllegalArgumentException("Unknown stairs shape template: " + shape);
+        };
     }
 
     public String getRegularItemTemplate() {

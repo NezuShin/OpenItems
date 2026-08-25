@@ -4,6 +4,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.block.data.type.NoteBlock;
 import org.bukkit.block.data.type.Tripwire;
@@ -19,10 +21,13 @@ import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
+import org.bukkit.event.world.EntitiesLoadEvent;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
+import su.nezushin.openitems.blocks.types.CustomBlockModel;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
 import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
+import su.nezushin.openitems.blocks.types.CustomStairsBlockModel;
 import su.nezushin.openitems.events.*;
 import su.nezushin.openitems.utils.NBTUtil;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
@@ -35,7 +40,8 @@ public class CustomBlocksListener implements Listener {
 
     private Map<Block, BlockLocationStore> brokenBlocks = new HashMap<>();
 
-    private Set<Block> brokenChorusBlocks = new HashSet<>();
+    /** Locations where we intentionally destroyed custom chorus; suppress vanilla fruit briefly. */
+    private final Map<Block, Integer> suppressChorusFruitUntilTick = new HashMap<>();
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void breakBlock(BlockBreakEvent e) {
@@ -101,6 +107,14 @@ public class CustomBlocksListener implements Listener {
     public void chunkUnload(ChunkUnloadEvent e) {
         var chunk = e.getChunk();
         OpenItems.getInstance().getBlocks().cleanChunk(chunk);
+    }
+
+    @EventHandler
+    public void entitiesLoad(EntitiesLoadEvent e) {
+        for (var entity : e.getEntities()) {
+            if (entity.getScoreboardTags().contains(CustomStairsBlockModel.SCOREBOARD_TAG))
+                entity.remove();
+        }
     }
 
     @EventHandler
@@ -184,13 +198,103 @@ public class CustomBlocksListener implements Listener {
         e.setCancelled(true);
     }
 
+    @EventHandler(ignoreCancelled = true)
+    public void pistonExtend(BlockPistonExtendEvent e) {
+        if (!handlePistonFragile(e.getBlocks(), e.getBlock(), pistonFacing(e.getBlock()))) {
+            e.setCancelled(true);
+            return;
+        }
+        // getDirection() = direction blocks move
+        handlePistonMove(e.getBlocks(), e.getDirection());
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void pistonRetract(BlockPistonRetractEvent e) {
+        if (!handlePistonFragile(e.getBlocks(), e.getBlock(), pistonFacing(e.getBlock()))) {
+            e.setCancelled(true);
+            return;
+        }
+        // Sticky retract already reports pull direction in getDirection() (opposite of facing)
+        handlePistonMove(e.getBlocks(), e.getDirection());
+    }
+
+    private BlockFace pistonFacing(Block piston) {
+        if (piston.getBlockData() instanceof Directional directional)
+            return directional.getFacing();
+        return BlockFace.SELF;
+    }
+
+    /**
+     * Chorus / tripwire are broken by pistons (DESTROY reaction), not pushed.
+     *
+     * @param facing piston block facing (not event movement direction)
+     * @return false if the piston should be cancelled ({@code can_be_replaced=false})
+     */
+    private boolean handlePistonFragile(List<Block> movedBlocks, Block piston, BlockFace facing) {
+        var blocks = OpenItems.getInstance().getBlocks();
+        Set<Block> candidates = new LinkedHashSet<>(movedBlocks);
+
+        if (facing != BlockFace.SELF) {
+            // Head destination + cells that pushed blocks would crush (DESTROY reaction)
+            candidates.add(piston.getRelative(facing));
+            for (var block : movedBlocks)
+                candidates.add(block.getRelative(facing));
+        }
+
+        List<Block> toDestroy = new ArrayList<>();
+        for (var block : candidates) {
+            var placedBlock = blocks.getPlacedBlocks().get(block);
+            if (placedBlock == null)
+                continue;
+
+            CustomBlockModel model = placedBlock.getModel();
+            if (!(model instanceof CustomTripwireModel) && !(model instanceof CustomChorusModel))
+                continue;
+
+            if (!placedBlock.canBeReplaced())
+                return false;
+
+            toDestroy.add(block);
+        }
+
+        for (var block : toDestroy)
+            // Clear the world block so piston head / moving_piston can occupy the cell.
+            // Leaving chorus/tripwire causes physics to re-apply and eat the piston head.
+            blocks.destroyBlock(block, false, true);
+
+        return true;
+    }
+
+    private void handlePistonMove(List<Block> movedBlocks, BlockFace direction) {
+        var blocks = OpenItems.getInstance().getBlocks();
+        Map<Block, Block> fromTo = new LinkedHashMap<>();
+
+        for (var block : movedBlocks) {
+            var placedBlock = blocks.getPlacedBlocks().get(block);
+            if (placedBlock == null)
+                continue;
+
+            CustomBlockModel model = placedBlock.getModel();
+            if (!(model instanceof CustomNoteblockModel) && !(model instanceof CustomStairsBlockModel))
+                continue;
+
+            fromTo.put(block, block.getRelative(direction));
+        }
+
+        if (fromTo.isEmpty())
+            return;
+
+        // Relocate registry immediately so physics/break handlers stay correct mid-animation
+        blocks.moveBlocks(fromTo, false);
+
+        // Sync displays/models after piston animation finishes
+        Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(),
+                () -> blocks.syncMovedBlocks(fromTo.values()), 3L);
+    }
+
     @EventHandler
     public void blockFromTo(BlockFromToEvent e) {
         var block = e.getToBlock();
-
-        if (!block.getType().equals(Material.TRIPWIRE) && !block.getType().equals(Material.CHORUS_PLANT))
-            return;
-
 
         var blocks = OpenItems.getInstance().getBlocks();
 
@@ -256,11 +360,11 @@ public class CustomBlocksListener implements Listener {
             var placedBlock = blocks.getPlacedBlocks().get(b);
 
             if (placedBlock != null) {
-                placedBlock.getModel().apply(mf);
+                placedBlock.getModel().apply(b, false);
             } else {
                 CustomChorusModel.setDefaultId(mf);
+                b.setBlockData(mf, false);
             }
-            b.setBlockData(mf, false);
 
         }
     }
@@ -281,8 +385,7 @@ public class CustomBlocksListener implements Listener {
         if (blockType == null || !blockType.applyOnPhysics() || !(blockType instanceof CustomTripwireModel))
             return;
 
-        blockType.apply(data);
-        b.setBlockData(data, false);
+        blockType.apply(b, false);
     }
 
     public void checkChorus(Block b) {
@@ -300,8 +403,7 @@ public class CustomBlocksListener implements Listener {
         if (blockType == null || !blockType.applyOnPhysics() || !(blockType instanceof CustomChorusModel))
             return;
 
-        blockType.apply(data);
-        b.setBlockData(data, false);
+        blockType.apply(b, false);
     }
 
     public void checkNote(Block b) {
@@ -319,15 +421,13 @@ public class CustomBlocksListener implements Listener {
         if (blockType == null || !blockType.applyOnPhysics() || !(blockType instanceof CustomNoteblockModel))
             return;
 
-        blockType.apply(data);
-        b.setBlockData(data, false);
+        blockType.apply(b, false);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void blockPhysics(BlockPhysicsEvent e) {
         var block = e.getBlock();
-        var sblock = e.getBlock();
-
+        var sblock = e.getSourceBlock();
 
         var blocks = OpenItems.getInstance().getBlocks();
         if ((block.getType() == Material.TRIPWIRE || sblock.getType() == Material.TRIPWIRE) && OpenItemsConfig.enableTripwires) {
@@ -337,13 +437,15 @@ public class CustomBlocksListener implements Listener {
             return;
         }
 
-        if ((block.getType() == Material.CHORUS_PLANT || sblock.getType() == Material.CHORUS_PLANT) && OpenItemsConfig.enableChorus) {
+        if (OpenItemsConfig.enableChorus && block.getType() == Material.CHORUS_PLANT) {
+            // Do not cancel / restore chorus while a piston is breaking or replacing it
+            if (isPistonRelated(sblock.getType()) || isPistonRelated(e.getChangedType()))
+                return;
+
             e.setCancelled(true);
             checkChorus(block);
-            checkChorus(sblock);
             return;
         }
-
 
         if (block.getType() == Material.NOTE_BLOCK || sblock.getType() == Material.NOTE_BLOCK) {
             e.setCancelled(true);
@@ -354,6 +456,9 @@ public class CustomBlocksListener implements Listener {
 
         //chorus check.
         if (OpenItemsConfig.enableChorus) {
+            if (isPistonRelated(block.getType()) || isPistonRelated(sblock.getType()))
+                return;
+
             boolean canCancel =
                     !OpenItemsConfig.allowedChorusUpdateBlocks.contains(block.getType()) &&
                             !OpenItemsConfig.allowedChorusUpdateBlocks.contains(sblock.getType());
@@ -371,11 +476,8 @@ public class CustomBlocksListener implements Listener {
                                 Bukkit.getPluginManager().callEvent(event);
 
                                 if (!event.isCancelled()) {
-                                    brokenChorusBlocks.add(relative);
+                                    suppressChorusFruit(relative);
                                     blocks.destroyBlock(relative, placedBlock.dropOnDestroyByLiquid(), true);
-                                    Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(), () -> {
-                                        brokenChorusBlocks.remove(relative);//TODO: replace this ugly solution somehow
-                                    }, 3);
                                 }
                             } else {
                                 if (OpenItemsConfig.allowChorusPhysicsCancel && canCancel) {
@@ -400,12 +502,29 @@ public class CustomBlocksListener implements Listener {
                 var blockType = placedBlock.getModel();
 
                 if (blockType != null && blockType.applyOnPhysics()) {
-                    var blockData = block.getBlockData();
-                    blockType.apply(blockData);
-                    block.setBlockData(blockData, false);
+                    blockType.apply(block, false);
                 }
             }
         }
+
+    }
+
+    private boolean isPistonRelated(Material type) {
+        return type == Material.PISTON
+                || type == Material.STICKY_PISTON
+                || type == Material.PISTON_HEAD
+                || type == Material.MOVING_PISTON;
+    }
+
+    private void suppressChorusFruit(Block block) {
+        int now = Bukkit.getCurrentTick();
+        suppressChorusFruitUntilTick.entrySet().removeIf(e -> e.getValue() < now);
+        suppressChorusFruitUntilTick.put(block, now + 5);
+    }
+
+    private boolean consumeChorusFruitSuppression(Block block) {
+        Integer until = suppressChorusFruitUntilTick.remove(block);
+        return until != null && Bukkit.getCurrentTick() <= until;
     }
 
 
@@ -415,13 +534,25 @@ public class CustomBlocksListener implements Listener {
 
         if (item.getItemStack().getType() != Material.CHORUS_FRUIT)
             return;
-        System.out.println(brokenChorusBlocks);
+
         var block = e.getLocation().getBlock();
+        var blocks = OpenItems.getInstance().getBlocks();
 
-        if (!brokenChorusBlocks.remove(block) || OpenItems.getInstance().getBlocks().getPlacedBlocks().containsKey(block))
+        // Suppress vanilla fruit from our intentional destroys (e.g. liquid)
+        if (consumeChorusFruitSuppression(block)) {
+            e.setCancelled(true);
             return;
+        }
 
-        e.setCancelled(true);
+        // Neighbor physics tried to break a still-registered custom chorus — cancel drop and restore
+        var placedBlock = blocks.getPlacedBlocks().get(block);
+        if (placedBlock != null && placedBlock.getModel() instanceof CustomChorusModel) {
+            e.setCancelled(true);
+            OpenItems.sync(() -> {
+                if (blocks.getPlacedBlocks().containsKey(block))
+                    placedBlock.getModel().apply(block, false);
+            });
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

@@ -16,13 +16,6 @@ public interface CustomBlockModel {
     public void apply(Block b, boolean update);
 
     /**
-     * Set right block data to block (used with applyOnPhysics=true; Needed for tripwire proper work)
-     *
-     * @param b - block data to change
-     */
-    public void apply(BlockData b);
-
-    /**
      * Check if block has this model
      *
      * @param b - block to check
@@ -35,4 +28,10 @@ public interface CustomBlockModel {
      * @return should listener apply(BlockData) on BlockPhysicsEvent or not
      */
     public boolean applyOnPhysics();
+
+    /**
+     * Clean up model-specific entities/state when the custom block is removed or unloaded.
+     */
+    default void remove(Block b) {
+    }
 }

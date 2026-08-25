@@ -11,7 +11,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Used to store and assign new ids for blocks
@@ -26,6 +28,8 @@ public class BlockIdCache extends JsonCache {
 
     private Map<String, Integer> chorusIds = new HashMap<>();
     private Map<String, Integer> registeredChorusIds = new HashMap<>();
+
+    private Set<String> registeredStairs = new HashSet<>();
 
     private int nextNoteblockId = 1;
     private int nextTripwireId = 1;
@@ -65,6 +69,10 @@ public class BlockIdCache extends JsonCache {
         return id;
     }
 
+    public void registerStairs(String name) {
+        registeredStairs.add(name);
+    }
+
     public void build() throws IOException {
         var blockstatesDir = new File(OpenItems.getInstance().getDataFolder(), "build/assets/minecraft/blockstates");
 
@@ -84,6 +92,8 @@ public class BlockIdCache extends JsonCache {
     public void cleanRegistered() {
         this.registeredNoteblockIds.clear();
         this.registeredTripwireIds.clear();
+        this.registeredChorusIds.clear();
+        this.registeredStairs.clear();
     }
 
     @Override
@@ -105,5 +115,9 @@ public class BlockIdCache extends JsonCache {
 
     public Map<String, Integer> getRegisteredChorusIds() {
         return registeredChorusIds;
+    }
+
+    public Set<String> getRegisteredStairs() {
+        return registeredStairs;
     }
 }

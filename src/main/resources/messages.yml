@@ -140,6 +140,7 @@ messages:
     - "<reset><#008f9a>Chorus: <#08c0c2>{block-types-chorus} of 63<#008f9a> models"
     - "<reset><#008f9a>Tripwire: <#08c0c2>{block-types-tripwire} of 127<#008f9a> models"
     - "<reset><#008f9a>Note block: <#08c0c2>{block-types-noteblock} of 1050<#008f9a> models"
+    - "<reset><#008f9a>Stairs: <#08c0c2>{block-types-stairs}<#008f9a> models"
 
 
 

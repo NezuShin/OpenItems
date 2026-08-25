@@ -88,6 +88,8 @@ public final class OpenItems extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (this.blocks != null)
+            this.blocks.removeAllDisplayEntities();
     }
 
     public static OpenItems getInstance() {

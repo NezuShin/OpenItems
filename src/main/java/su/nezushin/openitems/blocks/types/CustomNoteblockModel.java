@@ -42,8 +42,6 @@ public class CustomNoteblockModel implements CustomBlockModel {
 
     private int id;
 
-    private Map<BlockFace, Integer> faceMap = new HashMap<>();
-
     public CustomNoteblockModel(int id) {
         this.id = id;
     }
@@ -56,16 +54,7 @@ public class CustomNoteblockModel implements CustomBlockModel {
         if (b.getBlockData() instanceof NoteBlock nb) {
             setId(nb, id);
             b.setBlockData(nb, update);
-            //b.getState().update(true, true);
         }
-    }
-
-    @Override
-    public void apply(BlockData b) {
-        if (!(b instanceof NoteBlock nb))
-            return;
-
-        setId(nb, id);
     }
 
     @Override
