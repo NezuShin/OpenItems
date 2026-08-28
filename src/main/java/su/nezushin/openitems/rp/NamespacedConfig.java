@@ -7,6 +7,7 @@ import org.codehaus.plexus.util.FileUtils;
 import su.nezushin.openitems.rp.font.BitmapFontImage;
 import su.nezushin.openitems.rp.sound.Sound;
 import su.nezushin.openitems.rp.sound.SoundEvent;
+import su.nezushin.openitems.rp.textures.TextureLayout;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +53,19 @@ public class NamespacedConfig {
 
     // inventory / hand item model (straight stairs + vanilla stairs display)
     private String stairsItemModelTemplate = "{\"parent\": \"block/block\",\"textures\":{\"particle\":\"{path_side}\",\"bottom\":\"{path_bottom}\",\"side\":\"{path_side}\",\"top\":\"{path_top}\"},\"elements\":[{\"from\":[-0.02,-0.02,-0.02],\"to\":[16.02,8.02,16.02],\"faces\":{\"down\":{\"uv\":[0,0,16,16],\"texture\":\"#bottom\",\"cullface\":\"down\"},\"up\":{\"uv\":[0,0,16,16],\"texture\":\"#top\"},\"north\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"north\"},\"south\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"west\"},\"east\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"east\"}}},{\"from\":[7.98,8.02,-0.02],\"to\":[16.02,16.02,16.02],\"faces\":{\"up\":{\"uv\":[8,0,16,16],\"texture\":\"#top\",\"cullface\":\"up\"},\"north\":{\"uv\":[0,0,8,8],\"texture\":\"#side\",\"cullface\":\"north\"},\"south\":{\"uv\":[8,0,16,8],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,0,16,8],\"texture\":\"#side\"},\"east\":{\"uv\":[0,0,16,8],\"texture\":\"#side\",\"cullface\":\"east\"}}}],\"display\":{\"gui\":{\"rotation\":[30,135,0],\"translation\":[0,0,0],\"scale\":[0.625,0.625,0.625]},\"head\":{\"rotation\":[0,-90,0],\"translation\":[0,0,0],\"scale\":[1,1,1]},\"thirdperson_lefthand\":{\"rotation\":[75,-135,0],\"translation\":[0,2.5,0],\"scale\":[0.375,0.375,0.375]}}}";
+
+    // display slabs (note_block face layouts: single / up+down+side / six faces). {path_up}/{path_down}/{path_side} or per-cardinal.
+    private String slabBottomSideModelTemplate = "{\"textures\":{\"particle\":\"{path_side}\",\"down\":\"{path_down}\",\"side\":\"{path_side}\",\"up\":\"{path_up}\"},\"elements\":[{\"from\":[-0.02,-0.02,-0.02],\"to\":[16.02,8.02,16.02],\"faces\":{\"down\":{\"uv\":[0,0,16,16],\"texture\":\"#down\",\"cullface\":\"down\"},\"up\":{\"uv\":[0,0,16,16],\"texture\":\"#up\"},\"north\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"north\"},\"south\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"west\"},\"east\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"east\"}}}],\"display\":{\"head\":{\"translation\":[0,-6.4,0]}}}";
+
+    private String slabTopSideModelTemplate = "{\"textures\":{\"particle\":\"{path_side}\",\"down\":\"{path_down}\",\"side\":\"{path_side}\",\"up\":\"{path_up}\"},\"elements\":[{\"from\":[-0.02,7.98,-0.02],\"to\":[16.02,16.02,16.02],\"faces\":{\"down\":{\"uv\":[0,0,16,16],\"texture\":\"#down\"},\"up\":{\"uv\":[0,0,16,16],\"texture\":\"#up\",\"cullface\":\"up\"},\"north\":{\"uv\":[0,0,16,8],\"texture\":\"#side\",\"cullface\":\"north\"},\"south\":{\"uv\":[0,0,16,8],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,0,16,8],\"texture\":\"#side\",\"cullface\":\"west\"},\"east\":{\"uv\":[0,0,16,8],\"texture\":\"#side\",\"cullface\":\"east\"}}}],\"display\":{\"head\":{\"translation\":[0,-6.4,0]}}}";
+
+    private String slabItemSideModelTemplate = "{\"parent\":\"block/block\",\"textures\":{\"particle\":\"{path_side}\",\"down\":\"{path_down}\",\"side\":\"{path_side}\",\"up\":\"{path_up}\"},\"elements\":[{\"from\":[0,0,0],\"to\":[16,8,16],\"faces\":{\"down\":{\"uv\":[0,0,16,16],\"texture\":\"#down\",\"cullface\":\"down\"},\"up\":{\"uv\":[0,0,16,16],\"texture\":\"#up\"},\"north\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"north\"},\"south\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"west\"},\"east\":{\"uv\":[0,8,16,16],\"texture\":\"#side\",\"cullface\":\"east\"}}}],\"display\":{\"gui\":{\"rotation\":[30,225,0],\"scale\":[0.625,0.625,0.625]},\"ground\":{\"translation\":[0,3,0],\"scale\":[0.25,0.25,0.25]},\"fixed\":{\"scale\":[0.5,0.5,0.5]},\"thirdperson_righthand\":{\"rotation\":[75,45,0],\"translation\":[0,2.5,0],\"scale\":[0.375,0.375,0.375]},\"firstperson_righthand\":{\"rotation\":[0,45,0],\"scale\":[0.4,0.4,0.4]},\"firstperson_lefthand\":{\"rotation\":[0,225,0],\"scale\":[0.4,0.4,0.4]}}}";
+
+    private String slabBottomCubeModelTemplate = "{\"textures\":{\"particle\":\"{path_up}\",\"down\":\"{path_down}\",\"up\":\"{path_up}\",\"north\":\"{path_north}\",\"south\":\"{path_south}\",\"east\":\"{path_east}\",\"west\":\"{path_west}\"},\"elements\":[{\"from\":[-0.02,-0.02,-0.02],\"to\":[16.02,8.02,16.02],\"faces\":{\"down\":{\"uv\":[0,0,16,16],\"texture\":\"#down\",\"cullface\":\"down\"},\"up\":{\"uv\":[0,0,16,16],\"texture\":\"#up\"},\"north\":{\"uv\":[0,8,16,16],\"texture\":\"#north\",\"cullface\":\"north\"},\"south\":{\"uv\":[0,8,16,16],\"texture\":\"#south\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,8,16,16],\"texture\":\"#west\",\"cullface\":\"west\"},\"east\":{\"uv\":[0,8,16,16],\"texture\":\"#east\",\"cullface\":\"east\"}}}],\"display\":{\"head\":{\"translation\":[0,-6.4,0]}}}";
+
+    private String slabTopCubeModelTemplate = "{\"textures\":{\"particle\":\"{path_up}\",\"down\":\"{path_down}\",\"up\":\"{path_up}\",\"north\":\"{path_north}\",\"south\":\"{path_south}\",\"east\":\"{path_east}\",\"west\":\"{path_west}\"},\"elements\":[{\"from\":[-0.02,7.98,-0.02],\"to\":[16.02,16.02,16.02],\"faces\":{\"down\":{\"uv\":[0,0,16,16],\"texture\":\"#down\"},\"up\":{\"uv\":[0,0,16,16],\"texture\":\"#up\",\"cullface\":\"up\"},\"north\":{\"uv\":[0,0,16,8],\"texture\":\"#north\",\"cullface\":\"north\"},\"south\":{\"uv\":[0,0,16,8],\"texture\":\"#south\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,0,16,8],\"texture\":\"#west\",\"cullface\":\"west\"},\"east\":{\"uv\":[0,0,16,8],\"texture\":\"#east\",\"cullface\":\"east\"}}}],\"display\":{\"head\":{\"translation\":[0,-6.4,0]}}}";
+
+    private String slabItemCubeModelTemplate = "{\"parent\":\"block/block\",\"textures\":{\"particle\":\"{path_up}\",\"down\":\"{path_down}\",\"up\":\"{path_up}\",\"north\":\"{path_north}\",\"south\":\"{path_south}\",\"east\":\"{path_east}\",\"west\":\"{path_west}\"},\"elements\":[{\"from\":[0,0,0],\"to\":[16,8,16],\"faces\":{\"down\":{\"uv\":[0,0,16,16],\"texture\":\"#down\",\"cullface\":\"down\"},\"up\":{\"uv\":[0,0,16,16],\"texture\":\"#up\"},\"north\":{\"uv\":[0,8,16,16],\"texture\":\"#north\",\"cullface\":\"north\"},\"south\":{\"uv\":[0,8,16,16],\"texture\":\"#south\",\"cullface\":\"south\"},\"west\":{\"uv\":[0,8,16,16],\"texture\":\"#west\",\"cullface\":\"west\"},\"east\":{\"uv\":[0,8,16,16],\"texture\":\"#east\",\"cullface\":\"east\"}}}],\"display\":{\"gui\":{\"rotation\":[30,225,0],\"scale\":[0.625,0.625,0.625]},\"ground\":{\"translation\":[0,3,0],\"scale\":[0.25,0.25,0.25]},\"fixed\":{\"scale\":[0.5,0.5,0.5]},\"thirdperson_righthand\":{\"rotation\":[75,45,0],\"translation\":[0,2.5,0],\"scale\":[0.375,0.375,0.375]},\"firstperson_righthand\":{\"rotation\":[0,45,0],\"scale\":[0.4,0.4,0.4]},\"firstperson_lefthand\":{\"rotation\":[0,225,0],\"scale\":[0.4,0.4,0.4]}}}";
 
     private String regularItemTemplate = "{\"model\": {\"type\": \"model\", \"model\": \"{path}\"}}\n";
 
@@ -335,6 +349,18 @@ public class NamespacedConfig {
             case "inner" -> stairsInnerModelTemplate;
             case "outer" -> stairsOuterModelTemplate;
             default -> throw new IllegalArgumentException("Unknown stairs shape template: " + shape);
+        };
+    }
+
+    public String getSlabItemModelTemplate(TextureLayout layout) {
+        return layout.isSixFace() ? slabItemCubeModelTemplate : slabItemSideModelTemplate;
+    }
+
+    public String getSlabModelTemplate(String type, TextureLayout layout) {
+        return switch (type) {
+            case "bottom" -> layout.isSixFace() ? slabBottomCubeModelTemplate : slabBottomSideModelTemplate;
+            case "top" -> layout.isSixFace() ? slabTopCubeModelTemplate : slabTopSideModelTemplate;
+            default -> throw new IllegalArgumentException("Unknown slab type template: " + type);
         };
     }
 

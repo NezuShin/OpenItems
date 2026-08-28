@@ -32,6 +32,11 @@ public class CustomTripwireModel implements CustomBlockModel {
         return true;
     }
 
+    @Override
+    public boolean isFragile() {
+        return true;
+    }
+
     public static void setId(Tripwire nb, int id) {
         id++;
         nb.setFace(BlockFace.SOUTH, ((id) & 0b1) == 1);

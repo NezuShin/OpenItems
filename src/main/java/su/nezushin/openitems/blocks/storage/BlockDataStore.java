@@ -7,6 +7,7 @@ import org.bukkit.inventory.ItemStack;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.ToolItemType;
 import su.nezushin.openitems.blocks.types.CustomBlockModel;
+import su.nezushin.openitems.utils.NBTUtil;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +22,11 @@ public class BlockDataStore {
             dropOnExplosion = true, dropOnDestroyByLiquid = true, canBeDestroyedByLiquid = true, dropOnBurn = true;
 
     protected String id;
+
+    /**
+     * Current runtime model id when it differs from {@link #id} (e.g. promoted slab double).
+     */
+    protected String placementId;
 
     /**
      * Custom felt hardness. {@code null} means unset — use legacy tool speed maps.
@@ -58,6 +64,7 @@ public class BlockDataStore {
             return false;
 
         id = compound.getString("id");
+        placementId = compound.hasTag("placement_id") ? compound.getString("placement_id") : null;
         canBeBlown = compound.getBoolean("can_be_blown");
         canBeDestroyedByLiquid = compound.getBoolean("can_be_destroyed_by_liquid");
         canBeReplaced = compound.getBoolean("can_be_replaced");
@@ -111,6 +118,10 @@ public class BlockDataStore {
         var compound = nbtItem.getOrCreateCompound("openitems_custom_block");
 
         compound.setString("id", this.id);
+        if (this.placementId != null)
+            compound.setString("placement_id", this.placementId);
+        else
+            compound.removeKey("placement_id");
         compound.setBoolean("can_be_blown", this.canBeBlown);
         compound.setBoolean("can_be_replaced", this.canBeReplaced);
         compound.setBoolean("can_be_destroyed_by_liquid", this.canBeDestroyedByLiquid);
@@ -233,6 +244,21 @@ public class BlockDataStore {
         return id;
     }
 
+    public String getPlacementId() {
+        return placementId;
+    }
+
+    public void setPlacementId(String placementId) {
+        this.placementId = placementId;
+    }
+
+    /**
+     * Current runtime model id: {@code placement_id} when set, otherwise real {@code id}.
+     */
+    public String getEffectiveBlockId() {
+        return placementId != null ? placementId : id;
+    }
+
     /**
      * Set block model id and save it. Note that already placed and registered blocks need
      * to be changed via OpenItems.getInstance().getBlocks().changeBlockModel(block, modelId);
@@ -244,17 +270,24 @@ public class BlockDataStore {
     }
 
     /**
-     * @return custom block model
+     * @return custom block model for the current runtime id
      */
     public CustomBlockModel getModel() {
-        return OpenItems.getInstance().getModelRegistry().getBlockTypes().get(this.id);
+        return OpenItems.getInstance().getModelRegistry().getBlockTypes().get(getEffectiveBlockId());
     }
 
     /**
-     * @return item used to place this custom block
+     * Clone of internal item with full stored state (includes {@code placement_id} when set).
+     */
+    public ItemStack getEffectiveItem() {
+        return applyData().clone();
+    }
+
+    /**
+     * Clone for player drops: real {@code id}, never includes {@code placement_id}.
      */
     public ItemStack getItemToDrop() {
-        return itemToDrop;
+        return NBTUtil.clearPlacementId(itemToDrop.clone());
     }
 
     public boolean hasHardness() {
@@ -321,6 +354,7 @@ public class BlockDataStore {
                 ", canBeDestroyedByLiquid=" + canBeDestroyedByLiquid +
                 ", dropOnBurn=" + dropOnBurn +
                 ", id='" + id + '\'' +
+                ", placementId='" + placementId + '\'' +
                 ", hardness=" + hardness +
                 ", preferredTools=" + preferredTools +
                 ", toolSpeedMultipliers=" + toolSpeedMultipliers +

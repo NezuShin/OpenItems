@@ -7,19 +7,22 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.block.data.type.Tripwire;
+import org.bukkit.block.data.type.Slab;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
+import su.nezushin.openitems.blocks.types.CustomBlockModel;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
-import su.nezushin.openitems.blocks.types.CustomStairsBlockModel;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.CustomBlockLoadEvent;
 import su.nezushin.openitems.events.CustomBlockUnloadEvent;
 import su.nezushin.openitems.gson.ConfigurationSerializableGsonAdapter;
+import su.nezushin.openitems.utils.BlockEntityUtil;
 import su.nezushin.openitems.utils.NBTUtil;
 import su.nezushin.openitems.utils.OpenItemsConfig;
+import su.nezushin.openitems.utils.SlabPathsUtil;
 
 import java.util.*;
 
@@ -166,7 +169,15 @@ public class CustomBlocks {
                     }
 
                     var model = i.getModel();
-                    if (model instanceof CustomStairsBlockModel)
+
+                    if (model == null) {
+                        OpenItems.getInstance().getLogger().severe(
+                                "Custom block model not found: '" + i.getEffectiveBlockId() + "'. Removing stored block data.");
+                        destroyBlock(block, false,false);
+                        continue;
+                    }
+
+                    if (model.isReapplyOnLoadNeeded())
                         model.apply(block, false);
 
                     Bukkit.getPluginManager().callEvent(new CustomBlockLoadEvent(block, i));
@@ -207,8 +218,8 @@ public class CustomBlocks {
      * Relocate custom blocks' registry entries and display entities after a piston push/pull.
      * Handles chains safely (remove-all, then put-all).
      *
-     * @param fromTo       old location → new location
-     * @param applyModels  if true, teleport displays and re-apply models (call after piston animation)
+     * @param fromTo      old location → new location
+     * @param applyModels if true, teleport displays and re-apply models (call after piston animation)
      */
     public void moveBlocks(Map<Block, Block> fromTo, boolean applyModels) {
         if (fromTo.isEmpty())
@@ -325,11 +336,12 @@ public class CustomBlocks {
 
         item = item.clone();
         item.setAmount(1);
+        item = NBTUtil.clearPlacementId(item);
         var placedBlock = new BlockLocationStore(block.getX(), block.getY(), block.getZ(), item);
 
-        setBlockModel(block, id);
-
         blocks.getPlacedBlocks().put(block, placedBlock);
+
+        setBlockModel(block, id);
 
         blocks.saveChunk(block.getChunk());
         return placedBlock;
@@ -349,10 +361,47 @@ public class CustomBlocks {
      */
     public void changeBlockModel(Block block, String model) {
         var placedBlock = this.placedBlocks.get(block);
+        if (placedBlock == null)
+            return;
+
+        var previousModel = placedBlock.getModel();
+        placedBlock.setPlacementId(null);
         placedBlock.setId(model);
         block.getState().update(true, false);
+        if (previousModel != null)
+            previousModel.remove(block);
         setBlockModel(block, model);
         this.saveChunk(block.getChunk());
+    }
+
+    /**
+     * Promote a placed block to a different runtime model while keeping the real {@code id}
+     * (e.g. slab half → double note block). The only path that sets {@code placement_id}.
+     */
+    public void setEffectiveBlockModel(Block block, String runtimeModelId) {
+        var placedBlock = this.placedBlocks.get(block);
+        if (placedBlock == null)
+            return;
+
+        if (runtimeModelId.equals(placedBlock.getId())) {
+            changeBlockModel(block, runtimeModelId);
+            return;
+        }
+
+        var previousModel = placedBlock.getModel();
+        placedBlock.setPlacementId(runtimeModelId);
+        placedBlock.applyData();
+        block.getState().update(true, false);
+        if (previousModel != null)
+            previousModel.remove(block);
+        setBlockModel(block, runtimeModelId);
+        this.saveChunk(block.getChunk());
+    }
+
+    private static boolean isPromotedSlabWorldState(Block block) {
+        if (block.getType() == Material.NOTE_BLOCK)
+            return true;
+        return block.getBlockData() instanceof Slab slab && slab.getType() == Slab.Type.DOUBLE;
     }
 
 
@@ -386,7 +435,7 @@ public class CustomBlocks {
         // Orphans not in the map (e.g. after a crash mid-sync)
         for (var world : Bukkit.getWorlds()) {
             for (var entity : world.getEntitiesByClass(ItemDisplay.class)) {
-                if (entity.getScoreboardTags().contains(CustomStairsBlockModel.SCOREBOARD_TAG))
+                if (BlockEntityUtil.hasBlockDisplayTag(entity))
                     entity.remove();
             }
         }

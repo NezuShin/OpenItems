@@ -24,6 +24,28 @@ public class NBTUtil {
         return customBlockData.getString("id");
     }
 
+    /**
+     * Optional runtime model id (e.g. promoted slab double). Not used for placement.
+     */
+    public static String getPlacementId(ItemStack item) {
+        var nbtItem = new NBTItem(item);
+        var customBlockData = nbtItem.getCompound("openitems_custom_block");
+        if (customBlockData == null || !customBlockData.hasTag("placement_id"))
+            return null;
+        return customBlockData.getString("placement_id");
+    }
+
+    /**
+     * Remove {@code placement_id} from block NBT (player drops and placement sanitization).
+     */
+    public static ItemStack clearPlacementId(ItemStack item) {
+        var nbtItem = new NBTItem(item);
+        var customBlockData = nbtItem.getCompound("openitems_custom_block");
+        if (customBlockData != null)
+            customBlockData.removeKey("placement_id");
+        return nbtItem.getItem();
+    }
+
 
     /**
      * Set block model to item

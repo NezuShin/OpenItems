@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
 import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
+import su.nezushin.openitems.blocks.types.CustomSlabBlockModel;
 import su.nezushin.openitems.blocks.types.CustomStairsBlockModel;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.AsyncBuildDoneEvent;
@@ -150,6 +151,9 @@ public class ResourcePackBuilder {
             });
             this.blockIdCache.getRegisteredStairs().forEach(k -> {
                 OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomStairsBlockModel(k));
+            });
+            this.blockIdCache.getRegisteredSlabs().forEach(k -> {
+                OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomSlabBlockModel(k));
             });
             this.fontImageIdCache.getRegisteredCharIds().forEach((k, v) -> {
                 OpenItems.getInstance().getModelRegistry().getFontImages().put(k, v.getSymbol());

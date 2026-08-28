@@ -5,7 +5,7 @@ OpenItems is a plugin for PaperMC that allows you to add new items, blocks, and 
 Unlike [craftengine](https://modrinth.com/plugin/craftengine), OpenItems not manipulating PaperMCs registry since there is no pre-defined blocks, everything goes in runtime. 
 ## Features
 - [Automatic resource pack generation](#automatic-model-generator-and-content-creation)
-- [Custom blocks](#blocks) with [custom hardness](#understanding-block-hardness) — note blocks, chorus plants, tripwires, and [stairs](#stairs-itemdisplay)
+- [Custom blocks](#blocks) with [custom hardness](#understanding-block-hardness) — note blocks, chorus plants, tripwires, [stairs](#stairs-itemdisplay), and [slabs](#slabs-itemdisplay)
 - [Custom armor models](#equipment)
 - [Custom font images](#font-images-and-placeholders)
 - Edit models of items or blocks, configure their behavior in-game
@@ -182,7 +182,7 @@ Example model:
 
 The plugin scans content directories and registers block models automatically. Set the item look with `/oedit item model <your_model_path>`, then apply block behaviour with `/oedit block model <your_model_path>` so the item places as a custom block.
 
-For note-block, tripwire, and chorus hosts the generator also writes `minecraft/blockstates/` (`note_block.json`, `tripwire.json`, `chorus_plant.json`). Stairs use a different approach (see below).
+For note-block, tripwire, and chorus hosts the generator also writes `minecraft/blockstates/` (`note_block.json`, `tripwire.json`, `chorus_plant.json`). Stairs and slabs use a different approach (see below).
 
 ##### Note blocks
 
@@ -226,9 +226,27 @@ The generator builds three shape models (`straight`, `inner`, `outer`) plus an i
 
 Stairs do not consume note-block / tripwire / chorus blockstate IDs.
 
+##### Slabs (ItemDisplay + note-block double)
+
+Textures: `OpenItems/contents/<namespace>/textures/block/item_display/slabs/`
+
+Half slabs use a vanilla slab host plus an `ItemDisplay` (`bottom` / `top`). When two matching halves merge into a double, the host becomes a **note block** and uses a normal note-block model (correct block lighting).
+
+| Layout | Files | Registry id (half) | Double note-block model |
+|--------|-------|--------------------|-------------------------|
+| Single texture | `my_slab.png` | `<namespace>:block/item_display/slabs/my_slab` | `<namespace>:block/note_block/double_slabs/my_slab` |
+| Top / bottom / side | `my_slab_up.png`, `_down`, `_side` | same | same double path |
+| Per face | `_up`, `_down`, `_east`, `_west`, `_south`, `_north` | same | same double path |
+
+The generator builds ItemDisplay models for `bottom` and `top`, an inventory item model, and a note-block cube model under `models/block/note_block/double_slabs/`. Doubles consume a note-block blockstate ID.
+
+**Placement:** use a vanilla slab item as the base (e.g. `birch_slab`), then set `/oedit item model` and `/oedit block model` to `<namespace>:block/item_display/slabs/my_slab`.
+
+**Merging:** two half slabs may form a double only when both are the same custom id and the same host material (`itemToDrop` type). On a valid merge the host becomes a note block and the placed-block registry entry switches to `<namespace>:block/note_block/double_slabs/...` (`CustomNoteblockModel`). The drop item stays the original slab item.
+
 #### Understanding block hardness
 
-Plugin cannot change real block hardness (note-block / chorus hosts stay those materials; stairs stay vanilla stairs). It sets a player `block_break_speed` attribute so mining *feels* like a chosen hardness.
+Plugin cannot change real block hardness (note-block / chorus hosts stay those materials; stairs and half slabs stay their vanilla hosts; merged double slabs become note blocks). It sets a player `block_break_speed` attribute so mining *feels* like a chosen hardness.
 
 Typical setup (stone-like ore mined with pickaxes):
 

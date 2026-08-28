@@ -6,7 +6,6 @@ import org.bukkit.block.data.BlockData;
 
 public interface CustomBlockModel {
 
-
     /**
      * Place custom block
      *
@@ -33,5 +32,19 @@ public interface CustomBlockModel {
      * Clean up model-specific entities/state when the custom block is removed or unloaded.
      */
     default void remove(Block b) {
+    }
+
+    /**
+     * @return true if model state must be re-applied after chunk load (e.g. display entities)
+     */
+    default boolean isReapplyOnLoadNeeded() {
+        return false;
+    }
+
+    /**
+     * Fragile models are destroyed instead of moved when pistons interact with them.
+     */
+    default boolean isFragile() {
+        return false;
     }
 }

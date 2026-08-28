@@ -1,20 +1,26 @@
 package su.nezushin.openitems.rp;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.rp.equipment.EquipmentModel;
 import su.nezushin.openitems.rp.font.BitmapFontImage;
 import su.nezushin.openitems.rp.sound.Sound;
 import su.nezushin.openitems.rp.sound.SoundEvent;
+import su.nezushin.openitems.rp.textures.ResolvedBlockTextures;
+import su.nezushin.openitems.rp.textures.ResourcePackScanFile;
+import su.nezushin.openitems.rp.textures.SingleTextureExpansion;
+import su.nezushin.openitems.rp.textures.TextureLayout;
 import su.nezushin.openitems.utils.OpenItemsConfig;
+import su.nezushin.openitems.utils.SlabPathsUtil;
 import su.nezushin.openitems.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Builder and generator for every namespace
@@ -62,6 +68,9 @@ public class NamespacedSectionBuilder {
         //for display stairs (one texture → all BlockData variants)
         List<ResourcePackScanFile> pngFilesStairs = new ArrayList<>();
 
+        //for display slabs (note_block face layouts → bottom/top/double)
+        List<ResourcePackScanFile> pngFilesSlabs = new ArrayList<>();
+
 
         //for any arbitrary textures with custom model templates
         List<ResourcePackScanFile> pngFilesCustomModelTemplates = new ArrayList<>();
@@ -78,6 +87,7 @@ public class NamespacedSectionBuilder {
 
         var noteblockDir = new File(this.sectionDir, "textures/block/note_block");
         var stairsDir = new File(this.sectionDir, "textures/block/item_display/stairs");
+        var slabsDir = new File(this.sectionDir, "textures/block/item_display/slabs");
         var tripwireDir = new File(this.sectionDir, "models/block/tripwire");
         var chorusDir = new File(this.sectionDir, "models/block/chorus_plant");
 
@@ -96,6 +106,7 @@ public class NamespacedSectionBuilder {
             scanForTextures(handheldDir, "item", true, pngFilesHandheld);
             scanForTextures(noteblockDir, "block", true, pngFilesNoteblock);
             scanForTextures(stairsDir, "block/item_display", true, pngFilesStairs);
+            scanForTextures(slabsDir, "block/item_display", true, pngFilesSlabs);
             scanFontTextures(fontDir, pngFilesEmoji);
 
             scanForTextures(customModelTemplatesDir, "", false, pngFilesCustomModelTemplates);
@@ -177,6 +188,7 @@ public class NamespacedSectionBuilder {
 
         generateNoteblockModels(pngFilesNoteblock);
         generateStairsModels(pngFilesStairs);
+        generateSlabModels(pngFilesSlabs);
         scanForTripwireModels(tripwireDir, "block");
         scanForChorusModels(chorusDir, "block");
 
@@ -184,14 +196,6 @@ public class NamespacedSectionBuilder {
 
 
         Utils.copyFolder(this.sectionDir, outputDir, this.sectionDir, this.config.getDirectoriesIgnoreList(), this.config.getExtensionsIgnoreList());
-    }
-
-    private record ResourcePackScanFile(File file, String path, String name) {
-
-        public String pathAndName() {
-            return Utils.createPath(path, name);
-        }
-
     }
 
     /**
@@ -376,29 +380,13 @@ public class NamespacedSectionBuilder {
     }
 
     private void generateNoteblockModels(List<ResourcePackScanFile> scanFiles) throws IOException {
-        /*
-
-        case 1 - cube (each for every side):
-        block_id_up.png
-        block_id_down.png
-        block_id_west.png
-        block_id_east.png
-        block_id_south.png
-        block_id_west.png
-
-        case 2 - cube (one for every side):
-        block_id_up.png
-        block_id_side.png
-        block_id_down.png
-
-
-        case 3 - cube_all:
-        block_id.png
-         */
-        scanForBlockModels(scanFiles, this.config.getCubeModelTemplate(), Sets.newHashSet("up", "down", "west", "east", "south", "north"));
-        scanForBlockModels(scanFiles, this.config.getCubeSideModelTemplate(), Sets.newHashSet("up", "down", "side"));
-        for (var i : new ArrayList<>(scanFiles))
-            createBlockModel(scanFiles, i.pathAndName(), this.config.getCubeAllModelTemplate(), Sets.newHashSet(""));
+        for (var block : TextureLayout.resolveAll(
+                scanFiles, TextureLayout.CUBE_LAYOUT_ORDER, this.namespace, SingleTextureExpansion.NOTEBLOCK)) {
+            createNoteblockFromReplacements(
+                    block.pathAndName(),
+                    block.layout().noteblockTemplate(this.config),
+                    block.replacements());
+        }
     }
 
     // textures under textures/block/item_display/stairs → 3 shape models; facing/half via ItemDisplay rotation
@@ -411,126 +399,100 @@ public class NamespacedSectionBuilder {
     );
 
     private void generateStairsModels(List<ResourcePackScanFile> scanFiles) throws IOException {
-        scanForStairsModels(scanFiles, Sets.newHashSet("bottom", "side", "top"));
-        for (var i : new ArrayList<>(scanFiles))
-            createStairsModels(scanFiles, i.pathAndName(), Sets.newHashSet(""));
-    }
-
-    private void scanForStairsModels(List<ResourcePackScanFile> scanFiles, Set<String> faces) throws IOException {
-        var blocks = new HashSet<>(scanFiles.stream().filter(i -> {
-                    if (!i.name().contains("_")) return false;
-                    var face = i.name().substring(i.name().lastIndexOf("_") + 1);
-                    return faces.contains(face);
-                })
-                .map(i -> i.pathAndName().substring(0, i.pathAndName().lastIndexOf("_")))
-                .filter(i -> {
-                    for (var side : faces)
-                        if (scanFiles.stream().noneMatch(j -> j.pathAndName().equalsIgnoreCase(i + "_" + side)))
-                            return false;
-                    return true;
-                }).toList());
-
-        for (var i : blocks)
-            createStairsModels(scanFiles, i, faces);
-    }
-
-    private void createStairsModels(List<ResourcePackScanFile> scanFiles, String pathAndName, Set<String> faces) throws IOException {
-        var templateReplacements = new HashMap<String, String>();
-        if (faces.size() == 1 && faces.contains("")) {
-            var scanFile = getBlockFaceTexture(scanFiles, pathAndName);
-            scanFiles.remove(scanFile);
-            var texturePath = this.namespace + ":" + scanFile.pathAndName();
-            templateReplacements.put("{path_bottom}", texturePath);
-            templateReplacements.put("{path_side}", texturePath);
-            templateReplacements.put("{path_top}", texturePath);
-        } else {
-            for (var face : faces) {
-                var scanFile = getBlockFaceTexture(scanFiles, pathAndName + "_" + face);
-                scanFiles.remove(scanFile);
-                templateReplacements.put("{path_" + face + "}", this.namespace + ":" + scanFile.pathAndName());
-            }
+        var blockIdCache = OpenItems.getInstance().getResourcePackBuilder().getBlockIdCache();
+        for (var block : TextureLayout.resolveAll(
+                scanFiles, TextureLayout.STAIRS_LAYOUT_ORDER, this.namespace, SingleTextureExpansion.STAIRS)) {
+            createDisplayBlockModels(
+                    block,
+                    STAIRS_SHAPE_MODELS,
+                    this.config.getStairsItemModelTemplate(),
+                    this.config::getStairsModelTemplate,
+                    blockIdCache::registerStairs);
         }
+    }
+
+    // textures under textures/block/item_display/slabs
+    // half → ItemDisplay bottom/top; double → note_block host at models/block/note_block/double_slabs/
+    private static final List<String> SLAB_HALF_MODELS = List.of("bottom", "top");
+
+    private void generateSlabModels(List<ResourcePackScanFile> scanFiles) throws IOException {
+        var blockIdCache = OpenItems.getInstance().getResourcePackBuilder().getBlockIdCache();
+        for (var block : TextureLayout.resolveAll(
+                scanFiles, TextureLayout.CUBE_LAYOUT_ORDER, this.namespace, SingleTextureExpansion.SLAB)) {
+            createDisplayBlockModels(
+                    block,
+                    SLAB_HALF_MODELS,
+                    this.config.getSlabItemModelTemplate(block.layout()),
+                    type -> this.config.getSlabModelTemplate(type, block.layout()),
+                    blockIdCache::registerSlabs);
+            createSlabDoubleNoteblock(block);
+        }
+    }
+
+    private void createSlabDoubleNoteblock(ResolvedBlockTextures block) throws IOException {
+        var doublePathAndName = SlabPathsUtil.toDoubleNoteblockPath(block.pathAndName());
+        if (doublePathAndName == null)
+            return;
+        createNoteblockFromReplacements(
+                doublePathAndName,
+                block.layout().noteblockTemplate(this.config),
+                block.replacements());
+    }
+
+    private void createDisplayBlockModels(
+            ResolvedBlockTextures block,
+            List<String> variantNames,
+            String itemTemplate,
+            Function<String, String> variantTemplateFn,
+            Consumer<String> registerModelId) throws IOException {
+        var pathAndName = block.pathAndName();
+        var templateReplacements = block.replacements();
 
         var modelDir = new File(this.outputDir, "models/" + pathAndName);
         modelDir.mkdirs();
 
         var modelId = this.namespace + ":" + pathAndName;
-        var blockIdCache = OpenItems.getInstance().getResourcePackBuilder().getBlockIdCache();
-        blockIdCache.registerStairs(modelId);
+        registerModelId.accept(modelId);
 
-        // inventory / hand item model at models/<path>.json (same as noteblock blocks)
-        var itemTemplate = this.config.getStairsItemModelTemplate();
-        for (var e : templateReplacements.entrySet())
-            itemTemplate = itemTemplate.replace(e.getKey(), e.getValue());
-        Files.write(itemTemplate.getBytes(StandardCharsets.UTF_8),
+        var resolvedItemTemplate = applyReplacements(itemTemplate, templateReplacements);
+        Files.write(resolvedItemTemplate.getBytes(StandardCharsets.UTF_8),
                 new File(this.outputDir, "models/" + pathAndName + ".json"));
         createRegularTemplateItem(modelId,
                 pathAndName.substring(0, pathAndName.lastIndexOf("/")),
                 pathAndName.substring(pathAndName.lastIndexOf("/") + 1));
 
-        for (var shapeName : STAIRS_SHAPE_MODELS) {
-            var modelPath = modelId + "/" + shapeName;
-            var template = this.config.getStairsModelTemplate(shapeName);
-            for (var e : templateReplacements.entrySet())
-                template = template.replace(e.getKey(), e.getValue());
-
-            Files.write(template.getBytes(StandardCharsets.UTF_8), new File(modelDir, shapeName + ".json"));
-
-            createRegularTemplateItem(modelPath, pathAndName, shapeName);
+        for (var variantName : variantNames) {
+            var variantModelPath = modelId + "/" + variantName;
+            var template = applyReplacements(variantTemplateFn.apply(variantName), templateReplacements);
+            Files.write(template.getBytes(StandardCharsets.UTF_8), new File(modelDir, variantName + ".json"));
+            createRegularTemplateItem(variantModelPath, pathAndName, variantName);
         }
     }
 
-    public void scanForBlockModels(List<ResourcePackScanFile> scanFiles, String template, Set<String> faces) throws IOException {
-        var blocks = new HashSet<>(scanFiles.stream().filter(i -> {
-                    //filter for all textures that have "_" in name and ends with name of any face (e.g. west)
-                    if (!i.name().contains("_")) return false;
-                    var face = i.name().substring(i.name().lastIndexOf("_") + 1);
-                    return faces.contains(face);
-                })
-                //remove face from texture name
-                .map(i -> i.pathAndName().substring(0, i.pathAndName().lastIndexOf("_")))
-                .filter(i -> {
-                    //ensure there is at least one texture for any face
-                    for (var side : faces)
-                        if (!scanFiles.stream().anyMatch(j -> j.pathAndName().equalsIgnoreCase(i + "_" + side)))
-                            return false;
+    private void createNoteblockFromReplacements(
+            String pathAndName,
+            String template,
+            Map<String, String> replacements) throws IOException {
+        var resolvedTemplate = applyReplacements(template, replacements);
 
-                    return true;
-                }).toList());
-
-        for (var i : blocks)
-            createBlockModel(scanFiles, i, template, faces);
-
-    }
-
-    public void createBlockModel(List<ResourcePackScanFile> scanFiles, String pathAndName, String template, Set<String> faces) throws IOException {
-        File modelDir = null;
-        for (var face : faces) {
-            var scanFile = getBlockFaceTexture(scanFiles, pathAndName + (face.isEmpty() ? "" : "_") + face);
-
-            scanFiles.remove(scanFile);
-
-            if (modelDir == null) modelDir = new File(this.outputDir, "models/" + scanFile.path());
-
-            template = template.replace("{path" + (face.isEmpty() ? "" : "_") + face + "}", this.namespace + ":" + scanFile.pathAndName());
-        }
-
-        var modelPath = this.namespace + ":" + pathAndName;
-
+        var modelId = this.namespace + ":" + pathAndName;
         var blockIdCache = OpenItems.getInstance().getResourcePackBuilder().getBlockIdCache();
+        var id = blockIdCache.getOrCreateNoteblockId(modelId);
+        blockIdCache.getRegisteredNoteblockIds().put(modelId, id);
 
-        var id = blockIdCache.getOrCreateNoteblockId(modelPath);
-        blockIdCache.getRegisteredNoteblockIds().put(modelPath, id);
+        var outFile = new File(this.outputDir, "models/" + pathAndName + ".json");
+        outFile.getParentFile().mkdirs();
+        Files.write(resolvedTemplate.getBytes(StandardCharsets.UTF_8), outFile);
 
-        modelDir.mkdirs();
-
-        Files.write(template.getBytes(StandardCharsets.UTF_8), new File(this.outputDir + "/models/" + pathAndName + ".json"));
-
-        createRegularTemplateItem(modelPath, pathAndName.substring(0, pathAndName.lastIndexOf("/")), pathAndName.substring(pathAndName.lastIndexOf("/") + 1));
+        createRegularTemplateItem(modelId,
+                pathAndName.substring(0, pathAndName.lastIndexOf("/")),
+                pathAndName.substring(pathAndName.lastIndexOf("/") + 1));
     }
 
-    private ResourcePackScanFile getBlockFaceTexture(List<ResourcePackScanFile> scanFiles, String name) {
-        return scanFiles.stream().filter(i -> i.pathAndName().equalsIgnoreCase(name)).findFirst().orElse(null);
+    private static String applyReplacements(String template, Map<String, String> replacements) {
+        for (var e : replacements.entrySet())
+            template = template.replace(e.getKey(), e.getValue());
+        return template;
     }
 
     //For handheld and generated models

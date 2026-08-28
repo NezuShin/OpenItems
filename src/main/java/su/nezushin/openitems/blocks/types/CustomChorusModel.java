@@ -32,6 +32,11 @@ public class CustomChorusModel implements CustomBlockModel {
         return true;
     }
 
+    @Override
+    public boolean isFragile() {
+        return true;
+    }
+
     public static void setId(MultipleFacing nb, int id) {
         id--;
         for (var i : Utils.getMainBlockFaces()) {

@@ -3,11 +3,13 @@ package su.nezushin.openitems.blocks;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.block.data.type.NoteBlock;
+import org.bukkit.block.data.type.Slab;
 import org.bukkit.block.data.type.Tripwire;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -22,13 +24,14 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
+import org.bukkit.inventory.ItemStack;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
 import su.nezushin.openitems.blocks.types.CustomBlockModel;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
 import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
-import su.nezushin.openitems.blocks.types.CustomStairsBlockModel;
 import su.nezushin.openitems.events.*;
+import su.nezushin.openitems.utils.BlockEntityUtil;
 import su.nezushin.openitems.utils.NBTUtil;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.utils.OpenItemsConfig;
@@ -112,7 +115,7 @@ public class CustomBlocksListener implements Listener {
     @EventHandler
     public void entitiesLoad(EntitiesLoadEvent e) {
         for (var entity : e.getEntities()) {
-            if (entity.getScoreboardTags().contains(CustomStairsBlockModel.SCOREBOARD_TAG))
+            if (BlockEntityUtil.hasBlockDisplayTag(entity))
                 entity.remove();
         }
     }
@@ -248,7 +251,7 @@ public class CustomBlocksListener implements Listener {
                 continue;
 
             CustomBlockModel model = placedBlock.getModel();
-            if (!(model instanceof CustomTripwireModel) && !(model instanceof CustomChorusModel))
+            if (!model.isFragile())
                 continue;
 
             if (!placedBlock.canBeReplaced())
@@ -275,7 +278,7 @@ public class CustomBlocksListener implements Listener {
                 continue;
 
             CustomBlockModel model = placedBlock.getModel();
-            if (!(model instanceof CustomNoteblockModel) && !(model instanceof CustomStairsBlockModel))
+            if (model.isFragile())
                 continue;
 
             fromTo.put(block, block.getRelative(direction));
@@ -418,7 +421,9 @@ public class CustomBlocksListener implements Listener {
             return;
         }
         var blockType = placedBlock.getModel();
-        if (blockType == null || !blockType.applyOnPhysics() || !(blockType instanceof CustomNoteblockModel))
+        if (blockType == null || !blockType.applyOnPhysics())
+            return;
+        if (!(blockType instanceof CustomNoteblockModel))
             return;
 
         blockType.apply(b, false);
@@ -555,6 +560,75 @@ public class CustomBlocksListener implements Listener {
         }
     }
 
+    /**
+     * Prevent combining half slabs when one side is vanilla and the other is custom,
+     * or when two different custom slab ids / drop materials would merge.
+     * Same custom id + same {@code itemToDrop} material may form a double slab.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void preventInvalidSlabMerge(BlockPlaceEvent e) {
+        var hand = e.getItemInHand();
+        if (hand == null || hand.getType().isAir() || !Tag.SLABS.isTagged(hand.getType()))
+            return;
+
+        var halfBlock = findSlabMergeHalf(e, hand);
+        if (halfBlock == null)
+            return;
+
+        var blocks = OpenItems.getInstance().getBlocks();
+        var store = blocks.getPlacedBlocks().get(halfBlock);
+        var handId = NBTUtil.getBlockId(hand);
+
+        if (store == null) {
+            // vanilla half + custom slab in hand
+            if (handId != null)
+                e.setCancelled(true);
+            return;
+        }
+
+        // custom half + vanilla slab in hand
+        if (handId == null) {
+            e.setCancelled(true);
+            return;
+        }
+
+        // different custom ids
+        if (!handId.equals(store.getId())) {
+            e.setCancelled(true);
+            return;
+        }
+
+        // same id but different host / drop material
+        var drop = store.getItemToDrop();
+        if (drop == null || drop.getType() != hand.getType())
+            e.setCancelled(true);
+    }
+
+    /**
+     * @return the half-slab block being combined into a double, or null if this place is not a merge
+     */
+    private Block findSlabMergeHalf(BlockPlaceEvent e, ItemStack hand) {
+        var against = e.getBlockAgainst();
+        if (against != null
+                && Tag.SLABS.isTagged(against.getType())
+                && against.getType() == hand.getType()
+                && against.getBlockData() instanceof Slab againstSlab
+                && againstSlab.getType() != Slab.Type.DOUBLE) {
+            if (e.getBlock().equals(against)
+                    || e.getBlockReplacedState().getType() == against.getType())
+                return against;
+        }
+
+        var replaced = e.getBlockReplacedState();
+        if (Tag.SLABS.isTagged(replaced.getType())
+                && replaced.getType() == hand.getType()
+                && replaced.getBlockData() instanceof Slab replacedSlab
+                && replacedSlab.getType() != Slab.Type.DOUBLE)
+            return e.getBlock();
+
+        return null;
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void placeBlock(BlockPlaceEvent e) {
 
@@ -573,6 +647,7 @@ public class CustomBlocksListener implements Listener {
 
         item = item.clone();
         item.setAmount(1);
+        item = NBTUtil.clearPlacementId(item);
         var placedBlock = new BlockLocationStore(block.getX(), block.getY(), block.getZ(), item);
 
 
@@ -585,11 +660,8 @@ public class CustomBlocksListener implements Listener {
             return;
         }
 
-        blockType.apply(block, true);
-
-
         blocks.getPlacedBlocks().put(block, placedBlock);
-        //block.getState().update(true, true);
+        blockType.apply(block, true);
 
         blocks.saveChunk(block.getChunk());
     }

@@ -14,6 +14,7 @@ import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.utils.BlockEntityUtil;
 
 /**
  * Display stairs via ItemDisplay: 3 parent shapes (straight / inner / outer)
@@ -21,7 +22,7 @@ import su.nezushin.openitems.OpenItems;
  */
 public class CustomStairsBlockModel implements CustomBlockModel {
 
-    public static final String SCOREBOARD_TAG = "OI_Stairs";
+    public static final String SCOREBOARD_TAG = BlockEntityUtil.SCOREBOARD_TAG_PREFIX + "Stairs";
 
     /**
      * ItemDisplay HEAD faces opposite of block models on the east/west axis;
@@ -87,6 +88,11 @@ public class CustomStairsBlockModel implements CustomBlockModel {
 
     @Override
     public boolean applyOnPhysics() {
+        return true;
+    }
+
+    @Override
+    public boolean isReapplyOnLoadNeeded() {
         return true;
     }
 
