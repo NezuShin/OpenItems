@@ -15,7 +15,7 @@ import su.nezushin.openitems.utils.SlabPathsUtil;
 
 /**
  * Half slabs: ItemDisplay on a vanilla slab host ({@code bottom}/{@code top}).
- * Doubles: promoted via {@link su.nezushin.openitems.blocks.CustomBlocks#setEffectiveBlockModel}
+ * Doubles: promoted via {@link su.nezushin.openitems.blocks.CustomBlocks#overrideBlockModel}
  * to a note-block host; real {@code id} stays the slab model path.
  */
 public class CustomSlabBlockModel implements CustomBlockModel {
@@ -48,7 +48,7 @@ public class CustomSlabBlockModel implements CustomBlockModel {
     @Override
     public void apply(Block b, boolean update) {
         if (shouldPromoteToDouble(b)) {
-            OpenItems.getInstance().getBlocks().setEffectiveBlockModel(b, getDoubleNoteblockId());
+            OpenItems.getInstance().getBlocks().overrideBlockModel(b, getDoubleNoteblockId());
             return;
         }
         if (!(b.getBlockData() instanceof Slab slab) || slab.getType() == Slab.Type.DOUBLE)

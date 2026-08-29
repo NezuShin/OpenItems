@@ -13,7 +13,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
-import su.nezushin.openitems.blocks.types.CustomBlockModel;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.CustomBlockLoadEvent;
@@ -22,7 +21,6 @@ import su.nezushin.openitems.gson.ConfigurationSerializableGsonAdapter;
 import su.nezushin.openitems.utils.BlockEntityUtil;
 import su.nezushin.openitems.utils.NBTUtil;
 import su.nezushin.openitems.utils.OpenItemsConfig;
-import su.nezushin.openitems.utils.SlabPathsUtil;
 
 import java.util.*;
 
@@ -168,7 +166,7 @@ public class CustomBlocks {
                         continue;
                     }
 
-                    var model = i.getModel();
+                    var model = i.getCurrentModel();
 
                     if (model == null) {
                         OpenItems.getInstance().getLogger().severe(
@@ -193,7 +191,7 @@ public class CustomBlocks {
         var placedBlock = this.placedBlocks.remove(block);
 
         if (placedBlock != null) {
-            var model = placedBlock.getModel();
+            var model = placedBlock.getCurrentModel();
             if (model != null)
                 model.remove(block);
         }
@@ -252,7 +250,7 @@ public class CustomBlocks {
                 this.displayEntities.put(move.to(), move.display());
 
             if (applyModels) {
-                var model = move.store().getModel();
+                var model = move.store().getCurrentModel();
                 if (model != null)
                     model.apply(move.to(), false);
             }
@@ -285,7 +283,7 @@ public class CustomBlocks {
             if (placedBlock == null)
                 continue;
 
-            var model = placedBlock.getModel();
+            var model = placedBlock.getCurrentModel();
             if (model != null)
                 model.apply(to, false);
         }
@@ -336,7 +334,7 @@ public class CustomBlocks {
 
         item = item.clone();
         item.setAmount(1);
-        item = NBTUtil.clearPlacementId(item);
+        item = NBTUtil.clearOverrideId(item);
         var placedBlock = new BlockLocationStore(block.getX(), block.getY(), block.getZ(), item);
 
         blocks.getPlacedBlocks().put(block, placedBlock);
@@ -354,23 +352,23 @@ public class CustomBlocks {
     }
 
     /**
-     * Set model for already placed block. This method will also will save custom chunk data.
+     * Set modelId for already placed block. This method will also will save custom chunk data.
      *
-     * @param block block to apply model
-     * @param model path to the block model
+     * @param block block to apply modelId
+     * @param modelId path to the block modelId
      */
-    public void changeBlockModel(Block block, String model) {
+    public void changeBlockModel(Block block, String modelId) {
         var placedBlock = this.placedBlocks.get(block);
         if (placedBlock == null)
             return;
 
-        var previousModel = placedBlock.getModel();
-        placedBlock.setPlacementId(null);
-        placedBlock.setId(model);
+        var previousModel = placedBlock.getCurrentModel();
+        placedBlock.setOverrideId(null);
+        placedBlock.setId(modelId);
         block.getState().update(true, false);
         if (previousModel != null)
             previousModel.remove(block);
-        setBlockModel(block, model);
+        setBlockModel(block, modelId);
         this.saveChunk(block.getChunk());
     }
 
@@ -378,23 +376,23 @@ public class CustomBlocks {
      * Promote a placed block to a different runtime model while keeping the real {@code id}
      * (e.g. slab half → double note block). The only path that sets {@code placement_id}.
      */
-    public void setEffectiveBlockModel(Block block, String runtimeModelId) {
+    public void overrideBlockModel(Block block, String overrideModelId) {
         var placedBlock = this.placedBlocks.get(block);
         if (placedBlock == null)
             return;
 
-        if (runtimeModelId.equals(placedBlock.getId())) {
-            changeBlockModel(block, runtimeModelId);
+        if (overrideModelId.equals(placedBlock.getId())) {
+            changeBlockModel(block, overrideModelId);
             return;
         }
 
-        var previousModel = placedBlock.getModel();
-        placedBlock.setPlacementId(runtimeModelId);
+        var previousModel = placedBlock.getCurrentModel();
+        placedBlock.setOverrideId(overrideModelId);
         placedBlock.applyData();
         block.getState().update(true, false);
         if (previousModel != null)
             previousModel.remove(block);
-        setBlockModel(block, runtimeModelId);
+        setBlockModel(block, overrideModelId);
         this.saveChunk(block.getChunk());
     }
 
@@ -414,7 +412,7 @@ public class CustomBlocks {
         for (var i : this.placedBlocks.entrySet()
                 .stream().filter(i -> i.getKey().getChunk().equals(chunk)).toList()) {
             Bukkit.getPluginManager().callEvent(new CustomBlockUnloadEvent(i.getKey(), i.getValue()));
-            var model = i.getValue().getModel();
+            var model = i.getValue().getCurrentModel();
             if (model != null)
                 model.remove(i.getKey());
             this.placedBlocks.remove(i.getKey());

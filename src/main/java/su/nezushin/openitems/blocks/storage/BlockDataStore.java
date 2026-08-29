@@ -26,7 +26,7 @@ public class BlockDataStore {
     /**
      * Current runtime model id when it differs from {@link #id} (e.g. promoted slab double).
      */
-    protected String placementId;
+    protected String overrideId;
 
     /**
      * Custom felt hardness. {@code null} means unset — use legacy tool speed maps.
@@ -64,7 +64,7 @@ public class BlockDataStore {
             return false;
 
         id = compound.getString("id");
-        placementId = compound.hasTag("placement_id") ? compound.getString("placement_id") : null;
+        overrideId = compound.hasTag("override_id") ? compound.getString("override_id") : null;
         canBeBlown = compound.getBoolean("can_be_blown");
         canBeDestroyedByLiquid = compound.getBoolean("can_be_destroyed_by_liquid");
         canBeReplaced = compound.getBoolean("can_be_replaced");
@@ -118,10 +118,10 @@ public class BlockDataStore {
         var compound = nbtItem.getOrCreateCompound("openitems_custom_block");
 
         compound.setString("id", this.id);
-        if (this.placementId != null)
-            compound.setString("placement_id", this.placementId);
+        if (this.overrideId != null)
+            compound.setString("override_id", this.overrideId);
         else
-            compound.removeKey("placement_id");
+            compound.removeKey("override_id");
         compound.setBoolean("can_be_blown", this.canBeBlown);
         compound.setBoolean("can_be_replaced", this.canBeReplaced);
         compound.setBoolean("can_be_destroyed_by_liquid", this.canBeDestroyedByLiquid);
@@ -244,19 +244,19 @@ public class BlockDataStore {
         return id;
     }
 
-    public String getPlacementId() {
-        return placementId;
+    public String getOverrideId() {
+        return overrideId;
     }
 
-    public void setPlacementId(String placementId) {
-        this.placementId = placementId;
+    public void setOverrideId(String overrideId) {
+        this.overrideId = overrideId;
     }
 
     /**
-     * Current runtime model id: {@code placement_id} when set, otherwise real {@code id}.
+     * Current runtime model id: {@code override_id} when set, otherwise real {@code id}.
      */
     public String getEffectiveBlockId() {
-        return placementId != null ? placementId : id;
+        return overrideId != null ? overrideId : id;
     }
 
     /**
@@ -269,25 +269,33 @@ public class BlockDataStore {
         this.applyData();
     }
 
+
     /**
-     * @return custom block model for the current runtime id
+     * @return custom block model ignoring override id
      */
     public CustomBlockModel getModel() {
         return OpenItems.getInstance().getModelRegistry().getBlockTypes().get(getEffectiveBlockId());
     }
 
     /**
-     * Clone of internal item with full stored state (includes {@code placement_id} when set).
+     * @return custom block model (based on override_id when set; otherwise id)
      */
-    public ItemStack getEffectiveItem() {
-        return applyData().clone();
+    public CustomBlockModel getCurrentModel() {
+        return OpenItems.getInstance().getModelRegistry().getBlockTypes().get(getEffectiveBlockId());
+    }
+
+    /**
+     * Clone of internal item with full stored state (includes {@code override_id} when set).
+     */
+    public ItemStack getCurrentItem() {
+        return applyData();
     }
 
     /**
      * Clone for player drops: real {@code id}, never includes {@code placement_id}.
      */
     public ItemStack getItemToDrop() {
-        return NBTUtil.clearPlacementId(itemToDrop.clone());
+        return NBTUtil.clearOverrideId(itemToDrop.clone());
     }
 
     public boolean hasHardness() {
@@ -354,7 +362,7 @@ public class BlockDataStore {
                 ", canBeDestroyedByLiquid=" + canBeDestroyedByLiquid +
                 ", dropOnBurn=" + dropOnBurn +
                 ", id='" + id + '\'' +
-                ", placementId='" + placementId + '\'' +
+                ", overrideId='" + overrideId + '\'' +
                 ", hardness=" + hardness +
                 ", preferredTools=" + preferredTools +
                 ", toolSpeedMultipliers=" + toolSpeedMultipliers +

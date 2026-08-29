@@ -250,7 +250,7 @@ public class CustomBlocksListener implements Listener {
             if (placedBlock == null)
                 continue;
 
-            CustomBlockModel model = placedBlock.getModel();
+            CustomBlockModel model = placedBlock.getCurrentModel();
             if (!model.isFragile())
                 continue;
 
@@ -277,7 +277,7 @@ public class CustomBlocksListener implements Listener {
             if (placedBlock == null)
                 continue;
 
-            CustomBlockModel model = placedBlock.getModel();
+            CustomBlockModel model = placedBlock.getCurrentModel();
             if (model.isFragile())
                 continue;
 
@@ -363,7 +363,7 @@ public class CustomBlocksListener implements Listener {
             var placedBlock = blocks.getPlacedBlocks().get(b);
 
             if (placedBlock != null) {
-                placedBlock.getModel().apply(b, false);
+                placedBlock.getCurrentModel().apply(b, false);
             } else {
                 CustomChorusModel.setDefaultId(mf);
                 b.setBlockData(mf, false);
@@ -384,7 +384,7 @@ public class CustomBlocksListener implements Listener {
             b.setBlockData(data, false);
             return;
         }
-        var blockType = placedBlock.getModel();
+        var blockType = placedBlock.getCurrentModel();
         if (blockType == null || !blockType.applyOnPhysics() || !(blockType instanceof CustomTripwireModel))
             return;
 
@@ -402,7 +402,7 @@ public class CustomBlocksListener implements Listener {
             b.setBlockData(data, false);
             return;
         }
-        var blockType = placedBlock.getModel();
+        var blockType = placedBlock.getCurrentModel();
         if (blockType == null || !blockType.applyOnPhysics() || !(blockType instanceof CustomChorusModel))
             return;
 
@@ -420,7 +420,7 @@ public class CustomBlocksListener implements Listener {
             b.setBlockData(data, false);
             return;
         }
-        var blockType = placedBlock.getModel();
+        var blockType = placedBlock.getCurrentModel();
         if (blockType == null || !blockType.applyOnPhysics())
             return;
         if (!(blockType instanceof CustomNoteblockModel))
@@ -491,7 +491,7 @@ public class CustomBlocksListener implements Listener {
                                     return;
                                 }
                                 Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(), () -> {
-                                    placedBlock.getModel().apply(relative, false);
+                                    placedBlock.getCurrentModel().apply(relative, false);
                                 }, 2);
                             }
                         }
@@ -504,7 +504,7 @@ public class CustomBlocksListener implements Listener {
             //fallback check
             var placedBlock = blocks.getPlacedBlocks().get(block);
             if (placedBlock != null) {
-                var blockType = placedBlock.getModel();
+                var blockType = placedBlock.getCurrentModel();
 
                 if (blockType != null && blockType.applyOnPhysics()) {
                     blockType.apply(block, false);
@@ -551,11 +551,11 @@ public class CustomBlocksListener implements Listener {
 
         // Neighbor physics tried to break a still-registered custom chorus — cancel drop and restore
         var placedBlock = blocks.getPlacedBlocks().get(block);
-        if (placedBlock != null && placedBlock.getModel() instanceof CustomChorusModel) {
+        if (placedBlock != null && placedBlock.getCurrentModel() instanceof CustomChorusModel) {
             e.setCancelled(true);
             OpenItems.sync(() -> {
                 if (blocks.getPlacedBlocks().containsKey(block))
-                    placedBlock.getModel().apply(block, false);
+                    placedBlock.getCurrentModel().apply(block, false);
             });
         }
     }
@@ -647,7 +647,7 @@ public class CustomBlocksListener implements Listener {
 
         item = item.clone();
         item.setAmount(1);
-        item = NBTUtil.clearPlacementId(item);
+        item = NBTUtil.clearOverrideId(item);
         var placedBlock = new BlockLocationStore(block.getX(), block.getY(), block.getZ(), item);
 
 
