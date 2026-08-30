@@ -12,6 +12,7 @@ import su.nezushin.openitems.hooks.CommandHooks;
 import su.nezushin.openitems.hooks.FontImageExpansion;
 import su.nezushin.openitems.hooks.ResourcePackManagerHook;
 import su.nezushin.openitems.hooks.RoseResourcepackHook;
+import su.nezushin.openitems.hooks.worldedit.WorldEditHook;
 import su.nezushin.openitems.rp.ResourcePackBuilder;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
@@ -29,15 +30,19 @@ public final class OpenItems extends JavaPlugin {
     private ResourcePackManagerHook resourcePackManagerHook;
     private RoseResourcepackHook roseResourcepackHookHook;
     private CommandHooks commandHooks;
+    private WorldEditHook worldEditHook;
 
-    public static NamespacedKey CUSTOM_BLOCKS_CHUNK_KEY;
+    public static NamespacedKey CUSTOM_BLOCKS_VERSION_KEY;
+
+    public static NamespacedKey CUSTOM_BLOCKS_BPARTS_KEY;
 
     public static NamespacedKey CUSTOM_BLOCKS_CHECKED_CHUNK_KEY;
 
     @Override
     public void onLoad() {
         instance = this;
-        CUSTOM_BLOCKS_CHUNK_KEY = new NamespacedKey(OpenItems.getInstance(), "custom_blocks");
+        CUSTOM_BLOCKS_VERSION_KEY = new NamespacedKey(OpenItems.getInstance(), "custom_blocks_version");
+        CUSTOM_BLOCKS_BPARTS_KEY = new NamespacedKey(OpenItems.getInstance(), "custom_blocks_bparts");
         CUSTOM_BLOCKS_CHECKED_CHUNK_KEY = new NamespacedKey(OpenItems.getInstance(), "custom_blocks_checked");
     }
 
@@ -83,11 +88,18 @@ public final class OpenItems extends JavaPlugin {
         if (Bukkit.getPluginManager().isPluginEnabled("RoseResourcepack")) {
             roseResourcepackHookHook = new RoseResourcepackHook();
         }
+        if (Bukkit.getPluginManager().isPluginEnabled("WorldEdit")) {
+            if (worldEditHook == null)
+                worldEditHook = new WorldEditHook();
+            sync(() -> worldEditHook.register());
+        }
     }
 
 
     @Override
     public void onDisable() {
+        if (worldEditHook != null)
+            worldEditHook.unregister();
         if (this.blocks != null)
             this.blocks.removeAllDisplayEntities();
     }

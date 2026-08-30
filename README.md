@@ -326,28 +326,33 @@ blocks.destroyBlockOnLoad(block, false, true, () -> {
 });
 ```
 
-#### 3. Store arbitrary data on a placed block
+#### 3. Store per-block extras
 
-Plain values go in `getArbitraryData()`. Types that implement Bukkit’s `ConfigurationSerializable` (e.g. `ItemStack`, `Location`) go in `getArbitraryBukkitData()`. After changing either map, save the chunk.
+Plugin-owned data that does not belong in item NBT lives in **extras** — one map for all value types (primitives, collections, nested maps/lists, and Bukkit `ConfigurationSerializable` types such as `ItemStack` or `Location`). After changing extras, save the chunk.
+
+Use namespaced keys (e.g. `myplugin:counter`) to avoid collisions between addons.
 
 ```java
 BlockLocationStore store = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(block);
 if (store == null) return;
 
-// Simple serializable values (strings, numbers, maps, lists, …)
-store.getArbitraryData().put("owner", player.getUniqueId().toString());
-store.getArbitraryData().put("energy", 42);
-
-// ConfigurationSerializable (ItemStack, Location, your own class, …)
-store.getArbitraryBukkitData().put("reward", new ItemStack(Material.DIAMOND, 3));
-store.getArbitraryBukkitData().put("home", player.getLocation());
+store.putExtra("myplugin:owner", player.getUniqueId().toString());
+store.putExtra("myplugin:energy", 42);
+store.putExtra("myplugin:reward", new ItemStack(Material.DIAMOND, 3));
+store.putExtra("myplugin:home", player.getLocation());
 
 OpenItems.getInstance().getBlocks().saveChunk(block.getChunk());
 
 // Read back
-String owner = (String) store.getArbitraryData().get("owner");
-ItemStack reward = (ItemStack) store.getArbitraryBukkitData().get("reward");
+String owner = store.getExtra("myplugin:owner", String.class);
+ItemStack reward = store.getExtra("myplugin:reward", ItemStack.class);
+
+// Or use the live map
+store.getExtras().put("myplugin:flags", List.of("a", "b"));
+store.removeExtra("myplugin:energy");
 ```
+
+Extras are persisted in chunk data separately from the item palette (optional per block). They are not written into `openitems_custom_block` item NBT.
 
 #### 4. Change block model (including host type)
 

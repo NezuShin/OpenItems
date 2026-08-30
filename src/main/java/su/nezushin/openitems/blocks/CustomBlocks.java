@@ -1,6 +1,5 @@
 package su.nezushin.openitems.blocks;
 
-import com.google.common.reflect.TypeToken;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
@@ -13,11 +12,16 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
+import su.nezushin.openitems.blocks.storage.chunk.ChunkBlockSnapshotDecoder;
+import su.nezushin.openitems.blocks.storage.chunk.ChunkBlockSnapshotEncoder;
+import su.nezushin.openitems.blocks.storage.chunk.ChunkBlockSnapshotSerializer;
+import su.nezushin.openitems.blocks.storage.chunk.ChunkBlockStoreFormat;
+import su.nezushin.openitems.blocks.storage.pdc.ChunkBlockPdcReader;
+import su.nezushin.openitems.blocks.storage.pdc.ChunkBlockPdcWriter;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.CustomBlockLoadEvent;
 import su.nezushin.openitems.events.CustomBlockUnloadEvent;
-import su.nezushin.openitems.gson.ConfigurationSerializableGsonAdapter;
 import su.nezushin.openitems.utils.BlockEntityUtil;
 import su.nezushin.openitems.utils.NBTUtil;
 import su.nezushin.openitems.utils.OpenItemsConfig;
@@ -39,6 +43,11 @@ public class CustomBlocks {
 
     private BlockBreakSpeedModifiers blockBreakSpeedModifiers;
 
+    private final ChunkBlockSnapshotEncoder snapshotEncoder = new ChunkBlockSnapshotEncoder();
+    private final ChunkBlockSnapshotDecoder snapshotDecoder = new ChunkBlockSnapshotDecoder();
+    private final ChunkBlockSnapshotSerializer snapshotSerializer = new ChunkBlockSnapshotSerializer();
+    private final ChunkBlockPdcWriter pdcWriter = new ChunkBlockPdcWriter();
+    private final ChunkBlockPdcReader pdcReader = new ChunkBlockPdcReader();
 
     private record DestroyOnLoadBlock(boolean dropItem, boolean setAir, Runnable callback) {
 
@@ -73,11 +82,18 @@ public class CustomBlocks {
             List<BlockLocationStore> list = new ArrayList<>(this.placedBlocks.entrySet()
                     .stream().filter(i -> i.getKey().getChunk().equals(chunk)).map(Map.Entry::getValue).toList());
 
+            for (BlockLocationStore store : list)
+                store.applyData();
+
             OpenItems.async(() -> {
-                var str = ConfigurationSerializableGsonAdapter.createGson().toJson(list);
-                OpenItems.sync(() -> {
-                    chunk.getPersistentDataContainer().set(OpenItems.CUSTOM_BLOCKS_CHUNK_KEY, PersistentDataType.STRING, str);
-                });
+                if (list.isEmpty()) {
+                    OpenItems.sync(() -> pdcWriter.clear(chunk));
+                    return;
+                }
+
+                var snapshot = snapshotEncoder.encode(chunk, list);
+                byte[] rawPayload = snapshotSerializer.encode(snapshot);
+                OpenItems.sync(() -> pdcWriter.write(chunk, rawPayload));
             });
         };
 
@@ -134,21 +150,19 @@ public class CustomBlocks {
     }
 
     public void loadChunk(Chunk chunk) {
-        var str = chunk.getPersistentDataContainer().get(
-                OpenItems.CUSTOM_BLOCKS_CHUNK_KEY, PersistentDataType.STRING);
+        var format = pdcReader.detect(chunk);
 
-        if (str == null) {
+        if (format == ChunkBlockStoreFormat.EMPTY) {
             scanForWrongBlockModels(chunk);
             return;
         }
-        OpenItems.async(() -> {
-            var listType = new TypeToken<ArrayList<BlockLocationStore>>() {
-            }.getType();
 
-            List<BlockLocationStore> list = ConfigurationSerializableGsonAdapter.createGson().fromJson(str, listType);
+        OpenItems.async(() -> {
+            byte[] rawPayload = pdcReader.readRaw(chunk);
+            List<BlockLocationStore> list = snapshotDecoder.decode(chunk, snapshotSerializer.decode(rawPayload));
 
             OpenItems.sync(() -> {
-                var needSaveChunk = false;//remove invalid blocks and save chunk
+                var needSaveChunk = false;
                 for (var i : list) {
 
                     if (!i.load()) {
@@ -171,7 +185,7 @@ public class CustomBlocks {
                     if (model == null) {
                         OpenItems.getInstance().getLogger().severe(
                                 "Custom block model not found: '" + i.getEffectiveBlockId() + "'. Removing stored block data.");
-                        destroyBlock(block, false,false);
+                        destroyBlock(block, false, false);
                         continue;
                     }
 
@@ -181,7 +195,7 @@ public class CustomBlocks {
                     Bukkit.getPluginManager().callEvent(new CustomBlockLoadEvent(block, i));
                 }
                 if (needSaveChunk)
-                    OpenItems.sync(() -> saveChunk(chunk));
+                    saveChunk(chunk);
                 scanForWrongBlockModels(chunk);
             });
         });
@@ -343,6 +357,40 @@ public class CustomBlocks {
 
         blocks.saveChunk(block.getChunk());
         return placedBlock;
+    }
+
+    /**
+     * Register a block placed by WorldEdit after the host block state is already set.
+     */
+    public void registerWorldEditBlock(Block block, ItemStack item) {
+        registerWorldEditBlockMetadata(block, item);
+        applyWorldEditModel(block);
+    }
+
+    /**
+     * Insert/update registry entry for a WorldEdit placement without applying visuals yet.
+     */
+    public BlockLocationStore registerWorldEditBlockMetadata(Block block, ItemStack item) {
+        item = item.clone();
+        item.setAmount(1);
+        item = NBTUtil.clearOverrideId(item);
+        var placedBlock = new BlockLocationStore(block.getX(), block.getY(), block.getZ(), item);
+        placedBlocks.put(block, placedBlock);
+        saveChunk(block.getChunk());
+        return placedBlock;
+    }
+
+    /**
+     * Apply the custom model/display for a block already registered via WorldEdit.
+     */
+    public void applyWorldEditModel(Block block) {
+        var placedBlock = placedBlocks.get(block);
+        if (placedBlock == null)
+            return;
+
+        var model = placedBlock.getCurrentModel();
+        if (model != null)
+            model.apply(block, false);
     }
 
 

@@ -22,6 +22,10 @@ repositories {
     maven {
         url = 'https://repo.magmaguy.com/releases'
     }
+    maven {
+        name = "enginehub"
+        url = "https://maven.enginehub.org/repo/"
+    }
 }
 
 dependencies {
@@ -29,6 +33,13 @@ dependencies {
     compileOnly("de.tr7zw:item-nbt-api-plugin:2.15.2")
     compileOnly('me.clip:placeholderapi:2.11.6')
     compileOnly('com.magmaguy:ResourcePackManager:1.6.0')
+    compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.3")
+}
+
+configurations.compileClasspath {
+    resolutionStrategy.force("com.google.guava:guava:33.3.1-jre")
+    resolutionStrategy.force("com.google.code.gson:gson:2.11.0")
+    resolutionStrategy.force("it.unimi.dsi:fastutil:8.5.15")
 }
 
 def targetJavaVersion = 21
@@ -48,7 +59,6 @@ tasks.withType(JavaCompile).configureEach {
         options.release.set(targetJavaVersion)
     }
 }
-
 
 processResources {
     def props = [version: version]

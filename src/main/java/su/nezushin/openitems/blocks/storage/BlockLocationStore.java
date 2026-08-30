@@ -1,6 +1,5 @@
 package su.nezushin.openitems.blocks.storage;
 
-import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
@@ -12,9 +11,7 @@ import java.util.Map;
 public class BlockLocationStore extends BlockDataStore {
     private int x, y, z;
 
-    protected Map<String, Object> arbitraryData = new HashMap<>();
-
-    protected Map<String, ConfigurationSerializable> arbitraryBukkitData = new HashMap<>();
+    private final Map<String, Object> extras = new HashMap<>();
 
     public BlockLocationStore(int x, int y, int z, ItemStack itemToDrop) {
         super(itemToDrop);
@@ -22,7 +19,6 @@ public class BlockLocationStore extends BlockDataStore {
         this.y = y;
         this.z = z;
     }
-
 
     public BlockLocationStore() {
     }
@@ -46,23 +42,27 @@ public class BlockLocationStore extends BlockDataStore {
     }
 
     /**
-     * Any arbitrary data of custom block can be stored here. If you need to save ConfigurationSerializable use {@code getArbitraryBukkitData()} instead.
-     * Note that after setting arbitrary data you need to save chunk manually using {@code OpenItems.getInstance().getBlocks().saveChunk(chunk);}
-     *
-     * @return Map with arbitrary data.
+     * Plugin-owned per-block data not stored in item NBT.
+     * After changing extras, save the chunk via {@code OpenItems.getInstance().getBlocks().saveChunk(chunk)}.
      */
-    public Map<String, Object> getArbitraryData() {
-        return arbitraryData;
+    public Map<String, Object> getExtras() {
+        return extras;
     }
 
-    /**
-     * Any arbitrary instance of ConfigurationSerializable can be stored here. E.g. ItemStacks, Locations
-     * Note that after setting arbitrary data you need to save chunk manually using {@code OpenItems.getInstance().getBlocks().saveChunk(chunk);}
-     *
-     * @return Map with arbitrary data. Can store everything implements ConfigurationSerializable
-     */
-    public Map<String, ConfigurationSerializable> getArbitraryBukkitData() {
-        return arbitraryBukkitData;
+    public void putExtra(String key, Object value) {
+        extras.put(key, value);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getExtra(String key, Class<T> type) {
+        Object value = extras.get(key);
+        if (value == null)
+            return null;
+        return (T) value;
+    }
+
+    public void removeExtra(String key) {
+        extras.remove(key);
     }
 
     @Override
@@ -71,8 +71,7 @@ public class BlockLocationStore extends BlockDataStore {
                 "x=" + x +
                 ", y=" + y +
                 ", z=" + z +
-                ", arbitraryData=" + arbitraryData +
-                ", arbitraryBukkitData=" + arbitraryBukkitData +
+                ", extras=" + extras +
                 ", canBurn=" + canBurn +
                 ", canBeBlown=" + canBeBlown +
                 ", canBeReplaced=" + canBeReplaced +
