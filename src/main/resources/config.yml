@@ -35,6 +35,17 @@ command-hooks:
   after-build:
 #    - "say this will be printed after 'build done' message"
 
+worldedit:
+  # Support for custom block remove on overwrite and //set with custom oi: patterns.
+  enable-basic-support: true
+  # Support for clipboard via //copy, schematics save/load (vanilla WorldEdit only).
+  # Compatibility may break at any time. Disable if you encounter issues.
+  # Please open an issue or contact me if you run into problems.
+  enable-extended-support: true
+  # Use FAWE-friendly integration when FastAsyncWorldEdit is installed (recommended).
+  # Avoids reflection overrides; uses extent reads for //copy and schematics.
+  enable-fawe: true
+
 blocks:
   #ensure all vanilla tripwires and chorus plants in loaded chunk is with vanilla texture
   replace-tripwires-on-chunk-load: true

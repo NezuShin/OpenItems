@@ -4,9 +4,6 @@ import org.bukkit.Chunk;
 
 final class ChunkBlockPositionCodec {
 
-    private ChunkBlockPositionCodec() {
-    }
-
     static int pack(Chunk chunk, int x, int y, int z) {
         int localX = x & 15;
         int localZ = z & 15;

@@ -10,9 +10,8 @@ import su.nezushin.openitems.cmd.OEditCommand;
 import su.nezushin.openitems.cmd.OItemsCommand;
 import su.nezushin.openitems.hooks.CommandHooks;
 import su.nezushin.openitems.hooks.FontImageExpansion;
-import su.nezushin.openitems.hooks.ResourcePackManagerHook;
-import su.nezushin.openitems.hooks.RoseResourcepackHook;
 import su.nezushin.openitems.hooks.worldedit.WorldEditHook;
+import su.nezushin.openitems.hooks.worldedit.WorldEditSupportState;
 import su.nezushin.openitems.rp.ResourcePackBuilder;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
@@ -27,8 +26,6 @@ public final class OpenItems extends JavaPlugin {
     private Gson gson = new Gson();
 
     private FontImageExpansion papiHook;
-    private ResourcePackManagerHook resourcePackManagerHook;
-    private RoseResourcepackHook roseResourcepackHookHook;
     private CommandHooks commandHooks;
     private WorldEditHook worldEditHook;
 
@@ -78,20 +75,13 @@ public final class OpenItems extends JavaPlugin {
                 papiHook.register();
             });
         }
-        if (Bukkit.getPluginManager().isPluginEnabled("ResourcePackManager")) {
-            resourcePackManagerHook = new ResourcePackManagerHook();
-            sync(() -> {
-                resourcePackManagerHook.register();
-            });
 
-        }
-        if (Bukkit.getPluginManager().isPluginEnabled("RoseResourcepack")) {
-            roseResourcepackHookHook = new RoseResourcepackHook();
-        }
-        if (Bukkit.getPluginManager().isPluginEnabled("WorldEdit")) {
+        if (WorldEditSupportState.isWorldEditPresent()) {
             if (worldEditHook == null)
                 worldEditHook = new WorldEditHook();
             sync(() -> worldEditHook.register());
+        } else if (worldEditHook != null) {
+            sync(() -> worldEditHook.unregister());
         }
     }
 
@@ -137,16 +127,11 @@ public final class OpenItems extends JavaPlugin {
         return papiHook;
     }
 
-    public void callHooksBuildRP() {
-        sync(() -> {
-            if(resourcePackManagerHook != null)
-                resourcePackManagerHook.build();
-            if(roseResourcepackHookHook != null)
-                roseResourcepackHookHook.build();
-        });
-    }
-
     public Gson getGson() {
         return gson;
+    }
+
+    public WorldEditHook getWorldEditHook() {
+        return worldEditHook;
     }
 }

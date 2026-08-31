@@ -6,9 +6,6 @@ import org.bukkit.inventory.ItemStack;
 
 final class ItemStackYamlSerializer {
 
-    private ItemStackYamlSerializer() {
-    }
-
     static String serialize(ItemStack item) {
         YamlConfiguration conf = new YamlConfiguration();
         conf.set("data", item);

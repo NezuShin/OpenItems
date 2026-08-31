@@ -1,13 +1,17 @@
 package su.nezushin.openitems.hooks.worldedit;
 
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.util.concurrency.LazyReference;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
+import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.enginehub.linbus.tree.LinCompoundTag;
 import org.enginehub.linbus.tree.LinStringTag;
+import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.storage.BlockLocationStore;
 import su.nezushin.openitems.utils.NBTUtil;
 
@@ -24,9 +28,6 @@ final class OpenItemsWorldEditTag {
 
     private static final Map<BaseBlock, ItemStack> ITEM_CACHE =
             Collections.synchronizedMap(new WeakHashMap<>());
-
-    private OpenItemsWorldEditTag() {
-    }
 
     static BaseBlock tag(BlockStateHolder<?> hostState, ItemStack item) {
         ItemStack prepared = prepareItem(item);
@@ -89,5 +90,14 @@ final class OpenItemsWorldEditTag {
             throw new RuntimeException("Failed to deserialize OpenItems WorldEdit item payload", e);
         }
         return (ItemStack) conf.get("data");
+    }
+
+
+    static BaseBlock enrichFullBlock(World world, BlockVector3 position, BaseBlock block) {
+        Block bukkitBlock = world.getBlockAt(position.x(), position.y(), position.z());
+        BlockLocationStore store = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(bukkitBlock);
+        if (store == null)
+            return block;
+        return OpenItemsWorldEditTag.tag(block, store.getCurrentItem());
     }
 }

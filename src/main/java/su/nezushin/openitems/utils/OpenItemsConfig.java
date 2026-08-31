@@ -11,6 +11,7 @@ import su.nezushin.openitems.OpenItems;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -25,16 +26,10 @@ public class OpenItemsConfig {
     public static long beforeBuildMessageTimeout = 3000;
 
     public static boolean replaceTripwiresOnChunkLoad = true, replaceChorusPlantsOnChunkLoad = true,
-            enableTripwires = true, enableChorus = true, buildOnEnable, disableMipMapWarning, allowChorusPhysicsCancel = false;
+            enableTripwires = true, enableChorus = true, buildOnEnable, disableMipMapWarning, allowChorusPhysicsCancel = false, worldEditBasicSupport = true, worldEditExtendedSupport = true, worldEditEnableFawe = true;
 
 
-    public static Set<Material> allowedChorusUpdateBlocks = Sets.newHashSet(
-            Material.WATER,
-            Material.LAVA,
-            Material.REDSTONE,
-            Material.SPAWNER,
-            Material.TRIAL_SPAWNER
-    );
+    public static Set<Material> allowedChorusUpdateBlocks = new HashSet<>();
 
     public static void init() {
         var plugin = OpenItems.getInstance();
@@ -64,12 +59,22 @@ public class OpenItemsConfig {
         afterBuildCommands = config.getStringList("command-hooks.after-build");
         beforeBuildMessageTimeout = Math.max(0, config.getLong("command-hooks.before-build-message-timeout", 3000));
 
+        worldEditBasicSupport = config.getBoolean("worldedit.enable-basic-support", true);
+        worldEditExtendedSupport = config.getBoolean("worldedit.enable-extended-support", true);
+        worldEditEnableFawe = config.getBoolean("worldedit.enable-fawe", true);
+
         var messages = new File(plugin.getDataFolder() + File.separator + "messages.yml");
         if (!messages.exists()) {
             plugin.saveResource("messages.yml", true);
         }
         Message.load(YamlConfiguration.loadConfiguration(messages));
-
+        allowedChorusUpdateBlocks = Sets.newHashSet(
+                Material.WATER,
+                Material.LAVA,
+                Material.REDSTONE,
+                Material.SPAWNER,
+                Material.TRIAL_SPAWNER
+        );
 
         allowedChorusUpdateBlocks.addAll(MaterialTags.REDSTONE_TORCH.getValues());
         allowedChorusUpdateBlocks.addAll(MaterialTags.PISTONS.getValues());

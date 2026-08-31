@@ -15,9 +15,6 @@ public final class OpenItemsWorldEditWorlds {
 
     private static final Map<org.bukkit.World, OpenItemsWorldEditWorld> CACHE = new ConcurrentHashMap<>();
 
-    private OpenItemsWorldEditWorlds() {
-    }
-
     public static World wrap(World world, BooleanSupplier active) {
         if (world == null)
             return null;

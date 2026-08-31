@@ -10,11 +10,22 @@ import com.sk89q.worldedit.OpenItemsEditSessionSupport;
 import com.sk89q.worldedit.session.OpenItemsSessionManagerInstaller;
 import org.bukkit.World;
 import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.utils.OpenItemsConfig;
 
+import java.util.logging.Level;
+
+/**
+ * Registers tiered WorldEdit integration:
+ * <ul>
+ *   <li>Basic — extent writes + {@code oi:} block parser</li>
+ *   <li>Extended — vanilla WE world wrapper and session/factory overrides for //copy</li>
+ *   <li>FAWE — extent read enrichment instead of extended overrides</li>
+ * </ul>
+ */
 public final class WorldEditHook {
 
+    private final WorldEditPresetStore presetStore = new WorldEditPresetStore();
     private final OpenItemsBlockParser blockParser;
-    private volatile boolean active;
     private boolean parserRegistered;
     private boolean eventBusRegistered;
     private boolean sessionManagerInstalled;
@@ -23,7 +34,7 @@ public final class WorldEditHook {
     private final Object editSessionListener = new Object() {
         @Subscribe
         public void onEditSession(EditSessionEvent event) {
-            if (!active)
+            if (!WorldEditSupportState.isBasicActive())
                 return;
 
             if (event.getStage() != EditSession.Stage.BEFORE_CHANGE
@@ -35,17 +46,49 @@ public final class WorldEditHook {
 
             World world = BukkitAdapter.adapt(event.getWorld());
             event.setExtent(new OpenItemsWorldEditExtent(
-                    event.getExtent(), world, WorldEditHook.this::isActive, event.getStage()));
+                    event.getExtent(),
+                    world,
+                    WorldEditSupportState::isBasicActive,
+                    event.getStage(),
+                    WorldEditSupportState.isFaweMode()));
         }
     };
 
     public WorldEditHook() {
-        this.blockParser = new OpenItemsBlockParser(WorldEdit.getInstance(), this::isActive);
+        this.blockParser = new OpenItemsBlockParser(
+                WorldEdit.getInstance(), WorldEditSupportState::isBasicActive, presetStore);
+    }
+
+    public WorldEditPresetStore getPresetStore() {
+        return presetStore;
     }
 
     public void register() {
-        active = true;
-        OpenItemsEditSessionSupport.setActive(this::isActive);
+        var logger = OpenItems.getInstance().getLogger();
+
+        if (!OpenItemsConfig.worldEditBasicSupport) {
+            unregister();
+            logger.info("WorldEdit compatibility disabled (worldedit.enable-basic-support=false)");
+            return;
+        }
+
+        if (!WorldEditSupportState.isWorldEditPresent()) {
+            unregister();
+            return;
+        }
+
+        boolean fawePresent = WorldEditSupportState.isFawePresent();
+        boolean faweMode = fawePresent && OpenItemsConfig.worldEditEnableFawe;
+        boolean extendedMode = OpenItemsConfig.worldEditExtendedSupport && !faweMode;
+
+        if (fawePresent && OpenItemsConfig.worldEditExtendedSupport && !OpenItemsConfig.worldEditEnableFawe) {
+            logger.warning(
+                    "worldedit.enable-extended-support is not compatible with FastAsyncWorldEdit. "
+                            + "Set worldedit.enable-fawe=true (recommended) or disable extended support.");
+        }
+
+        WorldEditSupportState.configure(true, extendedMode, faweMode);
+        OpenItemsEditSessionSupport.setExtendedActive(WorldEditSupportState::shouldWrapWorld);
 
         WorldEdit worldEdit = WorldEdit.getInstance();
         if (!parserRegistered) {
@@ -56,41 +99,35 @@ public final class WorldEditHook {
             worldEdit.getEventBus().register(editSessionListener);
             eventBusRegistered = true;
         }
-        if (!sessionManagerInstalled) {
-            OpenItemsSessionManagerInstaller.install();
-            sessionManagerInstalled = true;
-        }
-        if (!editSessionFactoryInstalled) {
-            OpenItemsEditSessionFactoryInstaller.install();
-            editSessionFactoryInstalled = true;
+
+        if (extendedMode) {
+            installExtendedOverrides(logger);
+        } else {
+            uninstallExtendedOverrides(logger);
         }
 
-        OpenItems.getInstance().getLogger().info("WorldEdit compatibility enabled");
+        if (faweMode) {
+            logger.info("WorldEdit compatibility enabled (basic + FAWE extent reads)");
+        } else if (extendedMode) {
+            logger.warning(
+                    "WorldEdit compatibility enabled (basic + extended). "
+                            + "Extended mode uses internal overrides and may break with some WorldEdit versions. "
+                            + "Disable worldedit.enable-extended-support if you encounter issues.");
+        } else {
+            logger.info("WorldEdit compatibility enabled (basic — //set and overwrite cleanup only)");
+            if (fawePresent && !OpenItemsConfig.worldEditEnableFawe) {
+                logger.info("FastAsyncWorldEdit detected — set worldedit.enable-fawe=true for //copy and schematic support.");
+            }
+        }
     }
 
     public void unregister() {
-        active = false;
-        OpenItemsEditSessionSupport.setActive(() -> false);
+        WorldEditSupportState.disable();
+        OpenItemsEditSessionSupport.setExtendedActive(() -> false);
 
-        if (sessionManagerInstalled) {
-            try {
-                OpenItemsSessionManagerInstaller.uninstall();
-            } catch (RuntimeException e) {
-                OpenItems.getInstance().getLogger().warning("Failed to uninstall OpenItems WorldEdit session manager");
-            }
-            sessionManagerInstalled = false;
-        }
-
-        if (editSessionFactoryInstalled) {
-            try {
-                OpenItemsEditSessionFactoryInstaller.uninstall();
-            } catch (RuntimeException e) {
-                OpenItems.getInstance().getLogger().warning("Failed to uninstall OpenItems WorldEdit edit session factory");
-            }
-            editSessionFactoryInstalled = false;
-        }
-
+        uninstallExtendedOverrides(null);
         OpenItemsWorldEditWorlds.clearCache();
+        presetStore.clearAll();
 
         if (!eventBusRegistered)
             return;
@@ -103,7 +140,44 @@ public final class WorldEditHook {
         eventBusRegistered = false;
     }
 
-    boolean isActive() {
-        return active;
+    private void installExtendedOverrides(java.util.logging.Logger logger) {
+        if (!sessionManagerInstalled) {
+            try {
+                OpenItemsSessionManagerInstaller.install();
+                sessionManagerInstalled = true;
+            } catch (RuntimeException e) {
+                logger.log(Level.WARNING, "Failed to install OpenItems WorldEdit session manager", e);
+            }
+        }
+        if (!editSessionFactoryInstalled) {
+            try {
+                OpenItemsEditSessionFactoryInstaller.install();
+                editSessionFactoryInstalled = true;
+            } catch (RuntimeException e) {
+                logger.log(Level.WARNING, "Failed to install OpenItems WorldEdit edit session factory", e);
+            }
+        }
+    }
+
+    private void uninstallExtendedOverrides(java.util.logging.Logger logger) {
+        if (sessionManagerInstalled) {
+            try {
+                OpenItemsSessionManagerInstaller.uninstall();
+            } catch (RuntimeException e) {
+                if (logger != null)
+                    logger.warning("Failed to uninstall OpenItems WorldEdit session manager");
+            }
+            sessionManagerInstalled = false;
+        }
+
+        if (editSessionFactoryInstalled) {
+            try {
+                OpenItemsEditSessionFactoryInstaller.uninstall();
+            } catch (RuntimeException e) {
+                if (logger != null)
+                    logger.warning("Failed to uninstall OpenItems WorldEdit edit session factory");
+            }
+            editSessionFactoryInstalled = false;
+        }
     }
 }

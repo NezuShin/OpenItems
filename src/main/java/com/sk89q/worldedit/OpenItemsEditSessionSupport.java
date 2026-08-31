@@ -4,6 +4,7 @@ import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.extent.inventory.BlockBag;
 import com.sk89q.worldedit.world.World;
 import su.nezushin.openitems.hooks.worldedit.OpenItemsWorldEditWorlds;
+import su.nezushin.openitems.hooks.worldedit.WorldEditSupportState;
 
 import java.lang.reflect.Method;
 import java.util.function.BooleanSupplier;
@@ -13,24 +14,21 @@ import java.util.function.BooleanSupplier;
  */
 public final class OpenItemsEditSessionSupport {
 
-    private static volatile BooleanSupplier active = () -> false;
+    private static volatile BooleanSupplier extendedActive = () -> false;
 
-    private OpenItemsEditSessionSupport() {
-    }
-
-    public static void setActive(BooleanSupplier activeSupplier) {
-        active = activeSupplier;
+    public static void setExtendedActive(BooleanSupplier extendedActiveSupplier) {
+        extendedActive = extendedActiveSupplier;
     }
 
     /**
-     * Wrap a world before passing it to {@link EditSessionBuilder}.
+     * Wrap a world before passing it to {@link EditSessionBuilder} when extended vanilla WE support is active.
      *
      * <p>{@link EditSession#world} is final and cannot be replaced after construction.
      */
     public static World wrapWorld(World world) {
-        if (!active.getAsBoolean())
+        if (!extendedActive.getAsBoolean())
             return world;
-        return OpenItemsWorldEditWorlds.wrap(world, active);
+        return OpenItemsWorldEditWorlds.wrap(world, WorldEditSupportState::isBasicActive);
     }
 
     static void prepareEditingExtents(LocalSession session, EditSession editSession, Actor actor) {

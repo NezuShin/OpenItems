@@ -97,6 +97,11 @@ public class CustomStairsBlockModel implements CustomBlockModel {
     }
 
     @Override
+    public Material resolveHostMaterial(ItemStack item) {
+        return item.getType();
+    }
+
+    @Override
     public void remove(Block b) {
         var display = OpenItems.getInstance().getBlocks().getDisplayEntities().remove(b);
         if (display != null && display.isValid())

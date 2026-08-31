@@ -1,7 +1,9 @@
 package su.nezushin.openitems.blocks.types;
 
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.inventory.ItemStack;
 
 
 public interface CustomBlockModel {
@@ -47,4 +49,9 @@ public interface CustomBlockModel {
     default boolean isFragile() {
         return false;
     }
+
+    /**
+     * Vanilla block type WorldEdit should write before this model is applied.
+     */
+    Material resolveHostMaterial(ItemStack item);
 }

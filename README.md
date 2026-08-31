@@ -6,6 +6,7 @@ Unlike [craftengine](https://modrinth.com/plugin/craftengine), OpenItems not man
 ## Features
 - [Automatic resource pack generation](#automatic-model-generator-and-content-creation)
 - [Custom blocks](#blocks) with [custom hardness](#understanding-block-hardness) — note blocks, chorus plants, tripwires, [stairs](#stairs-itemdisplay), and [slabs](#slabs-itemdisplay)
+- [WorldEdit / FAWE](#worldedit-support) — `//set`, clipboard, presets (`oi:hand`, `oi:preset`, …)
 - [Custom armor models](#equipment)
 - [Custom font images](#font-images-and-placeholders)
 - Edit models of items or blocks, configure their behavior in-game
@@ -16,8 +17,7 @@ Unlike [craftengine](https://modrinth.com/plugin/craftengine), OpenItems not man
 
 ## Soft Dependencies
 - [**PlaceholderAPI**](https://www.spigotmc.org/resources/placeholderapi.6245/) - font image placeholders and text offsets 
-- [**RoseResourcepack**](https://modrinth.com/plugin/roseresourcepack) - resource pack management. Need to be configured manually to work with OpenItems; OpenItems only reloads RoseResourcepack after build 
-- [**ResourcePackManager**](https://www.spigotmc.org/resources/resource-pack-manager.118574/) - resource pack management. Need to be configured manually to work with OpenItems; OpenItems only reloads ResourcePackManager after build
+- [**WorldEdit**](https://enginehub.org/worldedit/) / [**FastAsyncWorldEdit**](https://intellectualsites.com/fastasyncworldedit/) - bulk edits with custom blocks ([details](#worldedit-support))
 
 ## Working with plugin 
 
@@ -259,7 +259,6 @@ Preferred tools get vanilla tool grade and Efficiency (wood/stone/iron/… as on
 
 - `/oedit block hardness <value>` — felt hardness (e.g. `1.5` like stone, `50` like obsidian). `clear` / `none` removes it.
 - `/oedit block preferred_tool [type] [type…]` — tools that get grade (e.g. `pickaxe`, or `pickaxe shovel`). No args clears the list.
-- Setting hardness clears legacy per-tool multipliers on that item.
 
 Overrides (flat, no grade) still work and win over hardness when the held item matches:
 
@@ -271,6 +270,69 @@ Overrides (flat, no grade) still work and win over hardness when the held item m
 If hardness is **unset**, mining uses vanilla host speed unless a material/model override matches. 
 
 Custom break speed only works for note-block and chorus-based blocks; vanilla tripwire breaks instantly.
+
+## WorldEdit support
+
+OpenItems can integrate with [WorldEdit](https://enginehub.org/worldedit/) and [FastAsyncWorldEdit](https://intellectualsites.com/fastasyncworldedit/). OpenItems loads the hook automatically when present.
+
+### Why it works this way
+
+OpenItems does not register new block types in Minecraft’s global block registry (unlike CraftEngine) and does not assign one block state to one specific configured block (like Nexo or IA). Custom blocks are configured at runtime: a vanilla host block (note block, tripwire, chorus, stairs, slab, …) plus OpenItems metadata in a per-chunk runtime registry. There is no `minecraft:my_custom_ore` id WorldEdit could target natively.
+
+Because of that:
+
+- WorldEdit only ever sees vanilla host block states unless OpenItems injects its own payload.
+- Every custom placement must update the runtime registry, apply the model (and sometimes spawn an `ItemDisplay`), and may save chunk data — work that normal `//set stone` does not do.
+- Large edits such as `//set oi:hand` over a big selection are much slower than filling with a vanilla block and can stress the server on huge regions (especially display stairs/slabs).
+
+
+Also, because of [lack of WorldEdit's api](https://github.com/EngineHub/WorldEdit/pull/2544), there is no normal way to 
+make snapshot reads (`//copy`, schematic saves). To achieve this functionality, OI inject its own code to WorldEdit 
+(when `worldedit.enable-extended-support` is enabled). This may break on any version change, so integration has been split into `basic-support` (to correctly `//set` custom blocks, allow to use `//set oi:hand`) and `extended-support` (with clipboard support. Loading/saving schematics). 
+
+FAWE use is highly recommbended because it does not have these problems and does not need additional code injections. 
+
+If both FAWE and extended support are enabled, extended mode is disabled automatically. With FAWE installed but `enable-fawe: false`, only basic support runs unless you enable extended (not recommended alongside FAWE).
+
+### Block patterns (selectors)
+
+Patterns are used as the replacement argument (e.g. `//set <pattern>`). They require a player context for hand/slot/preset forms.
+
+| Pattern | Meaning |
+|---------|---------|
+| `oi:hand` | Main-hand item if it is an OpenItems custom block |
+| `oi:hand[type=top]` | Same, with host `BlockData` properties (slabs/stairs facing, half, …) |
+| `oi:slot:0` … `oi:slot:8` | Hotbar slot `0`–`8` |
+| `oi:preset:<name>` | Saved preset (see below) |
+| `stone_slab[type=top]` | If main hand holds a matching OpenItems slab/stair **item material**, same as `oi:hand[type=top]` |
+
+
+**Presets** are per-player, in-memory templates for WorldEdit (lost on restart/reload):
+
+```text
+/oi we preset save <name>    # save main-hand custom block item
+/oi we preset list
+/oi we preset delete <name>
+//set oi:preset:<name>
+```
+
+### Commands — what works
+
+**Works well (basic tier):**
+
+- `//set oi:hand`, `//set oi:slot:3`, `//set oi:preset:foo` — places custom blocks; registry + model updated
+- `//set air`, `//set stone`, brushes, `//replace <vanilla_host> …` when overwriting custom blocks — OpenItems removes stale metadata/display (no extra drops)
+- `//replace note_block air` — matches all note blocks in the selection (both vanilla and OpenItems), OI's metadata will be cleaned gracefully anyway.
+
+**Needs extended or FAWE tier:**
+
+- `//copy`, `//paste`, `//cut`, `//schem save` / `//schem load` — custom id and item payload must be captured on read and restored on paste
+
+**Works with caveats:**
+
+- `//replace oi:hand oi:slot:2` — the replacement (`oi:slot:2`) works; the filter (`oi:hand`) usually does not match blocks already in the world. You cannot separate “custom” vs “vanilla” on the same host. There is no `//replace` mask by custom id yet.
+- `//replace oi:hand …` as “only my custom blocks” — **not supported**
+- Large `//set oi:…` regions — correct but slow;
 
 ## Plugin API
 

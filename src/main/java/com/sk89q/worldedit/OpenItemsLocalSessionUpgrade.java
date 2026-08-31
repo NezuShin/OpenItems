@@ -10,9 +10,6 @@ import java.util.List;
  */
 public final class OpenItemsLocalSessionUpgrade {
 
-    private OpenItemsLocalSessionUpgrade() {
-    }
-
     public static OpenItemsLocalSession upgrade(LocalSession from) {
         OpenItemsLocalSession to = new OpenItemsLocalSession();
         copyFields(from, to);

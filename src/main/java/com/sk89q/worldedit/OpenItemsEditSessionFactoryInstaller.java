@@ -7,9 +7,6 @@ import java.lang.reflect.Field;
  */
 public final class OpenItemsEditSessionFactoryInstaller {
 
-    private OpenItemsEditSessionFactoryInstaller() {
-    }
-
     public static void install() {
         try {
             Field factoryField = WorldEdit.class.getDeclaredField("editSessionFactory");

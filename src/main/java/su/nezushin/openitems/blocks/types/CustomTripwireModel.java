@@ -3,7 +3,7 @@ package su.nezushin.openitems.blocks.types;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.data.BlockData;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.block.data.type.Tripwire;
 
 public class CustomTripwireModel implements CustomBlockModel {
@@ -35,6 +35,11 @@ public class CustomTripwireModel implements CustomBlockModel {
     @Override
     public boolean isFragile() {
         return true;
+    }
+
+    @Override
+    public Material resolveHostMaterial(ItemStack item) {
+        return Material.TRIPWIRE;
     }
 
     public static void setId(Tripwire nb, int id) {

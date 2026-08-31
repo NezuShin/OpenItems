@@ -4,16 +4,10 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.world.block.BlockState;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.Tag;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.ItemStack;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.blocks.types.CustomBlockModel;
-import su.nezushin.openitems.blocks.types.CustomChorusModel;
-import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
-import su.nezushin.openitems.blocks.types.CustomSlabBlockModel;
-import su.nezushin.openitems.blocks.types.CustomStairsBlockModel;
-import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.utils.NBTUtil;
 
 /**
@@ -21,37 +15,44 @@ import su.nezushin.openitems.utils.NBTUtil;
  */
 final class WorldEditHostStates {
 
-    private WorldEditHostStates() {
+    static BlockState forItem(ItemStack item) {
+        return forItem(item, null);
     }
 
-    static BlockState forItem(ItemStack item) {
+    static BlockState forItem(ItemStack item, String properties) {
         String modelId = NBTUtil.getBlockId(item);
         CustomBlockModel model = OpenItems.getInstance().getModelRegistry().getBlockTypes().get(modelId);
         if (model == null)
             throw new IllegalStateException("Unknown custom block model: " + modelId);
 
-        Material hostMaterial = resolveHostMaterial(item, model);
-        BlockData data = Bukkit.createBlockData(hostMaterial);
+        Material hostMaterial = model.resolveHostMaterial(item);
+        BlockData data = createHostBlockData(hostMaterial, properties);
         return BukkitAdapter.adapt(data);
     }
 
-    private static Material resolveHostMaterial(ItemStack item, CustomBlockModel model) {
-        if (model instanceof CustomStairsBlockModel) {
-            if (Tag.STAIRS.isTagged(item.getType()))
-                return item.getType();
-            return Material.OAK_STAIRS;
+    static BlockState fromHostBlockData(ItemStack item, BlockData hostData) {
+        String modelId = NBTUtil.getBlockId(item);
+        CustomBlockModel model = OpenItems.getInstance().getModelRegistry().getBlockTypes().get(modelId);
+        if (model == null)
+            throw new IllegalStateException("Unknown custom block model: " + modelId);
+
+        Material expectedMaterial = model.resolveHostMaterial(item);
+        if (hostData.getMaterial() != expectedMaterial)
+            throw new IllegalArgumentException(
+                    "Host material " + hostData.getMaterial() + " does not match item material " + expectedMaterial
+            );
+
+        return BukkitAdapter.adapt(hostData);
+    }
+
+    private static BlockData createHostBlockData(Material material, String properties) {
+        if (properties == null || properties.isBlank())
+            return Bukkit.createBlockData(material);
+
+        try {
+            return Bukkit.createBlockData(material, properties);
+        } catch (IllegalArgumentException ignored) {
+            return Bukkit.createBlockData(material.getKey().getKey() + "[" + properties + "]");
         }
-        if (model instanceof CustomSlabBlockModel) {
-            if (Tag.SLABS.isTagged(item.getType()))
-                return item.getType();
-            return Material.OAK_SLAB;
-        }
-        if (model instanceof CustomNoteblockModel)
-            return Material.NOTE_BLOCK;
-        if (model instanceof CustomTripwireModel)
-            return Material.TRIPWIRE;
-        if (model instanceof CustomChorusModel)
-            return Material.CHORUS_PLANT;
-        return Material.STONE;
     }
 }

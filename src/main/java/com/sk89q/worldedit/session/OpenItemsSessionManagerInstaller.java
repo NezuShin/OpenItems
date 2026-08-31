@@ -9,9 +9,6 @@ import java.lang.reflect.Field;
  */
 public final class OpenItemsSessionManagerInstaller {
 
-    private OpenItemsSessionManagerInstaller() {
-    }
-
     public static void install() {
         WorldEdit worldEdit = WorldEdit.getInstance();
         try {

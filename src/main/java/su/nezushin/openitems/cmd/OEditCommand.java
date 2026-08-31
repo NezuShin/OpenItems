@@ -14,6 +14,7 @@ import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Tag;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -21,10 +22,13 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nezushin.openitems.blocks.ToolItemType;
+import su.nezushin.openitems.blocks.types.CustomSlabBlockModel;
+import su.nezushin.openitems.blocks.types.CustomStairsBlockModel;
 import su.nezushin.openitems.utils.Message;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.utils.NBTUtil;
@@ -135,6 +139,7 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
                     if (args[1].equalsIgnoreCase("model")) {
                         item = NBTUtil.setBlockId(item, args[2]);
                         block = NBTUtil.getBlockData(item);
+                        warnIfHostBlockMismatch(p, item, args[2]);
                     } else if (block != null) {
                         if (args[1].equalsIgnoreCase("hardness")) {
                             if (args.length >= 3) {
@@ -315,6 +320,23 @@ public class OEditCommand implements CommandExecutor, TabCompleter {
         }
 
         return true;
+    }
+
+    private static void warnIfHostBlockMismatch(Player player, ItemStack item, String modelId) {
+        var model = OpenItems.getInstance().getModelRegistry().getBlockTypes().get(modelId);
+        if (model == null)
+            return;
+
+        Material material = item.getType();
+        if (model instanceof CustomStairsBlockModel && !Tag.STAIRS.isTagged(material)) {
+            Message.oedit_block_model_stairs_host_warning
+                    .replace("{material}", material.name().toLowerCase())
+                    .send(player);
+        } else if (model instanceof CustomSlabBlockModel && !Tag.SLABS.isTagged(material)) {
+            Message.oedit_block_model_slab_host_warning
+                    .replace("{material}", material.name().toLowerCase())
+                    .send(player);
+        }
     }
 
 

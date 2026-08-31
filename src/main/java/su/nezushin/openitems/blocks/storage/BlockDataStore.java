@@ -29,17 +29,14 @@ public class BlockDataStore {
     protected String overrideId;
 
     /**
-     * Custom felt hardness. {@code null} means unset — use legacy tool speed maps.
+     * Custom felt hardness. {@code null} means unset — vanilla host speed applies.
      */
     protected Double hardness = null;
 
     protected Set<ToolItemType> preferredTools = new HashSet<>();
 
-    protected Map<ToolItemType, Double> toolSpeedMultipliers = new HashMap<>();
     protected Map<Material, Double> materialSpeedMultipliers = new HashMap<>();
     protected Map<String, Double> modelSpeedMultipliers = new HashMap<>();
-
-    protected Set<ToolItemType> toolSpeedHasGradeMultiplier = new HashSet<>();
 
     protected Set<ToolItemType> dropWhenMinedByTools = new HashSet<>();
 
@@ -87,14 +84,9 @@ public class BlockDataStore {
         var speedMultiplier = compound.getCompound("speed_multiplier");
 
         if (speedMultiplier != null) {
-            compoundToMap(speedMultiplier.getCompound("tools")).forEach((k, v) ->
-                    toolSpeedMultipliers.put(ToolItemType.valueOf(k.toUpperCase()), v));
             compoundToMap(speedMultiplier.getCompound("materials")).forEach((k, v) ->
                     materialSpeedMultipliers.put(Material.valueOf(k.toUpperCase()), v));
             modelSpeedMultipliers.putAll(compoundToMap(speedMultiplier.getCompound("models")));
-
-            var toolsList = speedMultiplier.getStringList("tools_has_grade_multiplier");
-            toolSpeedHasGradeMultiplier = new HashSet<>(toolsList.stream().map(i -> ToolItemType.valueOf(i.toUpperCase())).toList());
         }
 
         return true;
@@ -139,14 +131,11 @@ public class BlockDataStore {
         preferredList.clear();
         preferredList.addAll(preferredTools.stream().map(Enum::name).toList());
 
-        var speedMultiplier = compound.getOrCreateCompound("speed_multiplier");
+        var dropToolsList = compound.getStringList("drop_when_mined_by_tools");
+        dropToolsList.clear();
+        dropToolsList.addAll(dropWhenMinedByTools.stream().map(Enum::name).toList());
 
-        var tools = speedMultiplier.getOrCreateCompound("tools");
-        toolSpeedMultipliers.forEach((k, v) -> {
-            if (v != -1)
-                tools.setDouble(k.name(), v);
-            else tools.removeKey(k.name());
-        });
+        var speedMultiplier = compound.getOrCreateCompound("speed_multiplier");
 
         var materials = speedMultiplier.getOrCreateCompound("materials");
         materialSpeedMultipliers.forEach((k, v) -> {
@@ -162,10 +151,6 @@ public class BlockDataStore {
                 models.setDouble(k, v);
             else models.removeKey(k);
         });
-        var list = speedMultiplier.getStringList("tools_has_grade_multiplier");
-        list.clear();
-        list.addAll(toolSpeedHasGradeMultiplier.stream().map(Enum::name).toList());
-
         return this.itemToDrop = nbtItem.getItem();
     }
 
@@ -307,15 +292,10 @@ public class BlockDataStore {
     }
 
     /**
-     * Set custom hardness. Passing {@code null} clears it (legacy speed maps apply again).
-     * Setting a value clears legacy per-tool maps so both styles do not pile up.
+     * Set custom hardness. Passing {@code null} clears it.
      */
     public void setHardness(Double hardness) {
         this.hardness = hardness;
-        if (hardness != null) {
-            this.toolSpeedMultipliers.clear();
-            this.toolSpeedHasGradeMultiplier.clear();
-        }
     }
 
     public Set<ToolItemType> getPreferredTools() {
@@ -326,24 +306,12 @@ public class BlockDataStore {
         this.preferredTools = preferredTools;
     }
 
-    public Map<ToolItemType, Double> getToolSpeedMultipliers() {
-        return toolSpeedMultipliers;
-    }
-
     public Map<Material, Double> getMaterialSpeedMultipliers() {
         return materialSpeedMultipliers;
     }
 
     public Map<String, Double> getModelSpeedMultipliers() {
         return modelSpeedMultipliers;
-    }
-
-    public Set<ToolItemType> getToolSpeedHasGradeMultiplier() {
-        return toolSpeedHasGradeMultiplier;
-    }
-
-    public void setToolSpeedHasGradeMultiplier(Set<ToolItemType> toolSpeedHasGradeMultiplier) {
-        this.toolSpeedHasGradeMultiplier = toolSpeedHasGradeMultiplier;
     }
 
     public Set<ToolItemType> dropWhenMinedByTools() {
@@ -365,10 +333,8 @@ public class BlockDataStore {
                 ", overrideId='" + overrideId + '\'' +
                 ", hardness=" + hardness +
                 ", preferredTools=" + preferredTools +
-                ", toolSpeedMultipliers=" + toolSpeedMultipliers +
                 ", materialSpeedMultipliers=" + materialSpeedMultipliers +
                 ", modelSpeedMultipliers=" + modelSpeedMultipliers +
-                ", toolSpeedHasGradeMultiplier=" + toolSpeedHasGradeMultiplier +
                 ", dropWhenMinedByTools=" + dropWhenMinedByTools +
                 ", itemToDrop=" + itemToDrop +
                 '}';

@@ -49,6 +49,25 @@ messages:
     - "<reset><#08c0c2><click:suggest_command:'/oi font print_path'>/oi <#08c0c2>font print_path <path> <#008f9a>print font image"
     - "<reset><#08c0c2><click:suggest_command:'/oi font print_image'>/oi <#08c0c2>font print_image <symbol> <#008f9a>print symbol"
     - "<reset><#08c0c2><click:suggest_command:'/oi font print_offset_sequence'>/oi <#08c0c2>font print_offset_sequence <offset> <#008f9a>print sequence for offset <#08c0c2><offset><#008f9a> pixels. Offset can be negative"
+    - "<reset><#08c0c2><click:suggest_command:'/oi we preset save'>/oi <#08c0c2>we preset save <name> <#008f9a>save main-hand custom block for WorldEdit"
+    - "<reset><#08c0c2><click:suggest_command:'/oi we preset list'>/oi <#08c0c2>we preset list <#008f9a>list saved WorldEdit presets"
+
+  oi-we-not-available: '<red>WorldEdit support is not enabled.'
+  oi-we-preset-help:
+    - '<reset><gray>-------------<#008f9a>WorldEdit presets<reset><gray>-------------'
+    - "<reset><#08c0c2><click:suggest_command:'/oi we preset save'>/oi <#08c0c2>we preset save <name> <#008f9a>save main-hand custom block"
+    - "<reset><#08c0c2><click:suggest_command:'/oi we preset delete'>/oi <#08c0c2>we preset delete <name> <#008f9a>delete preset"
+    - "<reset><#08c0c2><click:suggest_command:'/oi we preset list'>/oi <#08c0c2>we preset list <#008f9a>list presets"
+    - '<reset><gray>Use <#08c0c2>//set oi:preset:<name><gray> in WorldEdit'
+  oi-we-preset-saved: '<#008f9a>Saved WorldEdit preset <#08c0c2>{name}<#008f9a>.'
+  oi-we-preset-deleted: '<#008f9a>Deleted WorldEdit preset <#08c0c2>{name}<#008f9a>.'
+  oi-we-preset-not-found: '<red>WorldEdit preset not found: <#08c0c2>{name}'
+  oi-we-preset-list-empty: '<gray>You have no WorldEdit presets saved.'
+  oi-we-preset-list-header: '<reset><gray>-------------<#008f9a>WorldEdit presets<reset><gray>-------------'
+  oi-we-preset-list-entry: '<reset><#08c0c2>{name}'
+  oi-we-preset-invalid-name: '<red>Invalid preset name: <#08c0c2>{name}<red> (use letters, numbers, _ and -)'
+  oi-we-preset-not-custom-block: '<red>Main-hand item is not an OpenItems custom block.'
+  oi-we-preset-unknown-model: '<red>Unknown OpenItems block model: <#08c0c2>{id}'
 
   oedit-help-general:
     - '<reset><gray>------------------<#008f9a>OEdit general help<reset><gray>-----------------'
@@ -74,7 +93,7 @@ messages:
     - '<reset><gray>------------------<#008f9a>OEdit block help<reset><gray>-----------------'
     - "<reset><#08c0c2><click:suggest_command:'/oedit block'>/oedit <#08c0c2>block<grey> - <#008f9a>show info about block"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block model'>/oedit <#08c0c2>block model <model path><grey> - <#008f9a>set block model for item (when placed); make possible to place this item as block"
-    - "<reset><#08c0c2><click:suggest_command:'/oedit block hardness'>/oedit <#08c0c2>block hardness <value|clear><grey> - <#008f9a>set custom felt hardness (e.g. 1.5 like stone). Clears legacy tool multipliers"
+    - "<reset><#08c0c2><click:suggest_command:'/oedit block hardness'>/oedit <#08c0c2>block hardness <value|clear><grey> - <#008f9a>set custom felt hardness (e.g. 1.5 like stone)"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block preferred_tool'>/oedit <#08c0c2>block preferred_tool [type] [type...]<grey> - <#008f9a>tools that get grade/Efficiency (e.g. pickaxe). Empty list clears"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block break_speed_multiplier'>/oedit <#08c0c2>block break_speed_multiplier<grey> - <#008f9a>show / set material or model speed overrides"
     - "<reset><#08c0c2><click:suggest_command:'/oedit block drop_on_break'>/oedit <#08c0c2>block drop_on_break <true/false><grey> - <#008f9a>make block drop item when mined by player"
@@ -100,18 +119,15 @@ messages:
     - "<reset><#08c0c2><click:suggest_command:'/oedit equipment dispensable'>/oedit <#08c0c2>equipment dispensable <true/false><grey> - set possible to equip item using dispenser<#008f9a>)"
     - "<reset><#08c0c2><click:suggest_command:'/oedit equipment damage_on_hurt'>/oedit <#08c0c2>equipment damage_on_hurt <true/false><grey> - decrease durability when hte wearing entity is damaged<#008f9a>)"
 
+  oedit-block-model-stairs-host-warning: '<reset><yellow>Stairs block model requires a vanilla stairs item as host; current material is <#08c0c2>{material}<yellow>.'
+  oedit-block-model-slab-host-warning: '<reset><yellow>Slab block model requires a vanilla slab item as host; current material is <#08c0c2>{material}<yellow>.'
+
   oedit-break-speed-multiplier: "<reset><gray>--------------<#008f9a>Block speed multipliers<reset><gray>-------------"
 
   oedit-break-speed-multiplier-none:
   - '<reset><#008f9a>There is no speed multipliers for this block'
   - '<reset><#008f9a>Prefer <#08c0c2>/oedit block hardness <value><#008f9a> and <#08c0c2>/oedit block preferred_tool <tool>'
   - '<reset><#008f9a>Or override: <#08c0c2>/oedit block break_speed_multiplier material|model <id> <multiplier>'
-
-  oedit-break-speed-grade-list:    '<reset><#08c0c2>Applied tool grades to: <#008f9a>{values}'
-  oedit-break-speed-grade-delimiter: '<#08c0c2>, <#008f9a>'
-
-  oedit-break-speed-multiplier-tool:
-    - "<reset><grey>(tool) <#08c0c2>{tool} <grey>- <#008f9a>{multiplier}x"
 
   oedit-break-speed-multiplier-material:
     - "<reset><grey>(material) <#08c0c2>{material} <grey>- <#008f9a>{multiplier}x"

@@ -9,9 +9,6 @@ import java.util.Map;
 
 final class BlockExtraCodec {
 
-    private BlockExtraCodec() {
-    }
-
     /** Empty map → null (omit "m" on disk). */
     static String encode(Map<String, Object> extras) {
         if (extras == null || extras.isEmpty())

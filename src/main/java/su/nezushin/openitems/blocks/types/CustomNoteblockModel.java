@@ -5,7 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.Note;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.data.BlockData;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.block.data.type.NoteBlock;
 
 import java.util.HashMap;
@@ -65,6 +65,11 @@ public class CustomNoteblockModel implements CustomBlockModel {
     @Override
     public boolean applyOnPhysics() {
         return true;
+    }
+
+    @Override
+    public Material resolveHostMaterial(ItemStack item) {
+        return Material.NOTE_BLOCK;
     }
 
     public static void setId(NoteBlock nb, int id) {

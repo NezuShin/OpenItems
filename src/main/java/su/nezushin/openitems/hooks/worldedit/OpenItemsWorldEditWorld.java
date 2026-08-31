@@ -10,9 +10,8 @@ import java.util.function.BooleanSupplier;
 /**
  * WorldEdit {@link BukkitWorld} wrapper that attaches OpenItems item payloads during block reads.
  *
- * <p>{@link com.sk89q.worldedit.EditSession#getFullBlock} reads from the session world directly,
- * bypassing the extent stack. Wrapping the world fixes {@code //copy}, {@code //cut},
- * {@code //schem save}, and similar snapshot operations.
+ * <p>Used by extended vanilla WorldEdit support ({@code enable-extended-support}). FAWE uses
+ * {@link OpenItemsWorldEditExtent} read enrichment instead.
  */
 final class OpenItemsWorldEditWorld extends BukkitWorld {
 
@@ -28,6 +27,6 @@ final class OpenItemsWorldEditWorld extends BukkitWorld {
         BaseBlock block = super.getFullBlock(position);
         if (!active.getAsBoolean())
             return block;
-        return OpenItemsWorldEditBlocks.enrichFullBlock(getWorld(), position, block);
+        return OpenItemsWorldEditTag.enrichFullBlock(getWorld(), position, block);
     }
 }

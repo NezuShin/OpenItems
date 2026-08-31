@@ -83,10 +83,8 @@ public class BlockLocationStore extends BlockDataStore {
                 ", id='" + id + '\'' +
                 ", hardness=" + hardness +
                 ", preferredTools=" + preferredTools +
-                ", toolSpeedMultipliers=" + toolSpeedMultipliers +
                 ", materialSpeedMultipliers=" + materialSpeedMultipliers +
                 ", modelSpeedMultipliers=" + modelSpeedMultipliers +
-                ", toolSpeedHasGradeMultiplier=" + toolSpeedHasGradeMultiplier +
                 ", dropWhenMinedByTools=" + dropWhenMinedByTools +
                 ", itemToDrop=" + itemToDrop +
                 '}';
