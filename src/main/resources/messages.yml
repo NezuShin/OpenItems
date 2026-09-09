@@ -51,6 +51,9 @@ messages:
     - "<reset><#08c0c2><click:suggest_command:'/oi font print_offset_sequence'>/oi <#08c0c2>font print_offset_sequence <offset> <#008f9a>print sequence for offset <#08c0c2><offset><#008f9a> pixels. Offset can be negative"
     - "<reset><#08c0c2><click:suggest_command:'/oi we preset save'>/oi <#08c0c2>we preset save <name> <#008f9a>save main-hand custom block for WorldEdit"
     - "<reset><#08c0c2><click:suggest_command:'/oi we preset list'>/oi <#08c0c2>we preset list <#008f9a>list saved WorldEdit presets"
+    - "<reset><#08c0c2><click:suggest_command:'/oi inventory load'>/oi <#08c0c2>inventory load \\<namespace:name\\> <#008f9a>load a saved inventory kit"
+    - "<reset><#08c0c2><click:suggest_command:'/oi inventory save'>/oi <#08c0c2>inventory save \\<namespace:name\\> <#008f9a>save current inventory"
+    - "<reset><#08c0c2><click:suggest_command:'/oi inventory restore'>/oi <#08c0c2>inventory restore <#008f9a>restore inventory from before load"
 
   oi-we-not-available: '<red>WorldEdit support is not enabled.'
   oi-we-preset-help:
@@ -68,6 +71,23 @@ messages:
   oi-we-preset-invalid-name: '<red>Invalid preset name: <#08c0c2>{name}<red> (use letters, numbers, _ and -)'
   oi-we-preset-not-custom-block: '<red>Main-hand item is not an OpenItems custom block.'
   oi-we-preset-unknown-model: '<red>Unknown OpenItems block model: <#08c0c2>{id}'
+
+  oi-inventory-help:
+    - '<reset><gray>-------------<#008f9a>Saved inventories<reset><gray>-------------'
+    - "<reset><#08c0c2><click:suggest_command:'/oi inventory load'>/oi <#08c0c2>inventory load \\<namespace:name\\> <#008f9a>replace your inventory with a saved kit"
+    - "<reset><#08c0c2><click:suggest_command:'/oi inventory save'>/oi <#08c0c2>inventory save \\<namespace:name\\> <#008f9a>save current inventory (requires confirm)"
+    - "<reset><#08c0c2><click:suggest_command:'/oi inventory restore'>/oi <#08c0c2>inventory restore <#008f9a>restore inventory from before load"
+    - '<reset><gray>Kits are stored in <#08c0c2>contents/<namespace>/saved_inventories/<name>.yml'
+  oi-inventory-saved: '<#008f9a>Saved inventory <#08c0c2>{id}<#008f9a>.'
+  oi-inventory-loaded: '<#008f9a>Loaded inventory <#08c0c2>{id}<#008f9a>.'
+  oi-inventory-restore-hint: "<reset><#008f9a>Click <#08c0c2><click:run_command:'/oi inventory restore'>[here]</click><#008f9a> to restore your old inventory"
+  oi-inventory-restored: '<#008f9a>Restored your previous inventory.'
+  oi-inventory-not-found: '<red>Saved inventory not found: <#08c0c2>{id}'
+  oi-inventory-invalid-id: '<red>Invalid inventory id: <#08c0c2>{id}<red> (use namespace:name)'
+  oi-inventory-namespace-missing: '<red>Namespace directory not found: <#08c0c2>{namespace}'
+  oi-inventory-save-confirm: "<reset><#008f9a>Click to confirm saving <#08c0c2>{id}<#008f9a>: <#08c0c2><click:run_command:'/oi inventory save {id} confirm'>[Confirm]"
+  oi-inventory-nothing-to-restore: '<red>There is no inventory to restore.'
+  oi-inventory-save-err: '<red>Failed to save inventory. Check console.'
 
   oedit-help-general:
     - '<reset><gray>------------------<#008f9a>OEdit general help<reset><gray>-----------------'
@@ -158,6 +178,7 @@ messages:
     - "<reset><#008f9a>Note block: <#08c0c2>{block-types-noteblock} of 1050<#008f9a> models"
     - "<reset><#008f9a>Stairs: <#08c0c2>{block-types-stairs}<#008f9a> models"
     - "<reset><#008f9a>Slabs: <#08c0c2>{block-types-slabs}<#008f9a> models"
+    - "<reset><#008f9a>Arbitrary: <#08c0c2>{block-types-arbitrary}<#008f9a> models"
 
 
 

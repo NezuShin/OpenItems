@@ -90,6 +90,7 @@ public class NamespacedSectionBuilder {
         var slabsDir = new File(this.sectionDir, "textures/block/item_display/slabs");
         var tripwireDir = new File(this.sectionDir, "models/block/tripwire");
         var chorusDir = new File(this.sectionDir, "models/block/chorus_plant");
+        var arbitraryDir = new File(this.sectionDir, "models/block/item_display/arbitrary");
 
 
         var customModelTemplatesDir = new File(this.sectionDir, "textures/");
@@ -191,6 +192,7 @@ public class NamespacedSectionBuilder {
         generateSlabModels(pngFilesSlabs);
         scanForTripwireModels(tripwireDir, "block");
         scanForChorusModels(chorusDir, "block");
+        scanForArbitraryModels(arbitraryDir, "block/item_display");
 
         scanForItemModels(new File(this.sectionDir, "models/item"), "");
 
@@ -359,6 +361,29 @@ public class NamespacedSectionBuilder {
         path = Utils.createPath(path, file);
         for (File i : file.listFiles())
             scanForChorusModels(i, path);
+    }
+
+    // scan dropped JSON under models/block/item_display/arbitrary → block registry + /items dir
+    public void scanForArbitraryModels(File file, String path) throws IOException {
+        if (!file.exists())
+            return;
+        if (!file.isDirectory()) {
+            if (!file.getName().toLowerCase().endsWith(".json"))
+                return;
+
+            var modelPath = this.namespace + ":" + path + "/" + Utils.getFileName(file);
+            createRegularTemplateItem(modelPath, path, Utils.getFileName(file));
+
+            var blockIdCache = OpenItems.getInstance().getResourcePackBuilder().getBlockIdCache();
+            blockIdCache.registerArbitrary(modelPath);
+            return;
+        }
+        path = Utils.createPath(path, file);
+        var children = file.listFiles();
+        if (children == null)
+            return;
+        for (File i : children)
+            scanForArbitraryModels(i, path);
     }
 
     private void generateEquipmentModels(File equipmentDir) throws IOException {

@@ -2,6 +2,8 @@ package su.nezushin.openitems;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.inventory.ItemStack;
+import su.nezushin.openitems.blocks.types.CustomArbitraryBlockModel;
 import su.nezushin.openitems.blocks.types.CustomBlockModel;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
 import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
@@ -11,6 +13,7 @@ import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.utils.Message;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Registry for the item models, block models, equipment and font images
@@ -35,6 +38,9 @@ public class ModelRegistry {
     //font spaces
     private SortedMap<Integer, String> fontSpaces = new TreeMap<>();
 
+    // namespace:name -> inventory contents; kept mutable after setLock so save can update it
+    private final Map<String, ItemStack[]> savedInventories = new ConcurrentHashMap<>();
+
     public Map<String, CustomBlockModel> getBlockTypes() {
         return blockTypes;
     }
@@ -58,6 +64,10 @@ public class ModelRegistry {
 
     public Map<Integer, String> getFontSpaces() {
         return fontSpaces;
+    }
+
+    public Map<String, ItemStack[]> getSavedInventories() {
+        return savedInventories;
     }
 
     //synchronized collections for async resource pack scan and build
@@ -101,6 +111,8 @@ public class ModelRegistry {
                         .filter(i -> i instanceof CustomStairsBlockModel).count()),
                 "{block-types-slabs}", String.valueOf(blockTypes.values().stream()
                         .filter(i -> i instanceof CustomSlabBlockModel).count()),
+                "{block-types-arbitrary}", String.valueOf(blockTypes.values().stream()
+                        .filter(i -> i instanceof CustomArbitraryBlockModel).count()),
                 "{font-images}", String.valueOf(fontImages.size()),
                 "{font-spaces}", String.valueOf(fontSpaces.size())
         ).send(sender);
@@ -113,5 +125,6 @@ public class ModelRegistry {
         fontSpaces = new TreeMap<>();
         fontImages = new HashMap<>();
         fontImageFonts = new HashMap<>();
+        savedInventories.clear();
     }
 }

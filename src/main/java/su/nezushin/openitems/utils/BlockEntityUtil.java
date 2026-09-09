@@ -1,6 +1,9 @@
 package su.nezushin.openitems.utils;
 
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Transformation;
 
 public class BlockEntityUtil {
 
@@ -12,5 +15,13 @@ public class BlockEntityUtil {
                 return true;
         }
         return false;
+    }
+
+    public static void configureBlockDisplay(ItemDisplay entity, ItemStack item, Transformation transformation, String scoreboardTag) {
+        entity.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.HEAD);
+        entity.setItemStack(item);
+        entity.setTransformation(transformation);
+        entity.addScoreboardTag(scoreboardTag);
+        entity.setPersistent(false);
     }
 }

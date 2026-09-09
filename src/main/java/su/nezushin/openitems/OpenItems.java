@@ -10,6 +10,7 @@ import su.nezushin.openitems.cmd.OEditCommand;
 import su.nezushin.openitems.cmd.OItemsCommand;
 import su.nezushin.openitems.hooks.CommandHooks;
 import su.nezushin.openitems.hooks.FontImageExpansion;
+import su.nezushin.openitems.inventory.PlayerInventoryBackup;
 import su.nezushin.openitems.hooks.worldedit.WorldEditHook;
 import su.nezushin.openitems.hooks.worldedit.WorldEditSupportState;
 import su.nezushin.openitems.rp.ResourcePackBuilder;
@@ -28,6 +29,7 @@ public final class OpenItems extends JavaPlugin {
     private FontImageExpansion papiHook;
     private CommandHooks commandHooks;
     private WorldEditHook worldEditHook;
+    private PlayerInventoryBackup inventoryBackup;
 
     public static NamespacedKey CUSTOM_BLOCKS_VERSION_KEY;
 
@@ -48,6 +50,7 @@ public final class OpenItems extends JavaPlugin {
         this.modelRegistry = new ModelRegistry();
         this.blocks = new CustomBlocks();
         this.resourcePackBuilder = new ResourcePackBuilder();
+        this.inventoryBackup = new PlayerInventoryBackup();
 
 
         load();
@@ -133,5 +136,9 @@ public final class OpenItems extends JavaPlugin {
 
     public WorldEditHook getWorldEditHook() {
         return worldEditHook;
+    }
+
+    public PlayerInventoryBackup getInventoryBackup() {
+        return inventoryBackup;
     }
 }

@@ -18,8 +18,10 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
@@ -713,7 +715,11 @@ public class CustomBlocksListener implements Listener {
         Block block = e.getClickedBlock();
         var blocks = OpenItems.getInstance().getBlocks();
         if (block == null) return;
-        if (!blocks.getPlacedBlocks().containsKey(block)) return;
+        var placedBlock = blocks.getPlacedBlocks().get(block);
+        if (placedBlock == null) return;
+        var model = placedBlock.getCurrentModel();
+        if (model != null && !model.denyVanillaRightClick())
+            return;
         if (!player.isSneaking()) e.setUseInteractedBlock(Event.Result.DENY);
     }
 

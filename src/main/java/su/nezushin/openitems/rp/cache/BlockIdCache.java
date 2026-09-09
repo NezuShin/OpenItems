@@ -31,6 +31,7 @@ public class BlockIdCache extends JsonCache {
 
     private Set<String> registeredStairs = new HashSet<>();
     private Set<String> registeredSlabs = new HashSet<>();
+    private Set<String> registeredArbitrary = new HashSet<>();
 
     private int nextNoteblockId = 1;
     private int nextTripwireId = 1;
@@ -78,6 +79,10 @@ public class BlockIdCache extends JsonCache {
         registeredSlabs.add(name);
     }
 
+    public void registerArbitrary(String name) {
+        registeredArbitrary.add(name);
+    }
+
     public void build() throws IOException {
         var blockstatesDir = new File(OpenItems.getInstance().getDataFolder(), "build/assets/minecraft/blockstates");
 
@@ -100,6 +105,7 @@ public class BlockIdCache extends JsonCache {
         this.registeredChorusIds.clear();
         this.registeredStairs.clear();
         this.registeredSlabs.clear();
+        this.registeredArbitrary.clear();
     }
 
     @Override
@@ -129,5 +135,9 @@ public class BlockIdCache extends JsonCache {
 
     public Set<String> getRegisteredSlabs() {
         return registeredSlabs;
+    }
+
+    public Set<String> getRegisteredArbitrary() {
+        return registeredArbitrary;
     }
 }

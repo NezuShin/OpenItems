@@ -44,6 +44,13 @@ public interface CustomBlockModel {
     }
 
     /**
+     * Note hosts must not run vanilla right-click (tune note).
+     */
+    default boolean denyVanillaRightClick() {
+        return false;
+    }
+
+    /**
      * Fragile models are destroyed instead of moved when pistons interact with them.
      */
     default boolean isFragile() {

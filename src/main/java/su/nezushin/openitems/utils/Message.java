@@ -25,7 +25,10 @@ public enum Message {
     oi_font_image_format, oi_font_image_not_found, oi_help_general, oi_font_offset_format,
     oi_we_not_available, oi_we_preset_help, oi_we_preset_saved, oi_we_preset_deleted, oi_we_preset_not_found,
     oi_we_preset_list_empty, oi_we_preset_list_header, oi_we_preset_list_entry, oi_we_preset_invalid_name,
-    oi_we_preset_not_custom_block, oi_we_preset_unknown_model;
+    oi_we_preset_not_custom_block, oi_we_preset_unknown_model,
+    oi_inventory_help, oi_inventory_saved, oi_inventory_loaded, oi_inventory_restored,
+    oi_inventory_not_found, oi_inventory_invalid_id, oi_inventory_namespace_missing,
+    oi_inventory_save_confirm, oi_inventory_restore_hint, oi_inventory_nothing_to_restore, oi_inventory_save_err;
 
     private List<String> list = Lists.newArrayList("");
 

@@ -58,13 +58,8 @@ public class CustomStairsBlockModel implements CustomBlockModel {
 
         if (!displayEntities.containsKey(b)) {
             var location = b.getLocation().add(0.5, 0.9, 0.5);
-            var display = b.getWorld().spawn(location, ItemDisplay.class, entity -> {
-                entity.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.HEAD);
-                entity.setItemStack(item);
-                entity.setTransformation(transformation);
-                entity.addScoreboardTag(SCOREBOARD_TAG);
-                entity.setPersistent(false);
-            });
+            var display = b.getWorld().spawn(location, ItemDisplay.class, entity ->
+                    BlockEntityUtil.configureBlockDisplay(entity, item, transformation, SCOREBOARD_TAG));
             displayEntities.put(b, display);
             return;
         }
@@ -95,7 +90,7 @@ public class CustomStairsBlockModel implements CustomBlockModel {
     public boolean isReapplyOnLoadNeeded() {
         return true;
     }
-
+    
     @Override
     public Material resolveHostMaterial(ItemStack item) {
         return item.getType();

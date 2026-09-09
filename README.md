@@ -24,6 +24,9 @@ Unlike [craftengine](https://modrinth.com/plugin/craftengine), OpenItems not man
 ### Commands
 - `/openitems` - reloading plugin and building resource pack
 - `/oedit` - main command for item editing
+- `/oi inventory load <namespace:name>` (alias `/oi inv`) — replace your inventory with a kit from `contents/<namespace>/saved_inventories/<name>.yml`. The inventory from before that load is kept in memory until a server restart.
+- `/oi inventory save <namespace:name>` — save the current inventory to that file (click the confirm prompt, or add `confirm`)
+- `/oi inventory restore` — restore the inventory from before the last load (can be used more than once)
 
 ### Suggested Setup
 - [**PaperMC**](https://papermc.io/) as server core
@@ -182,7 +185,7 @@ Example model:
 
 The plugin scans content directories and registers block models automatically. Set the item look with `/oedit item model <your_model_path>`, then apply block behaviour with `/oedit block model <your_model_path>` so the item places as a custom block.
 
-For note-block, tripwire, and chorus hosts the generator also writes `minecraft/blockstates/` (`note_block.json`, `tripwire.json`, `chorus_plant.json`). Stairs and slabs use a different approach (see below).
+For note-block, tripwire, and chorus hosts the generator also writes `minecraft/blockstates/` (`note_block.json`, `tripwire.json`, `chorus_plant.json`). Stairs, slabs, and arbitrary ItemDisplay models use a different approach (see below).
 
 ##### Note blocks
 
@@ -244,9 +247,29 @@ The generator builds ItemDisplay models for `bottom` and `top`, an inventory ite
 
 **Merging:** two half slabs may form a double only when both are the same custom id and the same host material (`itemToDrop` type). On a valid merge the host becomes a note block and the placed-block registry entry switches to `<namespace>:block/note_block/double_slabs/...` (`CustomNoteblockModel`). The drop item stays the original slab item.
 
+##### Arbitrary (ItemDisplay)
+
+Models: `OpenItems/contents/<namespace>/models/block/item_display/arbitrary/`
+
+Drop a JSON model here (copied as-is into the build, like tripwire/chorus). The host is whatever vanilla block item you use as the base (collision and physics stay that material). The custom look is an `ItemDisplay` whose `item_model` is the dropped file — it does **not** follow host BlockData (no facing/half/shape variants).
+
+Registry id: `<namespace>:block/item_display/arbitrary/<model>` (subdirectories are allowed).
+
+These models are shown with the same `HEAD` transform as stairs/slabs (`translation [0, -6.4, 0]` at entity y+0.9). Include that in your JSON so a 16³ cube sits in the block:
+
+```json
+"display": {
+  "head": { "translation": [0, -6.4, 0] }
+}
+```
+
+**Placement:** use any vanilla block item as the base (e.g. `barrier`, `stone`, `glass`), then set `/oedit item model` and `/oedit block model` to `<namespace>:block/item_display/arbitrary/my_model`. The item’s material becomes the host; OpenItems only overlays the display and stores metadata.
+
+Arbitrary models do not consume note-block / tripwire / chorus blockstate IDs.
+
 #### Understanding block hardness
 
-Plugin cannot change real block hardness (note-block / chorus hosts stay those materials; stairs and half slabs stay their vanilla hosts; merged double slabs become note blocks). It sets a player `block_break_speed` attribute so mining *feels* like a chosen hardness.
+Plugin cannot change real block hardness (note-block / chorus hosts stay those materials; stairs and half slabs stay their vanilla hosts; merged double slabs become note blocks; arbitrary ItemDisplay hosts stay the item’s material). It sets a player `block_break_speed` attribute so mining *feels* like a chosen hardness.
 
 Typical setup (stone-like ore mined with pickaxes):
 
@@ -277,13 +300,13 @@ OpenItems can integrate with [WorldEdit](https://enginehub.org/worldedit/) and [
 
 ### Why it works this way
 
-OpenItems does not register new block types in Minecraft’s global block registry (unlike CraftEngine) and does not assign one block state to one specific configured block (like Nexo or IA). Custom blocks are configured at runtime: a vanilla host block (note block, tripwire, chorus, stairs, slab, …) plus OpenItems metadata in a per-chunk runtime registry. There is no `minecraft:my_custom_ore` id WorldEdit could target natively.
+OpenItems does not register new block types in Minecraft’s global block registry (unlike CraftEngine) and does not assign one block state to one specific configured block (like Nexo or IA). Custom blocks are configured at runtime: a vanilla host block (note block, tripwire, chorus, stairs, slab, arbitrary ItemDisplay, …) plus OpenItems metadata in a per-chunk runtime registry. There is no `minecraft:my_custom_ore` id WorldEdit could target natively.
 
 Because of that:
 
 - WorldEdit only ever sees vanilla host block states unless OpenItems injects its own payload.
 - Every custom placement must update the runtime registry, apply the model (and sometimes spawn an `ItemDisplay`), and may save chunk data — work that normal `//set stone` does not do.
-- Large edits such as `//set oi:hand` over a big selection are much slower than filling with a vanilla block and can stress the server on huge regions (especially display stairs/slabs).
+- Large edits such as `//set oi:hand` over a big selection are much slower than filling with a vanilla block and can stress the server on huge regions (especially display stairs/slabs/arbitrary).
 
 
 Also, because of [lack of WorldEdit's api](https://github.com/EngineHub/WorldEdit/pull/2544), there is no normal way to 

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.hooks.worldedit.WorldEditPresetStore;
+import su.nezushin.openitems.inventory.SavedInventoryStore;
 import su.nezushin.openitems.utils.Message;
 import su.nezushin.openitems.utils.NBTUtil;
 import su.nezushin.openitems.utils.Utils;
@@ -78,6 +79,8 @@ public class OItemsCommand implements CommandExecutor, TabCompleter {
                 }
             } else if (args[0].equalsIgnoreCase("we")) {
                 handleWorldEditPreset(sender, args);
+            } else if (args[0].equalsIgnoreCase("inventory") || args[0].equalsIgnoreCase("inv")) {
+                handleInventory(sender, args);
             } else if (args[0].equalsIgnoreCase("scan_mip_map")) {
                 OpenItems.async(() -> {
                     try {
@@ -111,18 +114,22 @@ public class OItemsCommand implements CommandExecutor, TabCompleter {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
 
         if (args.length == 1)
-            return Lists.newArrayList("build", "font", "reload", "scan_mip_map", "we")
+            return Lists.newArrayList("build", "font", "reload", "scan_mip_map", "we", "inventory", "inv")
                     .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[0])).toList();
 
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("we"))
                 return tabCompleteWorldEditPreset(sender, args);
+            if (isInventoryCommand(args[0]))
+                return tabCompleteInventory(sender, args);
             if (args[0].equalsIgnoreCase("font"))
                 return Lists.newArrayList("print_path", "print_image", "print_offset_sequence")
                         .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
         } else if (args.length == 3) {
             if (args[0].equalsIgnoreCase("we"))
                 return tabCompleteWorldEditPreset(sender, args);
+            if (isInventoryCommand(args[0]))
+                return tabCompleteInventory(sender, args);
             if (args[0].equalsIgnoreCase("font")) {
                 if (args[1].equalsIgnoreCase("print_path"))
                     return OpenItems.getInstance().getModelRegistry().getFontImages().keySet()
@@ -133,7 +140,106 @@ public class OItemsCommand implements CommandExecutor, TabCompleter {
             }
         } else if (args.length == 4 && args[0].equalsIgnoreCase("we")) {
             return tabCompleteWorldEditPreset(sender, args);
+        } else if (args.length == 4 && isInventoryCommand(args[0])) {
+            return tabCompleteInventory(sender, args);
         }
+
+        return List.of();
+    }
+
+    private static boolean isInventoryCommand(String arg) {
+        return arg.equalsIgnoreCase("inventory") || arg.equalsIgnoreCase("inv");
+    }
+
+    private static void handleInventory(CommandSender sender, String[] args) throws CommandException {
+        if (!(sender instanceof Player player))
+            throw new CommandException(Message.err_player_only.get());
+
+        if (args.length < 2) {
+            Message.oi_inventory_help.send(sender);
+            return;
+        }
+
+        String action = args[1];
+        if (action.equalsIgnoreCase("restore")) {
+            ItemStack[] snapshot = OpenItems.getInstance().getInventoryBackup().get(player.getUniqueId());
+            if (snapshot == null)
+                throw new CommandException(Message.oi_inventory_nothing_to_restore.get());
+
+            player.getInventory().clear();
+            player.setItemOnCursor(null);
+            player.getInventory().setContents(snapshot);
+            Message.oi_inventory_restored.send(sender);
+            return;
+        }
+
+        if (args.length < 3) {
+            Message.oi_inventory_help.send(sender);
+            return;
+        }
+
+        SavedInventoryStore.InventoryId id;
+        try {
+            id = SavedInventoryStore.parseId(args[2]);
+        } catch (IllegalArgumentException e) {
+            throw new CommandException(Message.oi_inventory_invalid_id.replace("{id}", args[2]));
+        }
+
+        if (action.equalsIgnoreCase("load")) {
+            ItemStack[] items = OpenItems.getInstance().getModelRegistry().getSavedInventories().get(id.toId());
+            if (items == null)
+                throw new CommandException(Message.oi_inventory_not_found.replace("{id}", id.toId()));
+
+            OpenItems.getInstance().getInventoryBackup().put(player.getUniqueId(), player.getInventory().getContents());
+
+            player.getInventory().clear();
+            player.setItemOnCursor(null);
+            player.getInventory().setContents(SavedInventoryStore.copyToSize(items, player.getInventory().getContents().length));
+            Message.oi_inventory_loaded.replace("{id}", id.toId()).send(sender);
+            Message.oi_inventory_restore_hint.send(sender);
+            return;
+        }
+
+        if (action.equalsIgnoreCase("save")) {
+            boolean confirm = args.length >= 4 && args[3].equalsIgnoreCase("confirm");
+            if (!confirm) {
+                Message.oi_inventory_save_confirm.replace("{id}", id.toId()).send(sender);
+                return;
+            }
+
+            if (!SavedInventoryStore.namespaceExists(id.namespace()))
+                throw new CommandException(Message.oi_inventory_namespace_missing.replace("{namespace}", id.namespace()));
+
+            try {
+                ItemStack[] contents = SavedInventoryStore.cloneContents(player.getInventory().getContents());
+                SavedInventoryStore.write(SavedInventoryStore.getFile(id), contents);
+                OpenItems.getInstance().getModelRegistry().getSavedInventories().put(id.toId(), contents);
+                Message.oi_inventory_saved.replace("{id}", id.toId()).send(sender);
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new CommandException(Message.oi_inventory_save_err.get());
+            }
+            return;
+        }
+
+        Message.oi_inventory_help.send(sender);
+    }
+
+    private static List<String> tabCompleteInventory(CommandSender sender, String[] args) {
+        if (args.length == 2)
+            return Lists.newArrayList("load", "save", "restore")
+                    .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[1])).toList();
+
+        if (args.length == 3
+                && (args[1].equalsIgnoreCase("load") || args[1].equalsIgnoreCase("save"))) {
+            return OpenItems.getInstance().getModelRegistry().getSavedInventories().keySet().stream()
+                    .filter(i -> StringUtil.startsWithIgnoreCase(i, args[2]))
+                    .toList();
+        }
+
+        if (args.length == 4 && args[1].equalsIgnoreCase("save"))
+            return Lists.newArrayList("confirm")
+                    .stream().filter(i -> StringUtil.startsWithIgnoreCase(i, args[3])).toList();
 
         return List.of();
     }

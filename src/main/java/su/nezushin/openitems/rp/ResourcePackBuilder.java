@@ -2,6 +2,7 @@ package su.nezushin.openitems.rp;
 
 import org.bukkit.Bukkit;
 import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.blocks.types.CustomArbitraryBlockModel;
 import su.nezushin.openitems.blocks.types.CustomChorusModel;
 import su.nezushin.openitems.blocks.types.CustomNoteblockModel;
 import su.nezushin.openitems.blocks.types.CustomSlabBlockModel;
@@ -9,6 +10,7 @@ import su.nezushin.openitems.blocks.types.CustomStairsBlockModel;
 import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.AsyncBuildDoneEvent;
 import su.nezushin.openitems.events.AsyncRegistryLoadedEvent;
+import su.nezushin.openitems.inventory.SavedInventoryStore;
 import su.nezushin.openitems.rp.cache.BlockIdCache;
 import su.nezushin.openitems.rp.cache.FontImageIdCache;
 import su.nezushin.openitems.utils.Message;
@@ -152,6 +154,9 @@ public class ResourcePackBuilder {
             this.blockIdCache.getRegisteredSlabs().forEach(k -> {
                 OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomSlabBlockModel(k));
             });
+            this.blockIdCache.getRegisteredArbitrary().forEach(k -> {
+                OpenItems.getInstance().getModelRegistry().getBlockTypes().put(k, new CustomArbitraryBlockModel(k));
+            });
             this.fontImageIdCache.getRegisteredCharIds().forEach((k, v) -> {
                 OpenItems.getInstance().getModelRegistry().getFontImages().put(k, v.getSymbol());
             });
@@ -163,6 +168,8 @@ public class ResourcePackBuilder {
             this.fontImageIdCache.getFontSpaces().forEach((k, v) -> {
                 OpenItems.getInstance().getModelRegistry().getFontSpaces().put(k, v);
             });
+
+            SavedInventoryStore.scanInto(OpenItems.getInstance().getModelRegistry().getSavedInventories());
 
             OpenItems.async(() -> Bukkit.getPluginManager().callEvent(new AsyncRegistryLoadedEvent()));
         } catch (Exception ex) {

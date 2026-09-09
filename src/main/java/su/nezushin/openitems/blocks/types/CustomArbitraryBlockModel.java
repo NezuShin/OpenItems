@@ -3,7 +3,6 @@ package su.nezushin.openitems.blocks.types;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.type.Slab;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Transformation;
@@ -11,20 +10,18 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import su.nezushin.openitems.OpenItems;
 import su.nezushin.openitems.utils.BlockEntityUtil;
-import su.nezushin.openitems.utils.SlabPathsUtil;
 
 /**
- * Half slabs: ItemDisplay on a vanilla slab host ({@code bottom}/{@code top}).
- * Doubles: promoted via {@link su.nezushin.openitems.blocks.CustomBlocks#overrideBlockModel}
- * to a note-block host; real {@code id} stays the slab model path.
+ * Arbitrary ItemDisplay overlay: host is the item's vanilla material; look is a
+ * fixed {@code item_model} (the dropped JSON id). Host BlockData is ignored.
  */
-public class CustomSlabBlockModel implements CustomBlockModel {
+public class CustomArbitraryBlockModel implements CustomBlockModel {
 
-    public static final String SCOREBOARD_TAG = BlockEntityUtil.SCOREBOARD_TAG_PREFIX + "Slab";
+    public static final String SCOREBOARD_TAG = BlockEntityUtil.SCOREBOARD_TAG_PREFIX + "Arbitrary";
 
     private final String id;
 
-    public CustomSlabBlockModel(String id) {
+    public CustomArbitraryBlockModel(String id) {
         this.id = id;
     }
 
@@ -32,34 +29,14 @@ public class CustomSlabBlockModel implements CustomBlockModel {
         return id;
     }
 
-    /**
-     * Paired note-block model id for the full (double) form.
-     */
-    public String getDoubleNoteblockId() {
-        return SlabPathsUtil.toDoubleNoteblockId(id);
-    }
-
-    private static boolean shouldPromoteToDouble(Block block) {
-        if (block.getType() == Material.NOTE_BLOCK)
-            return true;
-        return block.getBlockData() instanceof Slab slab && slab.getType() == Slab.Type.DOUBLE;
-    }
-
     @Override
     public void apply(Block b, boolean update) {
-        if (shouldPromoteToDouble(b)) {
-            OpenItems.getInstance().getBlocks().overrideBlockModel(b, getDoubleNoteblockId());
-            return;
-        }
-        if (!(b.getBlockData() instanceof Slab slab) || slab.getType() == Slab.Type.DOUBLE)
-            return;
-
         var displayEntities = OpenItems.getInstance().getBlocks().getDisplayEntities();
-        var item = createDisplayItem(slab);
+        var item = createDisplayItem();
         var transformation = createTransformation();
 
         if (!displayEntities.containsKey(b)) {
-            var location = b.getLocation().add(0.5, 0.9, 0.5);
+            var location = b.getLocation().add(0.5, 0.5, 0.5);
             var display = b.getWorld().spawn(location, ItemDisplay.class, entity ->
                     BlockEntityUtil.configureBlockDisplay(entity, item, transformation, SCOREBOARD_TAG));
             displayEntities.put(b, display);
@@ -68,7 +45,7 @@ public class CustomSlabBlockModel implements CustomBlockModel {
 
         var display = displayEntities.get(b);
         if (display != null && display.isValid()) {
-            display.teleport(b.getLocation().add(0.5, 0.9, 0.5));
+            display.teleport(b.getLocation().add(0.5, 0.5, 0.5));
             display.setTeleportDuration(0);
             display.setItemStack(item);
             display.setTransformation(transformation);
@@ -80,17 +57,22 @@ public class CustomSlabBlockModel implements CustomBlockModel {
 
     @Override
     public boolean isSimilar(Block b) {
-        return b.getBlockData() instanceof Slab slab && slab.getType() != Slab.Type.DOUBLE;
+        return true;
     }
 
     @Override
     public boolean applyOnPhysics() {
-        return true;
+        return false;
     }
 
     @Override
     public boolean isReapplyOnLoadNeeded() {
         return true;
+    }
+
+    @Override
+    public boolean denyVanillaRightClick() {
+        return false;
     }
 
     @Override
@@ -105,11 +87,9 @@ public class CustomSlabBlockModel implements CustomBlockModel {
             display.remove();
     }
 
-    public ItemStack createDisplayItem(Slab slab) {
-        var typeName = slab.getType() == Slab.Type.TOP ? "top" : "bottom";
-        var modelPath = id + "/" + typeName;
+    public ItemStack createDisplayItem() {
         var item = new ItemStack(Material.STONE);
-        var key = NamespacedKey.fromString(modelPath);
+        var key = NamespacedKey.fromString(id);
         if (key != null)
             item.editMeta(meta -> meta.setItemModel(key));
         return item;

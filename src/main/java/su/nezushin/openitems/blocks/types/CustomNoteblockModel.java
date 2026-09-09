@@ -67,6 +67,12 @@ public class CustomNoteblockModel implements CustomBlockModel {
         return true;
     }
 
+
+    @Override
+    public boolean denyVanillaRightClick() {
+        return true;
+    }
+
     @Override
     public Material resolveHostMaterial(ItemStack item) {
         return Material.NOTE_BLOCK;

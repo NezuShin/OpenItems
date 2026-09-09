@@ -29,7 +29,7 @@ public class NamespacedConfig {
 
 
     private List<String> extensionsIgnoreList = Lists.newArrayList(".yml");
-    private List<String> directoriesIgnoreList = Lists.newArrayList();
+    private List<String> directoriesIgnoreList = Lists.newArrayList("/saved_inventories");
 
 
     private String generatedModelTemplate = "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"{path}\"}}";
