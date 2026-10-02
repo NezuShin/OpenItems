@@ -61,4 +61,13 @@ public interface CustomBlockModel {
      * Vanilla block type WorldEdit should write before this model is applied.
      */
     Material resolveHostMaterial(ItemStack item);
+
+    /**
+     * Write this model's id into host block data. Does not change the world.
+     *
+     * @return true when this model stores its id in block data
+     */
+    default boolean applyTo(BlockData data) {
+        return false;
+    }
 }

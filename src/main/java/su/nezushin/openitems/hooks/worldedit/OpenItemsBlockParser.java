@@ -7,6 +7,8 @@ import com.sk89q.worldedit.internal.registry.InputParser;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.world.block.BaseBlock;
+import com.sk89q.worldedit.world.block.BlockType;
+import com.sk89q.worldedit.world.block.BlockTypes;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -79,7 +81,11 @@ public final class OpenItemsBlockParser extends InputParser<BaseBlock> {
         };
 
         validateCustomBlockItem(item);
-        return OpenItemsWorldEditTag.tag(WorldEditHostStates.forItem(item, pattern.properties()), item);
+        try {
+            return OpenItemsWorldEditTag.tag(WorldEditHostStates.forItem(item, pattern.properties()), item);
+        } catch (IllegalArgumentException e) {
+            throw parseError("Invalid block properties: " + pattern.properties());
+        }
     }
 
     /**
@@ -126,6 +132,14 @@ public final class OpenItemsBlockParser extends InputParser<BaseBlock> {
 
         if (input.startsWith(PREFIX)) {
             String rest = input.substring(PREFIX.length());
+            int propertiesStart = rest.indexOf('[');
+            if (propertiesStart >= 0) {
+                String base = rest.substring(0, propertiesStart);
+                String properties = rest.substring(propertiesStart + 1);
+                if (properties.endsWith("]"))
+                    properties = properties.substring(0, properties.length() - 1);
+                return propertySuggestions(context, base, properties);
+            }
             if (rest.isEmpty() || "hand".startsWith(rest))
                 return Stream.of( "oi:hand", "oi:slot:", "oi:preset:");
             if ("slot:".startsWith(rest) || rest.startsWith("slot:"))
@@ -135,6 +149,41 @@ public final class OpenItemsBlockParser extends InputParser<BaseBlock> {
         }
 
         return Stream.empty();
+    }
+
+    private Stream<String> propertySuggestions(ParserContext context, String base, String properties) {
+        ItemStack item = resolveSuggestionItem(context, base);
+        if (item == null)
+            return Stream.empty();
+
+        String modelId = NBTUtil.getBlockId(item);
+        CustomBlockModel model = modelId == null
+                ? null
+                : OpenItems.getInstance().getModelRegistry().getBlockTypes().get(modelId);
+        if (model == null)
+            return Stream.empty();
+
+        BlockType type = BlockTypes.get(model.resolveHostMaterial(item).getKey().toString());
+        if (type == null)
+            return Stream.empty();
+
+        return OpenItemsPropertySuggestions.suggest(PREFIX + base, type, properties);
+    }
+
+    private ItemStack resolveSuggestionItem(ParserContext context, String base) {
+        try {
+            ItemStack item = switch (getForm(base)) {
+                case HAND -> resolveHand(context);
+                case SLOT -> resolveSlot(context, base.substring("slot:".length()));
+                case PRESET -> resolvePreset(context, base.substring("preset:".length()));
+                default -> null;
+            };
+            if (item == null || item.getType().isAir() || item.getAmount() <= 0 || NBTUtil.getBlockId(item) == null)
+                return null;
+            return item;
+        } catch (InputParseException e) {
+            return null;
+        }
     }
 
     private Stream<String> presetSuggestions(ParserContext context, String rest) {

@@ -51,8 +51,12 @@ final class WorldEditHostStates {
 
         try {
             return Bukkit.createBlockData(material, properties);
-        } catch (IllegalArgumentException ignored) {
-            return Bukkit.createBlockData(material.getKey().getKey() + "[" + properties + "]");
+        } catch (IllegalArgumentException first) {
+            try {
+                return Bukkit.createBlockData(material.getKey().getKey() + "[" + properties + "]");
+            } catch (IllegalArgumentException ignored) {
+                throw first;
+            }
         }
     }
 }

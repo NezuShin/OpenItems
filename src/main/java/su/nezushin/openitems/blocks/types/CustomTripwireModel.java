@@ -3,6 +3,7 @@ package su.nezushin.openitems.blocks.types;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.block.data.type.Tripwire;
 
@@ -17,9 +18,17 @@ public class CustomTripwireModel implements CustomBlockModel {
     public void apply(Block b, boolean update) {
         b.setType(Material.TRIPWIRE, update);
         if (b.getBlockData() instanceof Tripwire t) {
-            setId(t, this.id);
+            applyTo(t);
             b.setBlockData(t, update);
         }
+    }
+
+    @Override
+    public boolean applyTo(BlockData data) {
+        if (!(data instanceof Tripwire tripwire))
+            return false;
+        setId(tripwire, id);
+        return true;
     }
 
     @Override

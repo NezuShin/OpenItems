@@ -5,6 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.Note;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.block.data.type.NoteBlock;
 
@@ -52,9 +53,17 @@ public class CustomNoteblockModel implements CustomBlockModel {
         b.setType(Material.NOTE_BLOCK, update);
 
         if (b.getBlockData() instanceof NoteBlock nb) {
-            setId(nb, id);
+            applyTo(nb);
             b.setBlockData(nb, update);
         }
+    }
+
+    @Override
+    public boolean applyTo(BlockData data) {
+        if (!(data instanceof NoteBlock noteBlock))
+            return false;
+        setId(noteBlock, id);
+        return true;
     }
 
     @Override

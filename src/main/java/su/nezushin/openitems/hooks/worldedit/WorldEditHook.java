@@ -19,7 +19,7 @@ import java.util.logging.Level;
  * <ul>
  *   <li>Basic — extent writes + {@code oi:} block parser</li>
  *   <li>Extended — vanilla WE world wrapper and session/factory overrides for //copy</li>
- *   <li>FAWE — extent read enrichment instead of extended overrides</li>
+ *   <li>FAWE — {@link OpenItemsFaweExtent} for reads and //set; vanilla extent is not used</li>
  * </ul>
  */
 public final class WorldEditHook {
@@ -45,12 +45,20 @@ public final class WorldEditHook {
                 return;
 
             World world = BukkitAdapter.adapt(event.getWorld());
+            if (WorldEditSupportState.isFaweMode()) {
+                event.setExtent(new OpenItemsFaweExtent(
+                        event.getExtent(),
+                        world,
+                        WorldEditSupportState::isBasicActive,
+                        event.getStage()));
+                return;
+            }
+
             event.setExtent(new OpenItemsWorldEditExtent(
                     event.getExtent(),
                     world,
                     WorldEditSupportState::isBasicActive,
-                    event.getStage(),
-                    WorldEditSupportState.isFaweMode()));
+                    event.getStage()));
         }
     };
 
@@ -107,7 +115,7 @@ public final class WorldEditHook {
         }
 
         if (faweMode) {
-            logger.info("WorldEdit compatibility enabled (basic + FAWE extent reads)");
+            logger.info("WorldEdit compatibility enabled (basic + FAWE reads and //set)");
         } else if (extendedMode) {
             logger.warning(
                     "WorldEdit compatibility enabled (basic + extended). "

@@ -2,6 +2,7 @@ package su.nezushin.openitems.blocks.types;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.block.data.MultipleFacing;
 import su.nezushin.openitems.utils.Utils;
@@ -17,9 +18,17 @@ public class CustomChorusModel implements CustomBlockModel {
     public void apply(Block b, boolean update) {
         b.setType(Material.CHORUS_PLANT, update);
         if (b.getBlockData() instanceof MultipleFacing t) {
-            setId(t, this.id);
+            applyTo(t);
             b.setBlockData(t, update);
         }
+    }
+
+    @Override
+    public boolean applyTo(BlockData data) {
+        if (!(data instanceof MultipleFacing facing))
+            return false;
+        setId(facing, id);
+        return true;
     }
 
     @Override

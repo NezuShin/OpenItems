@@ -5,8 +5,6 @@ import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.extent.AbstractDelegateExtent;
 import com.sk89q.worldedit.extent.Extent;
 import com.sk89q.worldedit.math.BlockVector3;
-import com.sk89q.worldedit.world.block.BaseBlock;
-import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -20,12 +18,9 @@ import java.util.function.BooleanSupplier;
 /**
  * Intercepts WorldEdit block reads and writes to keep OpenItems metadata in sync.
  *
- * <p>Writes (//set, paste placement, overwrite cleanup) are always handled here when basic support
- * is enabled. Reads for copy/schematic capture use either:
- * <ul>
- *   <li>FAWE mode — {@link #getFullBlock} / {@link #getBlock} enrichment on this extent</li>
- *   <li>Extended vanilla WE — {@link OpenItemsWorldEditWorld} world wrapper</li>
- * </ul>
+ * <p>Writes (//set, paste placement, overwrite cleanup) are handled here for vanilla WorldEdit.
+ * FAWE installs {@link OpenItemsFaweExtent} instead. Reads for copy/schematic capture on vanilla
+ * WorldEdit use {@link OpenItemsWorldEditWorld} when extended support is enabled.
  *
  * <p>Model application must happen in {@link EditSession.Stage#BEFORE_CHANGE} after the host block
  * has actually been written.
@@ -35,44 +30,22 @@ final class OpenItemsWorldEditExtent extends AbstractDelegateExtent {
     private final World world;
     private final BooleanSupplier active;
     private final EditSession.Stage stage;
-    private final boolean enrichReads;
 
     OpenItemsWorldEditExtent(
             Extent extent,
             World world,
             BooleanSupplier active,
-            EditSession.Stage stage,
-            boolean enrichReads
+            EditSession.Stage stage
     ) {
         super(extent);
         this.world = world;
         this.active = active;
         this.stage = stage;
-        this.enrichReads = enrichReads;
-    }
-
-    @Override
-    public BlockState getBlock(BlockVector3 position) {
-        BlockState block = super.getBlock(position);
-        if (!enrichReads || !active.getAsBoolean())
-            return block;
-        return enrich(block.toBaseBlock(), position).toImmutableState();
-    }
-
-    @Override
-    public BaseBlock getFullBlock(BlockVector3 position) {
-        return enrich(super.getFullBlock(position), position);
     }
 
     @Override
     public <B extends BlockStateHolder<B>> boolean setBlock(BlockVector3 position, B block) throws WorldEditException {
         return setBlockInternal(position, block);
-    }
-
-    private BaseBlock enrich(BaseBlock block, BlockVector3 position) {
-        if (!enrichReads || !active.getAsBoolean())
-            return block;
-        return OpenItemsWorldEditTag.enrichFullBlock(world, position, block);
     }
 
     private <B extends BlockStateHolder<B>> boolean setBlockInternal(BlockVector3 position, B block)
