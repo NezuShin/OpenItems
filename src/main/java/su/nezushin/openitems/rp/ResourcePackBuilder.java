@@ -33,6 +33,12 @@ public class ResourcePackBuilder {
     private FontImageIdCache fontImageIdCache;
     private boolean hasMipMapProblem = false;
 
+    /**
+     * True from {@link #clean()} until a successful {@link #fillRegistry()} inside {@link #build()}.
+     * Chunk loads must not treat a missing model as deleted while this is set.
+     */
+    private volatile boolean registryRefreshing = false;
+
     public ResourcePackBuilder() {
         try {
             this.loadCache();
@@ -84,6 +90,7 @@ public class ResourcePackBuilder {
             var startTime = System.currentTimeMillis();
             OpenItems.getInstance().getModelRegistry().setLock(false);
             this.loadCache();
+            this.registryRefreshing = true;
             this.clean();
 
 
@@ -95,7 +102,8 @@ public class ResourcePackBuilder {
             this.fontImageIdCache.save();
 
             fillRegistry();
-
+            this.registryRefreshing = false;
+            OpenItems.sync(() -> OpenItems.getInstance().getBlocks().finishBlocksLoadedDuringRefresh());
 
             for (var out : OpenItemsConfig.getResourcePackCopyDestinationFiles()) {
                 Utils.deleteDirectory(out);
@@ -216,5 +224,9 @@ public class ResourcePackBuilder {
 
     public boolean isHasMipMapProblem() {
         return hasMipMapProblem;
+    }
+
+    public boolean isRegistryRefreshing() {
+        return registryRefreshing;
     }
 }

@@ -41,6 +41,12 @@ public class CustomBlocks {
 
     private Map<Chunk, Integer> saveChunkDebounce = new HashMap<>();
 
+    /**
+     * Blocks registered while a resource pack build had cleared the model registry.
+     * They stay in {@link #placedBlocks} so interactions work; the model is resolved when the registry is full.
+     */
+    private final Set<Block> blocksAwaitingModel = new HashSet<>();
+
     private BlockBreakSpeedModifiers blockBreakSpeedModifiers;
 
     private final ChunkBlockSnapshotEncoder snapshotEncoder = new ChunkBlockSnapshotEncoder();
@@ -162,6 +168,7 @@ public class CustomBlocks {
             List<BlockLocationStore> list = snapshotDecoder.decode(chunk, snapshotSerializer.decode(rawPayload));
 
             OpenItems.sync(() -> {
+                var refreshing = OpenItems.getInstance().getResourcePackBuilder().isRegistryRefreshing();
                 var needSaveChunk = false;
                 for (var i : list) {
 
@@ -180,17 +187,10 @@ public class CustomBlocks {
                         continue;
                     }
 
-                    var model = i.getCurrentModel();
-
-                    if (model == null) {
-                        OpenItems.getInstance().getLogger().severe(
-                                "Custom block model not found: '" + i.getEffectiveBlockId() + "'. Removing stored block data.");
-                        destroyBlock(block, false, false);
-                        continue;
-                    }
-
-                    if (model.isReapplyOnLoadNeeded())
-                        model.apply(block, false);
+                    if (refreshing)
+                        blocksAwaitingModel.add(block);
+                    else
+                        resolveBlockModel(block, i);
 
                     Bukkit.getPluginManager().callEvent(new CustomBlockLoadEvent(block, i));
                 }
@@ -201,7 +201,43 @@ public class CustomBlocks {
         });
     }
 
+    /**
+     * Resolve models for blocks that were registered while the registry was empty.
+     * A model that still matches the world block is left as-is, except display models that must be reapplied.
+     * A model that no longer matches is applied. A missing model is removed, same as a normal load.
+     * Main thread only.
+     */
+    public void finishBlocksLoadedDuringRefresh() {
+        var blocks = new ArrayList<>(blocksAwaitingModel);
+        blocksAwaitingModel.clear();
+        for (var block : blocks) {
+            if (!block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4))
+                continue;
+
+            var store = this.placedBlocks.get(block);
+            if (store == null)
+                continue;
+
+            resolveBlockModel(block, store);
+        }
+    }
+
+    private void resolveBlockModel(Block block, BlockLocationStore store) {
+        var model = store.getCurrentModel();
+
+        if (model == null) {
+            OpenItems.getInstance().getLogger().severe(
+                    "Custom block model not found: '" + store.getEffectiveBlockId() + "'. Removing stored block data.");
+            destroyBlock(block, false, false);
+            return;
+        }
+
+        if (model.isReapplyOnLoadNeeded())
+            model.apply(block, false);
+    }
+
     public void destroyBlock(Block block, boolean dropItem, boolean setAir) {
+        blocksAwaitingModel.remove(block);
         var placedBlock = this.placedBlocks.remove(block);
 
         if (placedBlock != null) {
@@ -402,7 +438,7 @@ public class CustomBlocks {
     /**
      * Set modelId for already placed block. This method will also will save custom chunk data.
      *
-     * @param block block to apply modelId
+     * @param block   block to apply modelId
      * @param modelId path to the block modelId
      */
     public void changeBlockModel(Block block, String modelId) {
@@ -457,6 +493,9 @@ public class CustomBlocks {
      * @param chunk chunk
      */
     public void cleanChunk(Chunk chunk) {
+        blocksAwaitingModel.removeIf(block -> block.getWorld().equals(chunk.getWorld())
+                && (block.getX() >> 4) == chunk.getX()
+                && (block.getZ() >> 4) == chunk.getZ());
         for (var i : this.placedBlocks.entrySet()
                 .stream().filter(i -> i.getKey().getChunk().equals(chunk)).toList()) {
             Bukkit.getPluginManager().callEvent(new CustomBlockUnloadEvent(i.getKey(), i.getValue()));
