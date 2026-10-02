@@ -116,6 +116,7 @@ public final class WorldEditHook {
 
         if (faweMode) {
             logger.info("WorldEdit compatibility enabled (basic + FAWE reads and //set)");
+            OpenItemsFaweAllowlist.warnIfExtentBlocked(logger);
         } else if (extendedMode) {
             logger.warning(
                     "WorldEdit compatibility enabled (basic + extended). "

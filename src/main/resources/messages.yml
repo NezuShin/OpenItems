@@ -71,6 +71,10 @@ messages:
   oi-we-preset-invalid-name: '<red>Invalid preset name: <#08c0c2>{name}<red> (use letters, numbers, _ and -)'
   oi-we-preset-not-custom-block: '<red>Main-hand item is not an OpenItems custom block.'
   oi-we-preset-unknown-model: '<red>Unknown OpenItems block model: <#08c0c2>{id}'
+  oi-we-fawe-extent-blocked:
+    - '<red>FastAsyncWorldEdit is blocking OpenItems edits.'
+    - '<gray>Add this line under <white>extent.allowed-plugins<gray> in <white>plugins/FastAsyncWorldEdit/config.yml<gray>, then run <white>/we reload<gray>:'
+    - "<reset><#08c0c2><click:copy_to_clipboard:'{class}'>- \"{class}\""
 
   oi-inventory-help:
     - '<reset><gray>-------------<#008f9a>Saved inventories<reset><gray>-------------'
