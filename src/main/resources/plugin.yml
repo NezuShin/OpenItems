@@ -2,6 +2,7 @@ name: OpenItems
 version: '1.0-SNAPSHOT'
 main: su.nezushin.openitems.OpenItems
 api-version: '1.21'
+folia-supported: true
 author: NezuShin
 depend: [NBTAPI]
 softdepend: [PlaceholderAPI, ResourcePackManager, RoseResourcepack, WorldEdit, FastAsyncWorldEdit]

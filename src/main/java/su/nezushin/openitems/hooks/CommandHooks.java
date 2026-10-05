@@ -7,6 +7,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.BroadcastMessageEvent;
 import su.nezushin.openitems.OpenItems;
+import su.nezushin.openitems.scheduler.SchedulerManager;
 import su.nezushin.openitems.utils.Message;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 
@@ -20,7 +21,7 @@ public class CommandHooks implements Listener {
 
     private boolean buildInProgress;
     private boolean waitingForQuiet;
-    private int quietTaskId = -1;
+    private SchedulerManager.ScheduledWork quietTask;
     private Runnable quietCallback;
 
     public CommandHooks() {
@@ -53,7 +54,7 @@ public class CommandHooks implements Listener {
                 if (announce)
                     Message.oi_build_end_done.send(sender);
 
-                OpenItems.sync(() -> runAfterBuildCommands(OpenItemsConfig.afterBuildCommands, sender, () -> {
+                OpenItems.getInstance().getScheduler().runGlobal(() -> runAfterBuildCommands(OpenItemsConfig.afterBuildCommands, sender, () -> {
                     if (announce && !sender.equals(Bukkit.getConsoleSender())) {
                         OpenItems.getInstance().getModelRegistry().reportLoaded(sender);
                         if (OpenItems.getInstance().getResourcePackBuilder().isHasMipMapProblem())
@@ -134,10 +135,7 @@ public class CommandHooks implements Listener {
     }
 
     private void syncRun(Runnable task) {
-        if (Bukkit.isPrimaryThread())
-            task.run();
-        else
-            OpenItems.sync(task);
+        OpenItems.getInstance().getScheduler().executeGlobal(task);
     }
 
     private CommandSender createHookSender(CommandSender initiator) {
@@ -156,28 +154,33 @@ public class CommandHooks implements Listener {
     }
 
     private void scheduleQuietTask() {
-        if (quietTaskId != -1)
-            Bukkit.getScheduler().cancelTask(quietTaskId);
+        if (quietTask != null) {
+            quietTask.cancel();
+            quietTask = null;
+        }
 
         var ticks = Math.max(1L, (OpenItemsConfig.beforeBuildMessageTimeout + 49L) / 50L);
-        quietTaskId = Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(), () -> {
-            quietTaskId = -1;
+        SchedulerManager.ScheduledWork[] holder = new SchedulerManager.ScheduledWork[1];
+        holder[0] = OpenItems.getInstance().getScheduler().runGlobalDelayed(() -> {
+            if (quietTask == holder[0])
+                quietTask = null;
             waitingForQuiet = false;
             var cb = quietCallback;
             quietCallback = null;
             if (cb != null)
                 cb.run();
         }, ticks);
+        quietTask = holder[0];
     }
 
     private void onCommandMessage() {
         if (!waitingForQuiet)
             return;
-        if (!Bukkit.isPrimaryThread()) {
-            OpenItems.sync(this::onCommandMessage);
-            return;
-        }
-        scheduleQuietTask();
+        OpenItems.getInstance().getScheduler().executeGlobal(() -> {
+            if (!waitingForQuiet)
+                return;
+            scheduleQuietTask();
+        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

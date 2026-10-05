@@ -2,6 +2,7 @@ package su.nezushin.openitems.blocks;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
@@ -40,13 +41,17 @@ import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CustomBlocksListener implements Listener {
 
-    private Map<Block, BlockLocationStore> brokenBlocks = new HashMap<>();
+    private final Map<Block, BlockLocationStore> brokenBlocks = new ConcurrentHashMap<>();
 
     /** Locations where we intentionally destroyed custom chorus; suppress vanilla fruit briefly. */
-    private final Map<Block, Integer> suppressChorusFruitUntilTick = new HashMap<>();
+    private final Map<Block, Long> suppressChorusFruitUntilTick = new ConcurrentHashMap<>();
+
+    /** Five ticks at 20 TPS, on a clock shared by every region. */
+    private static final long CHORUS_FRUIT_SUPPRESS_NANOS = 5L * 50_000_000L;
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void breakBlock(BlockBreakEvent e) {
@@ -292,9 +297,12 @@ public class CustomBlocksListener implements Listener {
         // Relocate registry immediately so physics/break handlers stay correct mid-animation
         blocks.moveBlocks(fromTo, false);
 
-        // Sync displays/models after piston animation finishes
-        Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(),
-                () -> blocks.syncMovedBlocks(fromTo.values()), 3L);
+        // Sync displays/models after piston animation finishes, on each destination's region.
+        var scheduler = OpenItems.getInstance().getScheduler();
+        for (var destination : fromTo.values()) {
+            scheduler.runAtDelayed(location(destination),
+                    () -> blocks.syncMovedBlocks(List.of(destination)), 3L);
+        }
     }
 
     @EventHandler
@@ -334,7 +342,7 @@ public class CustomBlocksListener implements Listener {
             return;
         if (!block.getType().equals(Material.CHORUS_FLOWER))
             return;
-        OpenItems.sync(() -> {
+        OpenItems.getInstance().getScheduler().runAt(location(block), () -> {
             if (!(block.getBlockData() instanceof MultipleFacing multipleFacing))
                 return;
 
@@ -351,26 +359,24 @@ public class CustomBlocksListener implements Listener {
         if (!newState.getType().equals(Material.CHORUS_FLOWER))
             return;
 
-        var blocks = OpenItems.getInstance().getBlocks();
+        for (var face : Utils.getMainBlockFaces())
+            restoreChorusPlant(block.getRelative(face));
+    }
 
-        for (var face : Utils.getMainBlockFaces()) {
-            var b = block.getRelative(face);
+    private void restoreChorusPlant(Block b) {
+        if (!b.getType().equals(Material.CHORUS_PLANT))
+            return;
 
-            if (!b.getType().equals(Material.CHORUS_PLANT))
-                continue;
+        if (!(b.getBlockData() instanceof MultipleFacing mf))
+            return;
 
-            if (!(b.getBlockData() instanceof MultipleFacing mf))
-                continue;
+        var placedBlock = OpenItems.getInstance().getBlocks().getPlacedBlocks().get(b);
 
-            var placedBlock = blocks.getPlacedBlocks().get(b);
-
-            if (placedBlock != null) {
-                placedBlock.getCurrentModel().apply(b, false);
-            } else {
-                CustomChorusModel.setDefaultId(mf);
-                b.setBlockData(mf, false);
-            }
-
+        if (placedBlock != null) {
+            placedBlock.getCurrentModel().apply(b, false);
+        } else {
+            CustomChorusModel.setDefaultId(mf);
+            b.setBlockData(mf, false);
         }
     }
 
@@ -470,36 +476,10 @@ public class CustomBlocksListener implements Listener {
                     !OpenItemsConfig.allowedChorusUpdateBlocks.contains(block.getType()) &&
                             !OpenItemsConfig.allowedChorusUpdateBlocks.contains(sblock.getType());
 
+            boolean sourceIsWater = block.getType() == Material.WATER;
             for (var face : Utils.getMainBlockFaces()) {
-                var relative = block.getRelative(face);
-                if (relative.getType() == Material.CHORUS_PLANT) {
-                    if (blocks.getPlacedBlocks().containsKey(relative)) {
-                        var placedBlock = blocks.getPlacedBlocks().get(relative);
-
-                        if (placedBlock != null) {
-                            if (placedBlock.canBeDestroyedByLiquid() && block.getType() == Material.WATER) {
-                                var event = new CustomBlockDestroyedByLiquidEvent(relative, placedBlock, e);
-
-                                Bukkit.getPluginManager().callEvent(event);
-
-                                if (!event.isCancelled()) {
-                                    suppressChorusFruit(relative);
-                                    blocks.destroyBlock(relative, placedBlock.dropOnDestroyByLiquid(), true);
-                                }
-                            } else {
-                                if (OpenItemsConfig.allowChorusPhysicsCancel && canCancel) {
-                                    checkChorus(relative);
-                                    e.setCancelled(true);
-                                    return;
-                                }
-                                Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(), () -> {
-                                    placedBlock.getCurrentModel().apply(relative, false);
-                                }, 2);
-                            }
-                        }
-                    }
-
-                }
+                if (handleChorusRelative(block.getRelative(face), sourceIsWater, canCancel, e))
+                    return;
             }
 
 
@@ -516,6 +496,44 @@ public class CustomBlocksListener implements Listener {
 
     }
 
+    private boolean handleChorusRelative(Block relative, boolean sourceIsWater, boolean canCancel, BlockPhysicsEvent e) {
+        if (relative.getType() != Material.CHORUS_PLANT)
+            return false;
+
+        var blocks = OpenItems.getInstance().getBlocks();
+        if (!blocks.getPlacedBlocks().containsKey(relative))
+            return false;
+
+        var placedBlock = blocks.getPlacedBlocks().get(relative);
+        if (placedBlock == null)
+            return false;
+
+        if (placedBlock.canBeDestroyedByLiquid() && sourceIsWater) {
+            var event = new CustomBlockDestroyedByLiquidEvent(relative, placedBlock, e);
+            Bukkit.getPluginManager().callEvent(event);
+            if (!event.isCancelled()) {
+                suppressChorusFruit(relative);
+                blocks.destroyBlock(relative, placedBlock.dropOnDestroyByLiquid(), true);
+            }
+            return false;
+        }
+
+        if (OpenItemsConfig.allowChorusPhysicsCancel && canCancel) {
+            checkChorus(relative);
+            e.setCancelled(true);
+            return true;
+        }
+
+        OpenItems.getInstance().getScheduler().runAtDelayed(location(relative), () -> {
+            placedBlock.getCurrentModel().apply(relative, false);
+        }, 2L);
+        return false;
+    }
+
+    private static Location location(Block block) {
+        return new Location(block.getWorld(), block.getX(), block.getY(), block.getZ());
+    }
+
     private boolean isPistonRelated(Material type) {
         return type == Material.PISTON
                 || type == Material.STICKY_PISTON
@@ -524,14 +542,14 @@ public class CustomBlocksListener implements Listener {
     }
 
     private void suppressChorusFruit(Block block) {
-        int now = Bukkit.getCurrentTick();
-        suppressChorusFruitUntilTick.entrySet().removeIf(e -> e.getValue() < now);
-        suppressChorusFruitUntilTick.put(block, now + 5);
+        long now = System.nanoTime();
+        suppressChorusFruitUntilTick.entrySet().removeIf(entry -> entry.getValue() <= now);
+        suppressChorusFruitUntilTick.put(block, now + CHORUS_FRUIT_SUPPRESS_NANOS);
     }
 
     private boolean consumeChorusFruitSuppression(Block block) {
-        Integer until = suppressChorusFruitUntilTick.remove(block);
-        return until != null && Bukkit.getCurrentTick() <= until;
+        Long until = suppressChorusFruitUntilTick.remove(block);
+        return until != null && System.nanoTime() <= until;
     }
 
 
@@ -555,7 +573,7 @@ public class CustomBlocksListener implements Listener {
         var placedBlock = blocks.getPlacedBlocks().get(block);
         if (placedBlock != null && placedBlock.getCurrentModel() instanceof CustomChorusModel) {
             e.setCancelled(true);
-            OpenItems.sync(() -> {
+            OpenItems.getInstance().getScheduler().runAt(location(block), () -> {
                 if (blocks.getPlacedBlocks().containsKey(block))
                     placedBlock.getCurrentModel().apply(block, false);
             });

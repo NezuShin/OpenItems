@@ -14,6 +14,7 @@ import su.nezushin.openitems.inventory.PlayerInventoryBackup;
 import su.nezushin.openitems.hooks.worldedit.WorldEditHook;
 import su.nezushin.openitems.hooks.worldedit.WorldEditSupportState;
 import su.nezushin.openitems.rp.ResourcePackBuilder;
+import su.nezushin.openitems.scheduler.SchedulerManager;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 import su.nezushin.openitems.utils.Utils;
 
@@ -30,6 +31,7 @@ public final class OpenItems extends JavaPlugin {
     private CommandHooks commandHooks;
     private WorldEditHook worldEditHook;
     private PlayerInventoryBackup inventoryBackup;
+    private SchedulerManager scheduler;
 
     public static NamespacedKey CUSTOM_BLOCKS_VERSION_KEY;
 
@@ -40,6 +42,7 @@ public final class OpenItems extends JavaPlugin {
     @Override
     public void onLoad() {
         instance = this;
+        this.scheduler = new SchedulerManager(this);
         CUSTOM_BLOCKS_VERSION_KEY = new NamespacedKey(OpenItems.getInstance(), "custom_blocks_version");
         CUSTOM_BLOCKS_BPARTS_KEY = new NamespacedKey(OpenItems.getInstance(), "custom_blocks_bparts");
         CUSTOM_BLOCKS_CHECKED_CHUNK_KEY = new NamespacedKey(OpenItems.getInstance(), "custom_blocks_checked");
@@ -52,6 +55,7 @@ public final class OpenItems extends JavaPlugin {
         this.resourcePackBuilder = new ResourcePackBuilder();
         this.inventoryBackup = new PlayerInventoryBackup();
 
+        this.blocks.removeAllDisplayEntities();
 
         load();
 
@@ -74,17 +78,15 @@ public final class OpenItems extends JavaPlugin {
         this.resourcePackBuilder.loadRegistry();
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             papiHook = new FontImageExpansion();
-            sync(() -> {
-                papiHook.register();
-            });
+            scheduler.runGlobal(() -> papiHook.register());
         }
 
         if (WorldEditSupportState.isWorldEditPresent()) {
             if (worldEditHook == null)
                 worldEditHook = new WorldEditHook();
-            sync(() -> worldEditHook.register());
+            scheduler.runGlobal(() -> worldEditHook.register());
         } else if (worldEditHook != null) {
-            sync(() -> worldEditHook.unregister());
+            scheduler.runGlobal(() -> worldEditHook.unregister());
         }
     }
 
@@ -117,13 +119,14 @@ public final class OpenItems extends JavaPlugin {
         return commandHooks;
     }
 
-    public static void sync(Runnable run) {
-        Bukkit.getScheduler().scheduleSyncDelayedTask(getInstance(), run);
+    public SchedulerManager getScheduler() {
+        return scheduler;
     }
 
-
     public static void async(Runnable run) {
-        Bukkit.getScheduler().runTaskAsynchronously(getInstance(), run);
+        var thread = new Thread(run);
+        thread.setName("OIThread");
+        thread.start();
     }
 
     public FontImageExpansion getPapiHook() {

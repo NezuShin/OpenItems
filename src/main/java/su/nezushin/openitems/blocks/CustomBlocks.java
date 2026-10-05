@@ -2,6 +2,7 @@ package su.nezushin.openitems.blocks;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.MultipleFacing;
@@ -23,29 +24,31 @@ import su.nezushin.openitems.blocks.types.CustomTripwireModel;
 import su.nezushin.openitems.events.CustomBlockLoadEvent;
 import su.nezushin.openitems.events.CustomBlockUnloadEvent;
 import su.nezushin.openitems.utils.BlockEntityUtil;
+import su.nezushin.openitems.scheduler.SchedulerManager;
 import su.nezushin.openitems.utils.NBTUtil;
 import su.nezushin.openitems.utils.OpenItemsConfig;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CustomBlocks {
 
-    //All loaded blocks in server
-    private Map<Block, BlockLocationStore> placedBlocks = new HashMap<>();
+    //All loaded blocks in server. Block equality is position-based, so lookups stay valid across region threads.
+    private final Map<Block, BlockLocationStore> placedBlocks = new ConcurrentHashMap<>();
 
     // ItemDisplay entities for stairs/display blocks (ephemeral)
-    private Map<Block, ItemDisplay> displayEntities = new HashMap<>();
+    private final Map<Block, ItemDisplay> displayEntities = new ConcurrentHashMap<>();
 
     //Blocks need to be destroyed on next chunk load
-    private Map<Block, DestroyOnLoadBlock> destroyOnLoad = new HashMap<>();
+    private final Map<Block, DestroyOnLoadBlock> destroyOnLoad = new ConcurrentHashMap<>();
 
-    private Map<Chunk, Integer> saveChunkDebounce = new HashMap<>();
+    private final Map<Chunk, SchedulerManager.ScheduledWork> saveChunkDebounce = new ConcurrentHashMap<>();
 
     /**
      * Blocks registered while a resource pack build had cleared the model registry.
      * They stay in {@link #placedBlocks} so interactions work; the model is resolved when the registry is full.
      */
-    private final Set<Block> blocksAwaitingModel = new HashSet<>();
+    private final Set<Block> blocksAwaitingModel = ConcurrentHashMap.newKeySet();
 
     private BlockBreakSpeedModifiers blockBreakSpeedModifiers;
 
@@ -65,9 +68,13 @@ public class CustomBlocks {
 
         blockBreakSpeedModifiers = new BlockBreakSpeedModifiers();
 
-        for (var world : Bukkit.getWorlds())
-            for (var chunk : world.getLoadedChunks())
-                loadChunk(chunk);
+        // Folia loads worlds after enable, and the global thread cannot touch them.
+        // ChunkLoadEvent covers those chunks. Paper chunks are already loaded here.
+        if (!OpenItems.getInstance().getScheduler().isFolia()) {
+            for (var world : Bukkit.getWorlds())
+                for (var chunk : world.getLoadedChunks())
+                    loadChunk(chunk);
+        }
     }
 
     public Map<Block, BlockLocationStore> getPlacedBlocks() {
@@ -80,30 +87,37 @@ public class CustomBlocks {
 
 
     public void saveChunk(Chunk chunk) {
-        if (this.saveChunkDebounce.containsKey(chunk)) {
-            Bukkit.getScheduler().cancelTask(this.saveChunkDebounce.get(chunk));
-        }
-        Runnable saveRunnable = () -> {
-            this.saveChunkDebounce.remove(chunk);
-            List<BlockLocationStore> list = new ArrayList<>(this.placedBlocks.entrySet()
-                    .stream().filter(i -> i.getKey().getChunk().equals(chunk)).map(Map.Entry::getValue).toList());
+        Location origin = chunkLocation(chunk);
+        SchedulerManager scheduler = OpenItems.getInstance().getScheduler();
+        this.saveChunkDebounce.compute(chunk, (key, existing) -> {
+            if (existing != null)
+                existing.cancel();
 
-            for (BlockLocationStore store : list)
-                store.applyData();
-
-            OpenItems.async(() -> {
-                if (list.isEmpty()) {
-                    OpenItems.sync(() -> pdcWriter.clear(chunk));
-                    return;
+            SchedulerManager.ScheduledWork[] holder = new SchedulerManager.ScheduledWork[1];
+            holder[0] = scheduler.runAtDelayed(origin, () -> {
+                this.saveChunkDebounce.remove(chunk, holder[0]);
+                List<BlockLocationStore> list = new ArrayList<>();
+                for (var entry : this.placedBlocks.entrySet()) {
+                    if (sameChunk(entry.getKey(), chunk))
+                        list.add(entry.getValue());
                 }
 
-                var snapshot = snapshotEncoder.encode(chunk, list);
-                byte[] rawPayload = snapshotSerializer.encode(snapshot);
-                OpenItems.sync(() -> pdcWriter.write(chunk, rawPayload));
-            });
-        };
+                for (BlockLocationStore store : list)
+                    store.applyData();
 
-        this.saveChunkDebounce.put(chunk, Bukkit.getScheduler().scheduleSyncDelayedTask(OpenItems.getInstance(), saveRunnable, 10));
+                OpenItems.async(() -> {
+                    if (list.isEmpty()) {
+                        scheduler.runAt(origin, () -> pdcWriter.clear(chunk));
+                        return;
+                    }
+
+                    var snapshot = snapshotEncoder.encode(chunk, list);
+                    byte[] rawPayload = snapshotSerializer.encode(snapshot);
+                    scheduler.runAt(origin, () -> pdcWriter.write(chunk, rawPayload));
+                });
+            }, 10L);
+            return holder[0];
+        });
     }
 
     public void scanForWrongBlockModels(Chunk chunk) {
@@ -120,6 +134,7 @@ public class CustomBlocks {
         if (val != null)
             return;
 
+        Location origin = chunkLocation(chunk);
         OpenItems.async(() -> {
             var list = new ArrayList<int[]>();
             for (var x = 0; x < 16; x++)
@@ -133,7 +148,7 @@ public class CustomBlocks {
                     }
 
             if (!list.isEmpty())
-                OpenItems.sync(() -> {
+                OpenItems.getInstance().getScheduler().runAt(origin, () -> {
                     for (var i : list) {
                         var block = chunk.getBlock(i[0], i[1], i[2]);
 
@@ -163,11 +178,12 @@ public class CustomBlocks {
             return;
         }
 
+        byte[] rawPayload = pdcReader.readRaw(chunk);
+        Location origin = chunkLocation(chunk);
         OpenItems.async(() -> {
-            byte[] rawPayload = pdcReader.readRaw(chunk);
             List<BlockLocationStore> list = snapshotDecoder.decode(chunk, snapshotSerializer.decode(rawPayload));
 
-            OpenItems.sync(() -> {
+            OpenItems.getInstance().getScheduler().runAt(origin, () -> {
                 var refreshing = OpenItems.getInstance().getResourcePackBuilder().isRegistryRefreshing();
                 var needSaveChunk = false;
                 for (var i : list) {
@@ -205,12 +221,33 @@ public class CustomBlocks {
      * Resolve models for blocks that were registered while the registry was empty.
      * A model that still matches the world block is left as-is, except display models that must be reapplied.
      * A model that no longer matches is applied. A missing model is removed, same as a normal load.
-     * Main thread only.
+     * Grouping may run off the region thread. Model application runs on each block's region.
      */
     public void finishBlocksLoadedDuringRefresh() {
         var blocks = new ArrayList<>(blocksAwaitingModel);
-        blocksAwaitingModel.clear();
+        blocksAwaitingModel.removeAll(blocks);
+
+        Map<ChunkKey, List<Block>> groups = new LinkedHashMap<>();
         for (var block : blocks) {
+            var key = new ChunkKey(block.getWorld(), block.getX() >> 4, block.getZ() >> 4);
+            groups.computeIfAbsent(key, ignored -> new ArrayList<>()).add(block);
+        }
+
+        var scheduler = OpenItems.getInstance().getScheduler();
+        for (var group : groups.values()) {
+            var sample = group.getFirst();
+            scheduler.runAt(blockLocation(sample), () -> resolveRefreshedBlocks(group));
+        }
+    }
+
+    private void resolveRefreshedBlocks(List<Block> blocks) {
+        var scheduler = OpenItems.getInstance().getScheduler();
+        for (var block : blocks) {
+            var location = blockLocation(block);
+            if (!scheduler.owns(location)) {
+                scheduler.runAt(location, () -> resolveRefreshedBlocks(List.of(block)));
+                continue;
+            }
             if (!block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4))
                 continue;
 
@@ -288,8 +325,8 @@ public class CustomBlocks {
 
             var display = this.displayEntities.remove(from);
             pending.add(new PendingMove(from, to, placedBlock, display));
-            chunksToSave.add(from.getChunk());
-            chunksToSave.add(to.getChunk());
+            rememberChunkSave(from, chunksToSave);
+            rememberChunkSave(to, chunksToSave);
         }
 
         for (var move : pending) {
@@ -348,6 +385,12 @@ public class CustomBlocks {
      * @param callback - callback to run after block being destroyed
      */
     public void destroyBlockOnLoad(Block block, boolean dropItem, boolean setAir, Runnable callback) {
+        var scheduler = OpenItems.getInstance().getScheduler();
+        var location = blockLocation(block);
+        if (!scheduler.owns(location)) {
+            scheduler.runAt(location, () -> destroyBlockOnLoad(block, dropItem, setAir, callback));
+            return;
+        }
         if (block.getChunk().isLoaded() && getPlacedBlocks().containsKey(block)) {
             destroyBlock(block, dropItem, setAir);
             callback.run();
@@ -497,7 +540,7 @@ public class CustomBlocks {
                 && (block.getX() >> 4) == chunk.getX()
                 && (block.getZ() >> 4) == chunk.getZ());
         for (var i : this.placedBlocks.entrySet()
-                .stream().filter(i -> i.getKey().getChunk().equals(chunk)).toList()) {
+                .stream().filter(entry -> sameChunk(entry.getKey(), chunk)).toList()) {
             Bukkit.getPluginManager().callEvent(new CustomBlockUnloadEvent(i.getKey(), i.getValue()));
             var model = i.getValue().getCurrentModel();
             if (model != null)
@@ -509,21 +552,85 @@ public class CustomBlocks {
     /**
      * Remove all stairs/display ItemDisplay entities. Call on plugin disable
      * so they do not linger after reload/shutdown.
+     * On Folia, entity and chunk access stays on the owning region. A disabled plugin
+     * cannot schedule that work, so displays outside the current region are removed on the next enable.
      */
     public void removeAllDisplayEntities() {
-        for (var display : this.displayEntities.values()) {
-            if (display != null && display.isValid())
-                display.remove();
-        }
+        var tracked = new ArrayList<>(this.displayEntities.values());
         this.displayEntities.clear();
 
-        // Orphans not in the map (e.g. after a crash mid-sync)
+        var scheduler = OpenItems.getInstance().getScheduler();
+        for (var display : tracked)
+            removeDisplayEntity(scheduler, display);
+
+        if (!scheduler.isFolia()) {
+            for (var world : Bukkit.getWorlds()) {
+                for (var entity : world.getEntitiesByClass(ItemDisplay.class)) {
+                    if (BlockEntityUtil.hasBlockDisplayTag(entity))
+                        entity.remove();
+                }
+            }
+            return;
+        }
+
+        if (!OpenItems.getInstance().isEnabled())
+            return;
+
         for (var world : Bukkit.getWorlds()) {
-            for (var entity : world.getEntitiesByClass(ItemDisplay.class)) {
-                if (BlockEntityUtil.hasBlockDisplayTag(entity))
-                    entity.remove();
+            for (var chunk : world.getLoadedChunks()) {
+                var origin = chunkLocation(chunk);
+                if (scheduler.owns(origin))
+                    removeTaggedDisplays(chunk);
+                else
+                    scheduler.runAt(origin, () -> removeTaggedDisplays(chunk));
             }
         }
+    }
+
+    private void removeDisplayEntity(SchedulerManager scheduler, ItemDisplay display) {
+        if (display == null)
+            return;
+
+        scheduler.runOnEntity(display, () -> {
+            if (display.isValid())
+                display.remove();
+        });
+    }
+
+    private static void removeTaggedDisplays(Chunk chunk) {
+        if (!chunk.isLoaded())
+            return;
+
+        for (var entity : chunk.getEntities()) {
+            if (entity instanceof ItemDisplay && BlockEntityUtil.hasBlockDisplayTag(entity))
+                entity.remove();
+        }
+    }
+
+    private void rememberChunkSave(Block block, Set<Chunk> chunksToSave) {
+        var scheduler = OpenItems.getInstance().getScheduler();
+        var location = blockLocation(block);
+        if (scheduler.owns(location))
+            chunksToSave.add(block.getChunk());
+        else
+            scheduler.runAt(location, () -> saveChunk(block.getChunk()));
+    }
+
+    private static boolean sameChunk(Block block, Chunk chunk) {
+        return block.getWorld().equals(chunk.getWorld())
+                && (block.getX() >> 4) == chunk.getX()
+                && (block.getZ() >> 4) == chunk.getZ();
+    }
+
+    private static Location chunkLocation(Chunk chunk) {
+        return new Location(chunk.getWorld(), chunk.getX() << 4, chunk.getWorld().getMinHeight(), chunk.getZ() << 4);
+    }
+
+    private static Location blockLocation(Block block) {
+        return new Location(block.getWorld(), block.getX(), block.getY(), block.getZ());
+    }
+
+    private record ChunkKey(org.bukkit.World world, int chunkX, int chunkZ) {
     }
 
     public BlockBreakSpeedModifiers getBlockBreakSpeedModifiers() {

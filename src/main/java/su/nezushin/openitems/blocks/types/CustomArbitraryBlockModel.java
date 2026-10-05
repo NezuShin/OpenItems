@@ -45,8 +45,8 @@ public class CustomArbitraryBlockModel implements CustomBlockModel {
 
         var display = displayEntities.get(b);
         if (display != null && display.isValid()) {
-            display.teleport(b.getLocation().add(0.5, 0.5, 0.5));
             display.setTeleportDuration(0);
+            display.teleportAsync(b.getLocation().add(0.5, 0.5, 0.5));
             display.setItemStack(item);
             display.setTransformation(transformation);
         } else {

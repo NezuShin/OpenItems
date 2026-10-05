@@ -103,7 +103,7 @@ public class ResourcePackBuilder {
 
             fillRegistry();
             this.registryRefreshing = false;
-            OpenItems.sync(() -> OpenItems.getInstance().getBlocks().finishBlocksLoadedDuringRefresh());
+            OpenItems.getInstance().getBlocks().finishBlocksLoadedDuringRefresh();
 
             for (var out : OpenItemsConfig.getResourcePackCopyDestinationFiles()) {
                 Utils.deleteDirectory(out);

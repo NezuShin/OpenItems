@@ -46,7 +46,7 @@ worldedit:
   # Avoids reflection overrides; uses extent reads for //copy and schematics.
   # FAWE ignores that extent unless plugins/FastAsyncWorldEdit/config.yml lists
   # su.nezushin.openitems.hooks.worldedit.OpenItemsFaweExtent under extent.allowed-plugins.
-  # OpenItems checks the list on startup and /oi reload.
+  # After you add this, type /fawe reload and than /oi reload
   enable-fawe: true
 
 blocks:
