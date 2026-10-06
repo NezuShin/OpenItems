@@ -47,11 +47,14 @@ public class CustomBlocksListener implements Listener {
 
     private final Map<Block, BlockLocationStore> brokenBlocks = new ConcurrentHashMap<>();
 
-    /** Locations where we intentionally destroyed custom chorus; suppress vanilla fruit briefly. */
-    private final Map<Block, Long> suppressChorusFruitUntilTick = new ConcurrentHashMap<>();
+    /**
+     * Locations where we intentionally destroyed custom chorus.
+     * Value is a generation so a stale expiry cannot clear a newer suppression.
+     */
+    private final Map<Block, Long> chorusFruitSuppression = new ConcurrentHashMap<>();
 
-    /** Five ticks at 20 TPS, on a clock shared by every region. */
-    private static final long CHORUS_FRUIT_SUPPRESS_NANOS = 5L * 50_000_000L;
+    /** Vanilla drops the fruit one region tick later; keep a short margin past that. */
+    private static final long CHORUS_FRUIT_SUPPRESS_TICKS = 5L;
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void breakBlock(BlockBreakEvent e) {
@@ -542,14 +545,13 @@ public class CustomBlocksListener implements Listener {
     }
 
     private void suppressChorusFruit(Block block) {
-        long now = System.nanoTime();
-        suppressChorusFruitUntilTick.entrySet().removeIf(entry -> entry.getValue() <= now);
-        suppressChorusFruitUntilTick.put(block, now + CHORUS_FRUIT_SUPPRESS_NANOS);
+        long generation = chorusFruitSuppression.merge(block, 1L, Long::sum);
+        OpenItems.getInstance().getScheduler().runAtDelayed(location(block), () ->
+                chorusFruitSuppression.remove(block, generation), CHORUS_FRUIT_SUPPRESS_TICKS);
     }
 
     private boolean consumeChorusFruitSuppression(Block block) {
-        Long until = suppressChorusFruitUntilTick.remove(block);
-        return until != null && System.nanoTime() <= until;
+        return chorusFruitSuppression.remove(block) != null;
     }
 
 
