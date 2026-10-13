@@ -2,7 +2,7 @@ package su.nezushin.openitems.hooks.worldedit;
 
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.Region;
-import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Slab;
@@ -18,11 +18,13 @@ import su.nezushin.openitems.blocks.types.CustomStairsBlockModel;
 import su.nezushin.openitems.utils.NBTUtil;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
- * Applies OpenItems registry updates and display entities on the main thread after FAWE flushes.
+ * Applies OpenItems registry updates and display entities after FAWE flushes.
  */
 final class OpenItemsFawePlacement {
 
@@ -43,6 +45,57 @@ final class OpenItemsFawePlacement {
         boolean spawnDisplay() {
             return encoded != null && encoded.spawnDisplay();
         }
+    }
+
+    static void flushLater(World world, List<Change> changes, List<Region> vanillaFills) {
+        var scheduler = OpenItems.getInstance().getScheduler();
+        if (!scheduler.isFolia()) {
+            scheduler.runGlobalDelayed(() -> {
+                finish(world, changes);
+                sweep(world, vanillaFills);
+            }, 1L);
+            return;
+        }
+
+        Map<Long, List<Change>> grouped = new HashMap<>();
+        for (Change change : changes)
+            grouped.computeIfAbsent(chunkKey(change.x(), change.z()), ignored -> new ArrayList<>()).add(change);
+        for (List<Change> group : grouped.values()) {
+            Change sample = group.getFirst();
+            scheduler.runAtDelayed(new Location(world, sample.x(), sample.y(), sample.z()), () -> finish(world, group), 1L);
+        }
+
+        if (vanillaFills.isEmpty())
+            return;
+
+        Map<Long, List<Block>> remove = new HashMap<>();
+        for (var entry : OpenItems.getInstance().getBlocks().getPlacedBlocks().entrySet()) {
+            Block block = entry.getKey();
+            if (!block.getWorld().equals(world))
+                continue;
+            BlockLocationStore store = entry.getValue();
+            BlockVector3 position = BlockVector3.at(store.getX(), store.getY(), store.getZ());
+            for (Region region : vanillaFills) {
+                if (!region.contains(position))
+                    continue;
+                remove.computeIfAbsent(chunkKey(store.getX(), store.getZ()), ignored -> new ArrayList<>()).add(block);
+                break;
+            }
+        }
+        CustomBlocks blocks = OpenItems.getInstance().getBlocks();
+        for (List<Block> group : remove.values()) {
+            BlockLocationStore sample = blocks.getPlacedBlocks().get(group.getFirst());
+            if (sample == null)
+                continue;
+            scheduler.runAtDelayed(new Location(world, sample.getX(), sample.getY(), sample.getZ()), () -> {
+                for (Block block : group)
+                    blocks.destroyBlock(block, false, false);
+            }, 1L);
+        }
+    }
+
+    private static long chunkKey(int x, int z) {
+        return ((long) (x >> 4) << 32) | (z >> 4 & 0xffffffffL);
     }
 
     static void finish(World world, List<Change> changes) {
@@ -140,8 +193,9 @@ final class OpenItemsFawePlacement {
         }
 
         if (!retry.isEmpty()) {
-            Bukkit.getScheduler().runTaskLater(
-                    OpenItems.getInstance(),
+            Change sample = retry.getFirst();
+            OpenItems.getInstance().getScheduler().runAtDelayed(
+                    new Location(world, sample.x(), sample.y(), sample.z()),
                     () -> spawnDisplays(world, retry, attempt + 1),
                     1L);
         }

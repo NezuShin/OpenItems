@@ -118,7 +118,7 @@ public class ResourcePackBuilder {
                 Message.oi_build_mip_map_warning.send(Bukkit.getConsoleSender());
             }
 
-            OpenItems.async(() -> Bukkit.getPluginManager().callEvent(new AsyncBuildDoneEvent()));
+            OpenItems.getInstance().getScheduler().async(() -> Bukkit.getPluginManager().callEvent(new AsyncBuildDoneEvent()));
             return true;
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -179,7 +179,7 @@ public class ResourcePackBuilder {
 
             SavedInventoryStore.scanInto(OpenItems.getInstance().getModelRegistry().getSavedInventories());
 
-            OpenItems.async(() -> Bukkit.getPluginManager().callEvent(new AsyncRegistryLoadedEvent()));
+            OpenItems.getInstance().getScheduler().async(() -> Bukkit.getPluginManager().callEvent(new AsyncRegistryLoadedEvent()));
         } catch (Exception ex) {
             throw ex;
         } finally {

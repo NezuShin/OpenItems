@@ -7,8 +7,9 @@ import org.bukkit.entity.Entity;
 import org.bukkit.plugin.Plugin;
 
 /**
- * Schedules work on the server thread (Paper) or on Folia's global region and per-location region threads.
- * Callers use this type only. The active {@link OpenItemsScheduler} is chosen once at construction.
+ * Schedules work on the server thread (Paper) or on the global region and per-location region threads
+ * (Folia and Canvas). Callers use this type only.
+ * The active {@link OpenItemsScheduler} is chosen once at construction.
  */
 public final class SchedulerManager {
 
@@ -46,12 +47,21 @@ public final class SchedulerManager {
         scheduler.runOnEntity(entity, task);
     }
 
+    public void async(Runnable task) {
+        scheduler.runGlobal(() -> scheduler.async(task));//Same behaviour like in old Bukkit scheduler
+    }
+
     public boolean isFolia() {
         return scheduler.isFolia();
     }
 
     private static boolean detectFolia() {
-        return "Folia".equals(Bukkit.getName());
+        try {
+            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
     }
 
     public interface OpenItemsScheduler {
@@ -68,6 +78,8 @@ public final class SchedulerManager {
         boolean owns(Location location);
 
         void runOnEntity(Entity entity, Runnable task);
+
+        void async(Runnable task);
 
         boolean isFolia();
     }
@@ -121,6 +133,11 @@ public final class SchedulerManager {
         @Override
         public void runOnEntity(Entity entity, Runnable task) {
             executeGlobal(task);
+        }
+
+        @Override
+        public void async(Runnable task) {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, task);
         }
 
         @Override
@@ -180,6 +197,11 @@ public final class SchedulerManager {
             }
 
             entity.getScheduler().execute(plugin, task, null, 1L);
+        }
+
+        @Override
+        public void async(Runnable task) {
+            Bukkit.getAsyncScheduler().runNow(plugin, scheduled -> task.run());
         }
 
         @Override

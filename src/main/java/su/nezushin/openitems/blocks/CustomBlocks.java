@@ -68,12 +68,17 @@ public class CustomBlocks {
 
         blockBreakSpeedModifiers = new BlockBreakSpeedModifiers();
 
-        // Folia loads worlds after enable, and the global thread cannot touch them.
-        // ChunkLoadEvent covers those chunks. Paper chunks are already loaded here.
-        if (!OpenItems.getInstance().getScheduler().isFolia()) {
-            for (var world : Bukkit.getWorlds())
-                for (var chunk : world.getLoadedChunks())
+        // Paper can read loaded chunks on this thread. Regionized servers cannot;
+        // each chunk is handed to the region that owns it. Worlds that are not loaded yet
+        // (typical Folia enable) are picked up by ChunkLoadEvent.
+        var scheduler = OpenItems.getInstance().getScheduler();
+        for (var world : Bukkit.getWorlds()) {
+            for (var chunk : world.getLoadedChunks()) {
+                if (scheduler.isFolia())
+                    scheduler.runAt(chunkLocation(chunk), () -> loadChunk(chunk));
+                else
                     loadChunk(chunk);
+            }
         }
     }
 

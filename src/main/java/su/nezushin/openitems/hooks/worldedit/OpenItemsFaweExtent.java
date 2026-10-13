@@ -14,7 +14,6 @@ import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.inventory.ItemStack;
 import su.nezushin.openitems.OpenItems;
@@ -36,7 +35,7 @@ import java.util.function.Function;
  * {@code setBlock(int, int, int, BlockStateHolder)} is the same kind of runtime override.
  *
  * <p>Block-state models are baked into the holder FAWE queues. Registry updates and display
- * entities run on the main thread one tick after {@code commitBefore()}, once the queue has been flushed.
+ * entities run one tick after {@code commitBefore()}, once the queue has been flushed.
  * A constant vanilla fill still uses FAWE's own {@code setBlocks}; custom blocks inside that
  * region are dropped after the flush.
  */
@@ -241,10 +240,7 @@ final class OpenItemsFaweExtent extends AbstractDelegateExtent {
         public Operation resume(RunContext run) {
             if (!finished) {
                 finished = true;
-                Bukkit.getScheduler().runTaskLater(OpenItems.getInstance(), () -> {
-                    OpenItemsFawePlacement.finish(world, changes);
-                    OpenItemsFawePlacement.sweep(world, vanillaFills);
-                }, 1L);
+                OpenItemsFawePlacement.flushLater(world, changes, vanillaFills);
             }
             return null;
         }
